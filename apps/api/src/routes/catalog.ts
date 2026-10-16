@@ -67,6 +67,16 @@ export function createCatalogRoutes(
       offset,
     });
 
+    if (c.req.query("include")?.split(",").includes("variants")) {
+      const withVariants = await Promise.all(
+        result.items.map((product) => repo.getProductWithVariants(tenantId, product.id))
+      );
+      return c.json({
+        ...result,
+        items: withVariants.filter((p): p is NonNullable<typeof p> => p !== null),
+      });
+    }
+
     return c.json(result);
   });
 

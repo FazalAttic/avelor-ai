@@ -98,6 +98,26 @@ describe("AI Chat HTTP API Endpoints", () => {
     expect(Array.isArray(body.toolCalls)).toBe(true);
     expect(body.toolCalls.length).toBeGreaterThan(0);
     expect(body.toolCalls[0].name).toBe("search_products");
+    expect(Array.isArray(body.products)).toBe(true);
+    expect(body.products[0].name).toBe("Organic Cold Brew Blend");
+  });
+
+  it("does not leak internal model messages or the system prompt", async () => {
+    const res = await app.request("/api/v1/chat", {
+      method: "POST",
+      headers: {
+        "x-tenant-id": tenantA,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        message: "I am looking for coffee",
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.messages).toBeUndefined();
+    expect(JSON.stringify(body)).not.toContain("system");
   });
 
   it("executes hybrid semantic search when customer uses conceptual phrasing", async () => {

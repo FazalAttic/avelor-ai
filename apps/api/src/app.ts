@@ -20,6 +20,7 @@ import {
   type TenantId,
 } from "@avelor/core";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { type AuthInstance, type AuthSession, type AuthUser, createAuth } from "./auth";
 import { createAuthMiddleware } from "./middleware/auth";
 import { createAdminRoutes } from "./routes/admin";
@@ -28,6 +29,7 @@ import { createCatalogRoutes } from "./routes/catalog";
 import { createChatRoutes } from "./routes/chat";
 import { createOrderRoutes } from "./routes/orders";
 import { createPaymentRoutes } from "./routes/payments";
+import { createPolicyRoutes } from "./routes/policies";
 
 export type AppEnv = {
   Variables: {
@@ -65,6 +67,23 @@ export function createApp(options: AppOptions = {}) {
 
   const auth = options.auth ?? createAuth();
   const authMiddleware = createAuthMiddleware(auth);
+
+  // CORS: only browser origins on the allowlist may call the API with credentials.
+  const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? "http://localhost:3000")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  app.use(
+    "*",
+    cors({
+      origin: (origin) => (origin && allowedOrigins.includes(origin) ? origin : undefined),
+      allowHeaders: ["Content-Type", "Authorization", "x-tenant-id", "x-request-id"],
+      allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      credentials: true,
+      maxAge: 86400,
+    })
+  );
 
   // Request ID middleware
   app.use("*", async (c, next) => {
@@ -109,6 +128,9 @@ export function createApp(options: AppOptions = {}) {
 
   // Mount cart routes
   app.route("/api/v1/carts", createCartRoutes(cartRepo, catalogRepo));
+
+  // Mount public store policy routes
+  app.route("/api/v1/policies", createPolicyRoutes(policyRepo));
 
   // Mount order & checkout routes
   app.route("/api/v1/orders", createOrderRoutes(orderRepo, cartRepo, catalogRepo, paymentProvider));

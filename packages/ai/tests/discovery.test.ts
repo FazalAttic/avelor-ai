@@ -70,7 +70,7 @@ describe("AI Discovery & Catalog Tools", () => {
     expect(result.product.name).toBe("Aero Glide Trail Shoes");
     expect(result.product.variants.length).toBe(1);
     expect(result.product.variants[0].sku).toBe("AERO-42-BLU");
-    expect(result.product.variants[0].price.formatted).toBe("120.00 USD");
+    expect(result.product.variants[0].price.formatted).toBe("$120.00");
   });
 
   it("orchestrates grounded discovery conversation end-to-end", async () => {

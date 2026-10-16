@@ -51,3 +51,8 @@ export function multiplyMoney(money: Money, factor: number): Money {
   const result = Math.round(money.amount * factor);
   return createMoney(result, money.currency);
 }
+
+export function formatMoney(money: Money): string {
+  const value = (money.amount / 100).toFixed(2);
+  return money.currency === "USD" ? `$${value}` : `${value} ${money.currency}`;
+}

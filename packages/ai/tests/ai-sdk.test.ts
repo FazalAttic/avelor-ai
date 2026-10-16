@@ -61,6 +61,6 @@ describe("Unified AI SDK Tool Integration", () => {
     expect(result.status).toBe("success");
     expect(result.product.name).toBe("Smart Coffee Grinder");
     expect(result.product.variants[0]?.sku).toBe("GRIND-SS-01");
-    expect(result.product.variants[0]?.price.formatted).toBe("199.00 USD");
+    expect(result.product.variants[0]?.price.formatted).toBe("$199.00");
   });
 });

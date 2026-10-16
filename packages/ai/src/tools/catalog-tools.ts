@@ -1,4 +1,10 @@
-import type { CatalogRepository, PolicyRepository, PolicyTopic, TenantId } from "@avelor/core";
+import {
+  type CatalogRepository,
+  type PolicyRepository,
+  type PolicyTopic,
+  type TenantId,
+  formatMoney,
+} from "@avelor/core";
 import type { EmbeddingModel } from "../contracts/embedding";
 import type { ToolDefinition } from "../contracts/model";
 import type { VectorStore } from "../contracts/vector-store";
@@ -190,7 +196,7 @@ export async function executeToolCall(
             price: {
               amount: v.price.amount,
               currency: v.price.currency,
-              formatted: `${(v.price.amount / 100).toFixed(2)} ${v.price.currency}`,
+              formatted: formatMoney(v.price),
             },
             inStock: v.inventoryQuantity > 0,
             stockQuantity: v.inventoryQuantity,

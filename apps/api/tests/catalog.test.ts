@@ -181,4 +181,46 @@ describe("Catalog HTTP API Endpoints", () => {
     expect(catBody.items.length).toBe(1);
     expect(catBody.items[0]?.name).toBe("Ergonomic Chair");
   });
+
+  it("hydrates variants when include=variants is requested", async () => {
+    const prodRes = await app.request("/api/v1/products", {
+      method: "POST",
+      headers: {
+        "x-tenant-id": tenantA,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ name: "Desk Mat", status: "active" }),
+    });
+    const product = await prodRes.json();
+
+    await app.request(`/api/v1/products/${product.id}/variants`, {
+      method: "POST",
+      headers: {
+        "x-tenant-id": tenantA,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        sku: "MAT-GRAY-XL",
+        title: "Extra Large / Heather Gray",
+        price: { amount: 2900, currency: "USD" },
+        inventoryQuantity: 50,
+      }),
+    });
+
+    const plainRes = await app.request("/api/v1/products", {
+      headers: { "x-tenant-id": tenantA },
+    });
+    const plainBody = await plainRes.json();
+    expect(plainBody.items[0].variants).toBeUndefined();
+
+    const hydratedRes = await app.request("/api/v1/products?include=variants", {
+      headers: { "x-tenant-id": tenantA },
+    });
+    const hydratedBody = await hydratedRes.json();
+    expect(hydratedBody.total).toBe(1);
+    expect(hydratedBody.items[0].id).toBe(product.id);
+    expect(hydratedBody.items[0].variants.length).toBe(1);
+    expect(hydratedBody.items[0].variants[0].sku).toBe("MAT-GRAY-XL");
+    expect(hydratedBody.items[0].variants[0].price).toEqual({ amount: 2900, currency: "USD" });
+  });
 });
