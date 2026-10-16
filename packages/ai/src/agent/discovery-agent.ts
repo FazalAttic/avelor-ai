@@ -1,5 +1,6 @@
 import type { CatalogRepository, PolicyRepository, TenantId } from "@avelor/core";
 import type { EmbeddingModel } from "../contracts/embedding";
+import type { GuardrailEngine } from "../contracts/guardrail";
 import type { ChatMessage, ChatModel, ToolCall } from "../contracts/model";
 import type { VectorStore } from "../contracts/vector-store";
 import { DISCOVERY_SYSTEM_PROMPT } from "../prompts/discovery";
@@ -15,6 +16,7 @@ export interface DiscoveryAgentOptions {
   readonly embeddingModel?: EmbeddingModel | undefined;
   readonly vectorStore?: VectorStore | undefined;
   readonly policyRepo?: PolicyRepository | undefined;
+  readonly guardrail?: GuardrailEngine | undefined;
 }
 
 export class DiscoveryAgent {
@@ -35,6 +37,42 @@ export class DiscoveryAgent {
       { role: "user", content: userQuery.trim() },
     ];
 
+    // 1. Pre-execution Input Guardrail
+    if (this.options?.guardrail) {
+      const inputCheck = await this.options.guardrail.checkInput({
+        text: userQuery,
+        role: "user",
+      });
+
+      if (inputCheck.verdict === "rejected") {
+        let rejectionReply: string;
+        if (
+          inputCheck.category === "prompt_injection" ||
+          inputCheck.category === "malicious_script"
+        ) {
+          rejectionReply =
+            "I am your store shopping assistant. I cannot execute system overrides or external scripts, but I'm happy to help you discover products, check stock, or review store policies.";
+        } else if (inputCheck.category === "out_of_domain") {
+          rejectionReply =
+            "I specialize exclusively in helping you find products and assist with your shopping at our store. How can I help you with our catalog today?";
+        } else {
+          rejectionReply =
+            "Your message could not be processed due to store safety policies. Please rephrase your shopping inquiry.";
+        }
+
+        const rejectionMessage: ChatMessage = {
+          role: "assistant",
+          content: rejectionReply,
+        };
+
+        return {
+          reply: rejectionReply,
+          messages: Object.freeze([...messages, rejectionMessage]),
+          toolCallsExecuted: Object.freeze([]),
+        };
+      }
+    }
+
     const toolCallsExecuted: ToolCall[] = [];
 
     // ponytail: execution loop ceiling: max 3 iterations to prevent infinite tool loops
@@ -53,8 +91,20 @@ export class DiscoveryAgent {
 
       // If no tool calls requested, we are done
       if (!assistantMessage.toolCalls || assistantMessage.toolCalls.length === 0) {
+        let reply = assistantMessage.content;
+        if (this.options?.guardrail) {
+          const outCheck = await this.options.guardrail.checkOutput({
+            text: reply,
+            role: "assistant",
+          });
+          if (outCheck.verdict === "rejected") {
+            reply =
+              "I encountered an issue verifying the response against safety policies. Please try again.";
+          }
+        }
+
         return {
-          reply: assistantMessage.content,
+          reply,
           messages: Object.freeze(messages),
           toolCallsExecuted: Object.freeze(toolCallsExecuted),
         };
@@ -86,10 +136,25 @@ export class DiscoveryAgent {
       temperature: 0.1,
     });
 
-    messages.push(finalResponse.message);
+    let finalReply = finalResponse.message.content;
+    if (this.options?.guardrail) {
+      const outCheck = await this.options.guardrail.checkOutput({
+        text: finalReply,
+        role: "assistant",
+      });
+      if (outCheck.verdict === "rejected") {
+        finalReply =
+          "I encountered an issue verifying the response against safety policies. Please try again.";
+      }
+    }
+
+    messages.push({
+      role: "assistant",
+      content: finalReply,
+    });
 
     return {
-      reply: finalResponse.message.content,
+      reply: finalReply,
       messages: Object.freeze(messages),
       toolCallsExecuted: Object.freeze(toolCallsExecuted),
     };

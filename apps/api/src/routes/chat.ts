@@ -3,6 +3,7 @@ import {
   type ChatModel,
   DiscoveryAgent,
   type EmbeddingModel,
+  type GuardrailEngine,
   type VectorStore,
 } from "@avelor/ai";
 import type { CatalogRepository, PolicyRepository } from "@avelor/core";
@@ -19,6 +20,7 @@ export interface ChatRoutesOptions {
   readonly embeddingModel?: EmbeddingModel | undefined;
   readonly vectorStore?: VectorStore | undefined;
   readonly policyRepo?: PolicyRepository | undefined;
+  readonly guardrail?: GuardrailEngine | undefined;
 }
 
 export function createChatRoutes(

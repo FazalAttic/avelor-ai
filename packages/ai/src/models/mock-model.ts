@@ -144,7 +144,8 @@ export class MockChatModel implements ChatModel {
     ) {
       // Extract search query
       const queryMatch = lastMessage.content
-        .replace(/find|search|for|i am looking for|show me/gi, "")
+        .replace(/\b(find|search|for|i am looking for|looking for|show me|me)\b/gi, "")
+        .replace(/\s+/g, " ")
         .trim();
       return {
         message: {

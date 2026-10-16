@@ -16,7 +16,7 @@ export class AiSdkEmbeddingModel implements EmbeddingModel {
   readonly dimensions: number;
 
   constructor(
-    private readonly model: AiSdkModelType<string>,
+    private readonly model: Parameters<typeof embed>[0]["model"],
     options: AiSdkEmbeddingModelOptions
   ) {
     this.modelId = options.modelId ?? "ai-sdk-embedding";

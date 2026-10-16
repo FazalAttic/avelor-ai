@@ -56,7 +56,7 @@ export function createAiSdkTools(
  * Decouples business logic while allowing any LanguageModelV1 (OpenAI, Anthropic, Gemini, Ollama, etc.) to be used.
  */
 export class AiSdkChatModel implements ChatModel {
-  constructor(private readonly model: LanguageModelV1) {}
+  constructor(private readonly model: Parameters<typeof generateText>[0]["model"]) {}
 
   async generate(input: ChatInput): Promise<ChatResult> {
     // 1. Convert Avelor ChatMessages to CoreMessages

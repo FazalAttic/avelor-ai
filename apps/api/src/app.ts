@@ -1,4 +1,11 @@
-import { type ChatModel, type EmbeddingModel, MockChatModel, type VectorStore } from "@avelor/ai";
+import {
+  type ChatModel,
+  CompositeGuardrail,
+  type EmbeddingModel,
+  type GuardrailEngine,
+  MockChatModel,
+  type VectorStore,
+} from "@avelor/ai";
 import {
   type CartRepository,
   type CatalogRepository,
@@ -41,6 +48,7 @@ export interface AppOptions {
   readonly chatModel?: ChatModel | undefined;
   readonly embeddingModel?: EmbeddingModel | undefined;
   readonly vectorStore?: VectorStore | undefined;
+  readonly guardrail?: GuardrailEngine | undefined;
   readonly auth?: AuthInstance | undefined;
   readonly enforceAdminAuth?: boolean | undefined;
 }
@@ -53,6 +61,7 @@ export function createApp(options: AppOptions = {}) {
   const policyRepo = options.policyRepo ?? new InMemoryPolicyRepository();
   const paymentProvider = options.paymentProvider ?? new MockPaymentProvider();
   const chatModel = options.chatModel ?? new MockChatModel();
+  const guardrail = options.guardrail ?? new CompositeGuardrail();
 
   const auth = options.auth ?? createAuth();
   const authMiddleware = createAuthMiddleware(auth);
@@ -115,13 +124,14 @@ export function createApp(options: AppOptions = {}) {
     })
   );
 
-  // Mount AI chat discovery routes with hybrid semantic vector search & policy RAG support
+  // Mount AI chat discovery routes with hybrid semantic vector search, policy RAG & guardrails
   app.route(
     "/api/v1/chat",
     createChatRoutes(chatModel, catalogRepo, {
       embeddingModel: options.embeddingModel,
       vectorStore: options.vectorStore,
       policyRepo,
+      guardrail,
     })
   );
 
