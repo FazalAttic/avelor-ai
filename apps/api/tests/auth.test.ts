@@ -181,6 +181,63 @@ describe("Better Auth & Admin / Customer Role Isolation", () => {
       expect(body.totalIndexed).toBe(1);
       expect(body.durationMs).toBeGreaterThanOrEqual(0);
     });
+
+    it("blocks customers from accessing or modifying admin policies", async () => {
+      const getRes = await app.request("/api/v1/admin/policies", {
+        headers: {
+          "x-tenant-id": tenantA,
+          authorization: `Bearer ${customerToken}`,
+        },
+      });
+      expect(getRes.status).toBe(403);
+
+      const putRes = await app.request("/api/v1/admin/policies/returns", {
+        method: "PUT",
+        headers: {
+          "x-tenant-id": tenantA,
+          authorization: `Bearer ${customerToken}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          title: "Malicious Customer Policy",
+          content: "Free items for everyone.",
+        }),
+      });
+      expect(putRes.status).toBe(403);
+    });
+
+    it("allows authenticated Admin A to create and list store policies", async () => {
+      const putRes = await app.request("/api/v1/admin/policies/returns", {
+        method: "PUT",
+        headers: {
+          "x-tenant-id": tenantA,
+          authorization: `Bearer ${adminTokenA}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          title: "Official 45-Day Returns",
+          content: "Return any product within 45 days for full refund.",
+        }),
+      });
+
+      expect(putRes.status).toBe(200);
+      const putBody = await putRes.json();
+      expect(putBody.topic).toBe("returns");
+      expect(putBody.title).toBe("Official 45-Day Returns");
+
+      const getRes = await app.request("/api/v1/admin/policies", {
+        headers: {
+          "x-tenant-id": tenantA,
+          authorization: `Bearer ${adminTokenA}`,
+        },
+      });
+
+      expect(getRes.status).toBe(200);
+      const policies = await getRes.json();
+      expect(Array.isArray(policies)).toBe(true);
+      expect(policies.length).toBe(1);
+      expect(policies[0].topic).toBe("returns");
+    });
   });
 
   describe("Catalog Mutation Security (POST /api/v1/products)", () => {

@@ -1,5 +1,10 @@
 import { type EmbeddingModel, type VectorStore, reindexCatalog } from "@avelor/ai";
-import type { CatalogRepository, OrderRepository } from "@avelor/core";
+import type {
+  CatalogRepository,
+  OrderRepository,
+  PolicyRepository,
+  PolicyTopic,
+} from "@avelor/core";
 import { Hono } from "hono";
 import type { AppEnv } from "../app";
 import type { createAuthMiddleware } from "../middleware/auth";
@@ -9,6 +14,7 @@ export interface AdminRoutesDependencies {
   orderRepo: OrderRepository;
   catalogRepo: CatalogRepository;
   authMiddleware: ReturnType<typeof createAuthMiddleware>;
+  policyRepo?: PolicyRepository | undefined;
   embeddingModel?: EmbeddingModel | undefined;
   vectorStore?: VectorStore | undefined;
 }
@@ -80,6 +86,72 @@ export function createAdminRoutes(deps: AdminRoutesDependencies) {
       totalIndexed: result.totalIndexed,
       durationMs: result.durationMs,
     });
+  });
+
+  // Store Admin Policy Management (Knowledge RAG)
+  router.get("/policies", async (c) => {
+    const tenantId = c.get("tenantId");
+    if (!deps.policyRepo) {
+      return c.json([]);
+    }
+    const policies = await deps.policyRepo.listPolicies(tenantId);
+    return c.json(policies);
+  });
+
+  router.put("/policies/:topic", async (c) => {
+    const tenantId = c.get("tenantId");
+    const rawTopic = c.req.param("topic");
+    const validTopics: PolicyTopic[] = [
+      "returns",
+      "shipping",
+      "privacy",
+      "terms",
+      "faq",
+      "general",
+    ];
+
+    if (!validTopics.includes(rawTopic as PolicyTopic)) {
+      return c.json(
+        {
+          error: {
+            code: "VALIDATION_ERROR",
+            message: `Invalid policy topic '${rawTopic}'. Allowed: ${validTopics.join(", ")}`,
+          },
+        },
+        400
+      );
+    }
+
+    const topic = rawTopic as PolicyTopic;
+
+    if (!deps.policyRepo) {
+      return c.json(
+        { error: { code: "NOT_CONFIGURED", message: "Policy repository is not configured" } },
+        400
+      );
+    }
+
+    let body: { title?: string; content?: string };
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: { code: "INVALID_JSON", message: "Malformed JSON body" } }, 400);
+    }
+
+    if (!body.title || !body.content) {
+      return c.json(
+        { error: { code: "VALIDATION_ERROR", message: "Both 'title' and 'content' are required" } },
+        400
+      );
+    }
+
+    const policy = await deps.policyRepo.upsertPolicy(tenantId, {
+      topic,
+      title: body.title,
+      content: body.content,
+    });
+
+    return c.json(policy);
   });
 
   return router;

@@ -5,7 +5,7 @@ import {
   type EmbeddingModel,
   type VectorStore,
 } from "@avelor/ai";
-import type { CatalogRepository } from "@avelor/core";
+import type { CatalogRepository, PolicyRepository } from "@avelor/core";
 import { Hono } from "hono";
 import type { AppEnv } from "../app";
 import { requireTenant } from "../middleware/tenant";
@@ -18,6 +18,7 @@ interface ChatRequestBody {
 export interface ChatRoutesOptions {
   readonly embeddingModel?: EmbeddingModel | undefined;
   readonly vectorStore?: VectorStore | undefined;
+  readonly policyRepo?: PolicyRepository | undefined;
 }
 
 export function createChatRoutes(

@@ -7,6 +7,7 @@ import {
   productVariants,
   products,
   sessions,
+  storePolicies,
   users,
   verifications,
 } from "../src/index";
@@ -64,5 +65,13 @@ describe("Database schema definitions", () => {
     expect(productEmbeddings.embedding.name).toBe("embedding");
     expect(productEmbeddings.model.name).toBe("model");
     expect(productEmbeddings.contentHash.name).toBe("content_hash");
+  });
+
+  it("defines storePolicies table with tenant isolation and topic indexing", () => {
+    expect(storePolicies.id.name).toBe("id");
+    expect(storePolicies.tenantId.name).toBe("tenant_id");
+    expect(storePolicies.topic.name).toBe("topic");
+    expect(storePolicies.title.name).toBe("title");
+    expect(storePolicies.content.name).toBe("content");
   });
 });

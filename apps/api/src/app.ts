@@ -5,9 +5,11 @@ import {
   InMemoryCartRepository,
   InMemoryCatalogRepository,
   InMemoryOrderRepository,
+  InMemoryPolicyRepository,
   MockPaymentProvider,
   type OrderRepository,
   type PaymentProvider,
+  type PolicyRepository,
   type TenantId,
 } from "@avelor/core";
 import { Hono } from "hono";
@@ -33,6 +35,7 @@ export interface AppOptions {
   readonly catalogRepo?: CatalogRepository | undefined;
   readonly cartRepo?: CartRepository | undefined;
   readonly orderRepo?: OrderRepository | undefined;
+  readonly policyRepo?: PolicyRepository | undefined;
   readonly paymentProvider?: PaymentProvider | undefined;
   readonly webhookSecret?: string | undefined;
   readonly chatModel?: ChatModel | undefined;
@@ -47,6 +50,7 @@ export function createApp(options: AppOptions = {}) {
   const catalogRepo = options.catalogRepo ?? new InMemoryCatalogRepository();
   const cartRepo = options.cartRepo ?? new InMemoryCartRepository();
   const orderRepo = options.orderRepo ?? new InMemoryOrderRepository();
+  const policyRepo = options.policyRepo ?? new InMemoryPolicyRepository();
   const paymentProvider = options.paymentProvider ?? new MockPaymentProvider();
   const chatModel = options.chatModel ?? new MockChatModel();
 
@@ -81,12 +85,13 @@ export function createApp(options: AppOptions = {}) {
     createCatalogRoutes(catalogRepo, options.enforceAdminAuth ? authMiddleware : undefined)
   );
 
-  // Mount admin dashboard and management routes (strictly locked to admin role)
+  // Mount admin dashboard, management, policy, and reindex routes (strictly locked to admin role)
   app.route(
     "/api/v1/admin",
     createAdminRoutes({
       orderRepo,
       catalogRepo,
+      policyRepo,
       authMiddleware,
       embeddingModel: options.embeddingModel,
       vectorStore: options.vectorStore,
@@ -110,12 +115,13 @@ export function createApp(options: AppOptions = {}) {
     })
   );
 
-  // Mount AI chat discovery routes with hybrid semantic vector search support
+  // Mount AI chat discovery routes with hybrid semantic vector search & policy RAG support
   app.route(
     "/api/v1/chat",
     createChatRoutes(chatModel, catalogRepo, {
       embeddingModel: options.embeddingModel,
       vectorStore: options.vectorStore,
+      policyRepo,
     })
   );
 

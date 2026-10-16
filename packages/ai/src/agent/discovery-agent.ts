@@ -1,4 +1,4 @@
-import type { CatalogRepository, TenantId } from "@avelor/core";
+import type { CatalogRepository, PolicyRepository, TenantId } from "@avelor/core";
 import type { EmbeddingModel } from "../contracts/embedding";
 import type { ChatMessage, ChatModel, ToolCall } from "../contracts/model";
 import type { VectorStore } from "../contracts/vector-store";
@@ -14,6 +14,7 @@ export interface AgentExecutionResult {
 export interface DiscoveryAgentOptions {
   readonly embeddingModel?: EmbeddingModel | undefined;
   readonly vectorStore?: VectorStore | undefined;
+  readonly policyRepo?: PolicyRepository | undefined;
 }
 
 export class DiscoveryAgent {
@@ -65,6 +66,7 @@ export class DiscoveryAgent {
         const resultString = await executeToolCall(call.name, call.arguments, {
           tenantId: this.tenantId,
           catalogRepo: this.catalogRepo,
+          ...(this.options?.policyRepo ? { policyRepo: this.options.policyRepo } : {}),
           ...(this.options?.embeddingModel ? { embeddingModel: this.options.embeddingModel } : {}),
           ...(this.options?.vectorStore ? { vectorStore: this.options.vectorStore } : {}),
         });

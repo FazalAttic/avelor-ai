@@ -1,4 +1,4 @@
-import type { CatalogRepository, TenantId } from "@avelor/core";
+import type { CatalogRepository, PolicyRepository, PolicyTopic, TenantId } from "@avelor/core";
 import type { EmbeddingModel } from "../contracts/embedding";
 import type { ToolDefinition } from "../contracts/model";
 import type { VectorStore } from "../contracts/vector-store";
@@ -42,14 +42,33 @@ export const GET_PRODUCT_DETAILS_TOOL: ToolDefinition = {
   },
 };
 
+export const GET_STORE_POLICY_TOOL: ToolDefinition = {
+  name: "get_store_policy",
+  description:
+    "Retrieve authoritative store policies including return windows, refund rules, shipping costs, delivery times, and FAQs.",
+  parameters: {
+    type: "object",
+    properties: {
+      topic: {
+        type: "string",
+        enum: ["returns", "shipping", "privacy", "terms", "faq", "general"],
+        description: "The policy topic to retrieve (e.g. 'returns', 'shipping', 'faq')",
+      },
+    },
+    required: ["topic"],
+  },
+};
+
 export const CATALOG_TOOLS: readonly ToolDefinition[] = Object.freeze([
   SEARCH_PRODUCTS_TOOL,
   GET_PRODUCT_DETAILS_TOOL,
+  GET_STORE_POLICY_TOOL,
 ]);
 
 export interface ToolExecutorContext {
   readonly tenantId: TenantId;
   readonly catalogRepo: CatalogRepository;
+  readonly policyRepo?: PolicyRepository | undefined;
   readonly embeddingModel?: EmbeddingModel | undefined;
   readonly vectorStore?: VectorStore | undefined;
 }
@@ -177,6 +196,36 @@ export async function executeToolCall(
             stockQuantity: v.inventoryQuantity,
           })),
         },
+      });
+    }
+
+    case "get_store_policy": {
+      const topic =
+        typeof args.topic === "string" ? (args.topic.toLowerCase() as PolicyTopic) : "general";
+
+      if (context.policyRepo) {
+        const policy = await context.policyRepo.getPolicy(tenantId, topic);
+        if (policy) {
+          return JSON.stringify({
+            status: "success",
+            topic: policy.topic,
+            title: policy.title,
+            content: policy.content,
+            updatedAt: policy.updatedAt.toISOString(),
+          });
+        }
+      }
+
+      // Sensible standard fallback when policy is not yet explicitly written
+      return JSON.stringify({
+        status: "default",
+        topic,
+        message:
+          topic === "returns"
+            ? "Standard store policy: items in original condition may be returned or exchanged within 30 days of delivery."
+            : topic === "shipping"
+              ? "Standard store shipping: orders are processed in 1-2 business days with standard tracked delivery."
+              : "Standard store customer satisfaction policy applies.",
       });
     }
 

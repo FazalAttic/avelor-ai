@@ -42,6 +42,17 @@ export class MockChatModel implements ChatModel {
           };
         }
 
+        if (data.topic) {
+          const detail = data.content ?? data.message;
+          return {
+            message: {
+              role: "assistant",
+              content: `Regarding our ${data.topic} policy: ${detail}`,
+            },
+            finishReason: "stop",
+          };
+        }
+
         if (data.status === "success" && data.product) {
           const p = data.product;
           return {
@@ -63,8 +74,47 @@ export class MockChatModel implements ChatModel {
       }
     }
 
-    // 2. If user message requests product details
+    // 2. If user message requests store policies (Knowledge RAG)
     const content = lastMessage.content.toLowerCase();
+    if (content.includes("return") || content.includes("refund")) {
+      return {
+        message: {
+          role: "assistant",
+          content: "",
+          toolCalls: [
+            {
+              id: `call_${crypto.randomUUID().slice(0, 8)}`,
+              name: "get_store_policy",
+              arguments: { topic: "returns" },
+            },
+          ],
+        },
+        finishReason: "tool_calls",
+      };
+    }
+
+    if (
+      content.includes("shipping") ||
+      content.includes("delivery") ||
+      content.includes("ship to")
+    ) {
+      return {
+        message: {
+          role: "assistant",
+          content: "",
+          toolCalls: [
+            {
+              id: `call_${crypto.randomUUID().slice(0, 8)}`,
+              name: "get_store_policy",
+              arguments: { topic: "shipping" },
+            },
+          ],
+        },
+        finishReason: "tool_calls",
+      };
+    }
+
+    // 3. If user message requests product details
     if (content.includes("details for") || content.includes("tell me about prod_")) {
       const match = lastMessage.content.match(/prod_[a-zA-Z0-9_-]+/);
       const productId = match ? match[0] : "unknown";

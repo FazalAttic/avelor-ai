@@ -18,3 +18,6 @@ export * from "./tenant";
 
 export * from "./vector/types";
 export * from "./ai/embedding-types";
+
+export * from "./policies/types";
+export * from "./policies/in-memory-repository";
