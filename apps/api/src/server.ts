@@ -5,7 +5,7 @@ import {
 } from "@avelor/ai";
 import { createApp } from "./app";
 
-const port = Number(process.env.PORT ?? 3000);
+const port = Number(process.env.PORT ?? 5000);
 
 const chatModel = createProductionChatModel();
 const embeddingModel = createProductionEmbeddingModel();

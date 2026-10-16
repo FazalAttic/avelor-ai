@@ -107,11 +107,11 @@ infrastructure in advance.
 -   Document bottlenecks and migration paths instead of prematurely
     implementing every possible scale strategy.
 
-## AI SDK decision
+## Vercel AI SDK decision
 
 ### Recommended starting point
 
-Evaluate the **AI SDK** as the preferred integration layer for
+Evaluate the **Vercel AI SDK** as the preferred integration layer for
 LLM interaction in the TypeScript application. It can reduce
 provider-specific plumbing for supported models, streaming, and tool
 calling. It does not replace Avelor's commerce logic, search system,
@@ -148,7 +148,7 @@ Avelor AI orchestration / tool contracts
 LLM integration adapter
         |
         v
-AI SDK (initial candidate)
+Vercel AI SDK (initial candidate)
         |
         +--> supported model providers
 ```

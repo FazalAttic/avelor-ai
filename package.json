@@ -6,7 +6,10 @@
   "license": "Apache-2.0",
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "dev": "bun --filter @avelor/api dev",
+    "dev": "concurrently -n \"api,storefront\" -c \"cyan,magenta\" \"bun run dev:api\" \"bun run dev:storefront\"",
+    "dev:all": "docker compose up -d postgres && bun run dev",
+    "dev:api": "bun --filter @avelor/api dev",
+    "dev:storefront": "bun --filter storefront dev",
     "start": "bun --filter @avelor/api start",
     "docker:db": "docker compose up -d postgres",
     "docker:down": "docker compose down",
@@ -20,6 +23,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/bun": "1.4.3",
+    "concurrently": "10.0.6",
     "typescript": "^5.7.3"
   }
 }
