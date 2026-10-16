@@ -12,8 +12,7 @@ import type {
 } from "./types";
 import { validateProductInput, validateVariantInput } from "./validation";
 
-// ponytail: in-memory repository ceiling: stores items in a JS Map with O(n) filtering.
-// Acceptable for unit tests and local dev without external database.
+// In-memory store with O(n) filtering: acceptable for unit tests and local dev without a database.
 // Upgrade path: PostgreSQL CatalogRepository with indexed queries and pg_trgm full-text search.
 
 export class InMemoryCatalogRepository implements CatalogRepository {

@@ -11,8 +11,7 @@ export interface CartRepository {
   clearCart(tenantId: TenantId, cartId: string): Promise<Cart>;
 }
 
-// ponytail: in-memory cart repository ceiling: carts held in-memory with TTL-less Map.
-// Acceptable for initial development and unit tests.
+// In-memory cart store with no TTL: acceptable for local development and unit tests.
 // Upgrade path: Redis or PostgreSQL cart persistence with TTL expiration.
 
 export class InMemoryCartRepository implements CartRepository {

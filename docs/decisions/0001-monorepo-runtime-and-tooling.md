@@ -20,4 +20,4 @@ We considered:
 - Fast installs and sub-second test execution out of the box.
 - Zero ESLint/Prettier plugin conflicts or maintenance churn.
 - CI pipeline is lean and executes in seconds.
-- Adheres directly to Ponytail rules: reuse native platform capabilities, minimize external dependencies, avoid unnecessary boilerplate.
+- Aligns with the project's engineering principles: reuse native platform capabilities, minimize external dependencies, avoid unnecessary boilerplate.

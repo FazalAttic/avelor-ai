@@ -25,7 +25,7 @@ Unlike generic LLM wrappers that hallucinate prices, fake inventory, or manipula
 - **Universal AI (Bring Your Own LLM):** Plug in any model (Anthropic, OpenAI, Google, Groq, Ollama, etc.) through our neutral `ChatModel` contract or the standard open `ai` SDK adapter.
 - **Grounded Discovery:** LLMs only observe what the catalog allows. Tool outputs are deterministic, bounded, and scoped to the active tenant.
 - **Transactional Safety:** Minor-unit integer arithmetic (`Money`), zero floating-point math, multi-tenant query boundaries, and idempotent checkout lifecycles.
-- **Pragmatic Monolith:** Built with [Ponytail rules](./ponytail.md)—high internal cohesion, clear package boundaries, minimal dependencies, and no premature distributed complexity.
+- **Pragmatic Monolith:** High internal cohesion, clear package boundaries, minimal dependencies, and no premature distributed complexity.
 
 ---
 ## License

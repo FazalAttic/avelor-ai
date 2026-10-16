@@ -6,7 +6,7 @@ Accepted
 ## Context
 Avelor AI requires a flexible, provider-neutral model layer allowing merchants and developers to connect any LLM provider (OpenAI, Anthropic Claude, Google Gemini, Mistral, local models via Ollama, etc.) without rewriting discovery tools or business logic.
 
-Per the Engineering Blueprint (Section on AI SDK integration), we evaluated the standard **AI SDK** (`ai` package on npm) against the mandatory verification criteria:
+We evaluated the standard **Vercel AI SDK** (`ai` package on npm) against the following verification criteria:
 
 | Evaluation Criteria | Assessment | Status |
 | :--- | :--- | :--- |

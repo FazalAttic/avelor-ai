@@ -75,8 +75,8 @@ export class DiscoveryAgent {
 
     const toolCallsExecuted: ToolCall[] = [];
 
-    // ponytail: execution loop ceiling: max 3 iterations to prevent infinite tool loops
-    // and bounded token consumption. Upgrade path: configurable per tenant with timeout budget.
+    // Bounded loop: max 3 iterations to prevent infinite tool loops and runaway token
+    // consumption. Upgrade path: configurable per tenant with a timeout budget.
     const MAX_STEPS = 3;
 
     for (let step = 0; step < MAX_STEPS; step++) {

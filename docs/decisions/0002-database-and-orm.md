@@ -5,7 +5,7 @@ Accepted
 
 ## Context
 Avelor AI requires a relational persistence layer for commerce state: products, categories, flexible attributes, variants, and inventory.
-Per the Engineering Blueprint:
+Per the project's architectural principles:
 1. Prices must be stored as integer minor units (never floating-point).
 2. Tenant isolation must be enforced on every query.
 3. We must choose one primary ORM/query approach for the first release and avoid maintaining competing abstractions.

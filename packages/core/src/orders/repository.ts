@@ -27,8 +27,7 @@ export interface OrderRepository {
   ): Promise<Order>;
 }
 
-// ponytail: in-memory order repository ceiling: stored in JS Map.
-// Acceptable for initial development and unit tests.
+// In-memory order store: acceptable for local development and unit tests.
 // Upgrade path: PostgreSQL OrderRepository with ACID transactions and row-level locks.
 
 export class InMemoryOrderRepository implements OrderRepository {

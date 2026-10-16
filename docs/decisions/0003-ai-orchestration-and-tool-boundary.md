@@ -8,7 +8,7 @@ Avelor AI enables intelligent product discovery powered by Large Language Models
 However, LLMs are non-deterministic and prone to hallucinating product attributes, discounts, stock availability, and prices.
 Furthermore, letting an LLM access the database directly or infer tenant identity from customer conversation creates catastrophic security and data-leak risks.
 
-Per the Engineering Blueprint:
+Per the project's architectural principles:
 1. LLM provider SDKs must remain strictly decoupled from commerce business rules.
 2. Tenant identity must be derived exclusively from trusted server authentication/headers, never from LLM arguments.
 3. The LLM may only invoke allowlisted tools (`search_products`, `get_product_details`).

@@ -10,9 +10,9 @@ import {
   type PaymentWebhookEventType,
 } from "./types";
 
-// ponytail: mock payment provider ceiling: in-memory sessions + HMAC-SHA256 signature verification.
-// Perfect for local dev, offline tests, and CI without external network calls or credit cards.
-// Upgrade path: Stripe / LemonSqueezy adapter implementing the exact same PaymentProvider interface.
+// In-memory sessions with HMAC-SHA256 signature verification, so local dev,
+// offline tests, and CI run without external network calls or credit cards.
+// Upgrade path: Stripe / LemonSqueezy adapter implementing the same PaymentProvider interface.
 
 export class MockPaymentProvider implements PaymentProvider {
   readonly name = "mock-pay";

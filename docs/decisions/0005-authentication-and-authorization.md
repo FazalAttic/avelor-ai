@@ -5,7 +5,7 @@ Accepted
 
 ## Context
 Avelor AI requires an enterprise-grade authentication and authorization mechanism to separate store administrative operations from public customer shopping.
-Per the Engineering Blueprint and Ponytail rules:
+Per the project's security principles:
 1. **Server-Authoritative Security:** Sensitive actions (product creation, inventory changes, price modifications, analytics) must be authorized on the server. Never trust client-side state.
 2. **Simplified Single-Store Role Hierarchy:** To avoid premature complexity (YAGNI) and marketplace confusion, the system distinguishes between exactly two roles:
    - **`admin`:** Store owner/operator. Manages catalog, inventory, settings, orders, and sales analytics.

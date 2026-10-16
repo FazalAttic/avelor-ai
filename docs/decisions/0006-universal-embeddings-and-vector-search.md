@@ -6,7 +6,7 @@ Accepted
 ## Context
 Conversational e-commerce discovery frequently encounters the "vocabulary mismatch" problem: customers search using moods, scenarios, or problems (e.g. *"waterproof gear for a rainy trek"* or *"cozy winter tea"*), while store catalogs use technical brand or product names (e.g. *"Alpine Gore-Tex Technical Shell"*). Standard SQL keyword search (`ILIKE` or full-text indexes) yields zero results in such cases.
 
-Per the Engineering Blueprint:
+Per the project's architectural principles:
 1. **Vendor Neutrality:** Do not hardcode a specific embedding vendor (OpenAI, Cohere, Ollama) or vector database (Pinecone, Qdrant).
 2. **Reuse Before Rebuilding (Zero Added Infrastructure by Default):** Since Avelor already runs on PostgreSQL, semantic vector storage must run natively via `pgvector` out of the box without requiring external paid SaaS subscriptions.
 3. **Hybrid Search Fusion:** Combine structured SQL filters (category, active status, in-stock count, price range) with semantic cosine distance, guaranteeing the LLM never hallucinates or recommends out-of-stock items.

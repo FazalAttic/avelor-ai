@@ -2,9 +2,7 @@
 
 Thank you for your interest in contributing to Avelor AI!
 
-## Engineering Standard: Ponytail Mode
-
-All contributors and AI coding assistants must adhere to the **Ponytail rules** documented in [`ponytail.md`](./ponytail.md) and the [`avelor-ai-engineering-blueprint.md`](./avelor-ai-engineering-blueprint.md).
+## Engineering Standards
 
 Core tenets:
 1. **Inspect before editing:** Read relevant files and trace real flow end-to-end first.
