@@ -9,6 +9,8 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@avelor/core": "workspace:*"
+    "@avelor/core": "workspace:*",
+    "ai": "^4.1.0",
+    "zod": "^3.23.8"
   }
 }
