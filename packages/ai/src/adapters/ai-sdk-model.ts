@@ -102,7 +102,7 @@ export class AiSdkChatModel implements ChatModel {
       for (const t of input.tools) {
         sdkTools[t.name] = tool({
           description: t.description,
-          parameters: z.record(z.unknown()),
+          parameters: z.record(z.string(), z.unknown()),
           execute: async (args: Record<string, unknown>) => args,
         });
       }

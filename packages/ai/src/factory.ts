@@ -29,14 +29,17 @@ export function createProductionChatModel(config: AiEnvironmentConfig = {}): Cha
   const googleKey =
     config.googleApiKey ?? process.env.GOOGLE_GENERATIVE_AI_API_KEY ?? process.env.GEMINI_API_KEY;
 
+  // Prioritize Google Gemini for conversational chat if Google API key is configured
+  if (googleKey) {
+    const google = createGoogleGenerativeAI({ apiKey: googleKey });
+    const modelName = process.env.GEMINI_MODEL ?? "gemini-flash-latest";
+    return new AiSdkChatModel(google(modelName) as never);
+  }
+
+  // Fall back to OpenAI if only OpenAI API key is configured
   if (openaiKey) {
     const openai = createOpenAI({ apiKey: openaiKey });
     return new AiSdkChatModel(openai("gpt-4o-mini") as never);
-  }
-
-  if (googleKey) {
-    const google = createGoogleGenerativeAI({ apiKey: googleKey });
-    return new AiSdkChatModel(google("gemini-1.5-flash") as never);
   }
 
   return new MockChatModel();

@@ -14,6 +14,39 @@ export interface JevGuardrailOptions {
  * Type-first AI Guardrail Adapter using TypeSafe AI's Jev "System One" decision model.
  * Provides ultra-fast, calibrated classification directly into TypeScript types without generative hallucination.
  */
+function createCloneSafeFetch(): (
+  input: Parameters<typeof fetch>[0],
+  init?: Parameters<typeof fetch>[1]
+) => Promise<Response> {
+  return async (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
+    const rawRes = await fetch(input, init);
+    const text = await rawRes.text();
+    return {
+      ok: rawRes.ok,
+      status: rawRes.status,
+      statusText: rawRes.statusText,
+      headers: rawRes.headers,
+      clone() {
+        return new Response(text, {
+          status: rawRes.status,
+          statusText: rawRes.statusText,
+          headers: rawRes.headers,
+        });
+      },
+      text: async () => text,
+      json: async () => JSON.parse(text),
+      get body() {
+        return new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode(text));
+            controller.close();
+          },
+        });
+      },
+    } as unknown as Response;
+  };
+}
+
 export class JevGuardrail implements GuardrailEngine {
   private readonly client: TypeSafeClient | null;
 
@@ -22,7 +55,12 @@ export class JevGuardrail implements GuardrailEngine {
       this.client = options.client;
     } else {
       const apiKey = options.apiKey ?? process.env.TYPESAFE_API_KEY;
-      this.client = apiKey ? new TypeSafeClient({ apiKey }) : null;
+      this.client = apiKey
+        ? new TypeSafeClient({
+            apiKey,
+            fetch: createCloneSafeFetch(),
+          })
+        : null;
     }
   }
 
