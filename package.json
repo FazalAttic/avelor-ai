@@ -1,0 +1,20 @@
+{
+  "name": "avelor-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Provider-neutral, open-source commerce platform with AI-powered discovery",
+  "license": "Apache-2.0",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc -b",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "check": "bun run typecheck && bun run lint"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/bun": "1.4.3",
+    "typescript": "^5.7.3"
+  }
+}

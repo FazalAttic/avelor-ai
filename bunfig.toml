@@ -1,0 +1,7 @@
+# Bun configuration for Avelor AI
+[install]
+exact = true
+
+[test]
+root = "."
+coverage = false
