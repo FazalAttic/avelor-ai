@@ -80,7 +80,7 @@ export function Sidebar({ open, recentChats = DEFAULT_RECENT_CHATS }: SidebarPro
         title="Sign in"
         className="flex shrink-0 items-center gap-3 rounded-xl p-2 transition-colors duration-150 ease-expo hover:bg-surface-hover"
       >
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[image:var(--gradient-brand)] text-xs font-semibold text-white">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background">
           G
         </span>
         <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">Sign in</span>

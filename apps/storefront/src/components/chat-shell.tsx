@@ -33,10 +33,12 @@ export function ChatShell({ children }: { children: ReactNode }) {
         <Link
           href="/"
           title="Avelor"
-          className="flex h-10 items-center gap-2 rounded-full border border-white/50 bg-white/40 px-3.5 shadow-card backdrop-blur-xl dark:border-white/10 dark:bg-white/10"
+          className="flex h-10 items-center gap-2 rounded-full border border-white/50 bg-white/40 px-3 shadow-card backdrop-blur-xl sm:px-3.5 dark:border-white/10 dark:bg-white/10"
         >
           <Image src="/avelor-logo.png" alt="" width={24} height={24} priority />
-          <span className="text-sm font-semibold tracking-tight text-foreground">Avelor</span>
+          <span className="hidden text-sm font-semibold tracking-tight text-foreground min-[420px]:inline">
+            Avelor
+          </span>
         </Link>
         <IconButton
           label="Open sidebar"
@@ -57,7 +59,7 @@ export function ChatShell({ children }: { children: ReactNode }) {
             <HugeiconsIcon icon={FavouriteIcon} size={20} strokeWidth={1.8} />
           </IconLink>
           <IconLink label="Sign in" href="/sign-in" className="ml-0.5 size-8">
-            <span className="flex size-full items-center justify-center rounded-full bg-[image:var(--gradient-brand)] text-xs font-semibold text-white">
+            <span className="flex size-full items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background">
               G
             </span>
           </IconLink>

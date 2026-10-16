@@ -27,20 +27,16 @@
   --ring: rgba(32, 56, 248, 0.45);
 
   /* Signature gradient — the logo's flow */
-  --gradient-brand: linear-gradient(
-    135deg,
-    var(--brand-violet) 0%,
-    var(--brand-blue) 52%,
-    var(--brand-cyan) 100%
-  );
+  --gradient-brand: linear-gradient(135deg,
+      var(--brand-violet) 0%,
+      var(--brand-blue) 52%,
+      var(--brand-cyan) 100%);
 
   /* Canvas glow — tight brand aura under the hero content, Gemini-style */
-  --glow-canvas: radial-gradient(
-    65% 42% at 50% 56%,
-    rgba(32, 56, 248, 0.15) 0%,
-    rgba(96, 32, 248, 0.07) 45%,
-    transparent 70%
-  );
+  --glow-canvas: radial-gradient(65% 42% at 50% 56%,
+      rgba(32, 56, 248, 0.15) 0%,
+      rgba(96, 32, 248, 0.07) 45%,
+      transparent 70%);
 
   /* Elevation */
   --shadow-card: 0 1px 2px rgba(23, 23, 30, 0.04), 0 4px 16px rgba(23, 23, 30, 0.06);
@@ -96,12 +92,10 @@ body {
   --brand-wash: #1b2145;
   --ring: rgba(120, 140, 255, 0.55);
 
-  --glow-canvas: radial-gradient(
-    65% 42% at 50% 56%,
-    rgba(72, 96, 255, 0.22) 0%,
-    rgba(96, 32, 248, 0.12) 45%,
-    transparent 70%
-  );
+  --glow-canvas: radial-gradient(65% 42% at 50% 56%,
+      rgba(72, 96, 255, 0.22) 0%,
+      rgba(96, 32, 248, 0.12) 45%,
+      transparent 70%);
 
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.4);
   --shadow-pop: 0 4px 12px rgba(0, 0, 0, 0.45), 0 16px 48px rgba(0, 0, 0, 0.55);
@@ -150,7 +144,7 @@ body {
   opacity: 0;
 }
 
-/* Parallax echo — the same texture mirrored, drifting against the base layer */
+/* Parallax echo — a second cloud texture, drifting against the base layer */
 .sky-echo {
   inset: -6%;
   opacity: 0;
@@ -158,12 +152,12 @@ body {
 }
 
 .sky-day-echo {
-  background-image: url("/sky/sky-day.png");
+  background-image: url("/sky/sky-day-2.png");
   opacity: 0.45;
 }
 
 .sky-night-echo {
-  background-image: url("/sky/sky-night.png");
+  background-image: url("/sky/sky-night-2.png");
 }
 
 .dark .sky-day-echo {
@@ -178,6 +172,7 @@ body {
   from {
     transform: scale(1.02) translateX(0);
   }
+
   to {
     transform: scale(1.07) translateX(-1.5%);
   }
@@ -185,10 +180,11 @@ body {
 
 @keyframes sky-drift-reverse {
   from {
-    transform: scaleX(-1) scale(1.07) translateX(0);
+    transform: scale(1.07) translateX(0);
   }
+
   to {
-    transform: scaleX(-1) scale(1.02) translateX(-1.6%);
+    transform: scale(1.02) translateX(1.6%);
   }
 }
 
@@ -197,10 +193,12 @@ body {
  * hover, blur out of the way while typing
  * ------------------------------------------------------------------------- */
 @keyframes float-soft {
+
   0%,
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-8px);
   }
@@ -210,6 +208,7 @@ body {
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(-50%);
   }
@@ -219,17 +218,21 @@ body {
   .float-soft {
     animation: float-soft 7s ease-in-out infinite;
   }
+
   .marquee-track {
     /* -50% of an 8-copy track = 4 copies per cycle; 192s keeps the drift at
        the same gentle speed as the original 48s / 2-copy version */
     animation: marquee-drift 192s linear infinite;
   }
+
   .marquee:hover .marquee-track {
     animation-play-state: paused;
   }
+
   .sky {
     animation: sky-drift 90s ease-in-out infinite alternate;
   }
+
   .sky-echo {
     animation: sky-drift-reverse 64s ease-in-out infinite alternate;
   }
