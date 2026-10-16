@@ -1,0 +1,41 @@
+services:
+  # PostgreSQL 16 with pgvector extension pre-installed
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: avelor-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    environment:
+      POSTGRES_DB: avelor_dev
+      POSTGRES_USER: avelor
+      POSTGRES_PASSWORD: avelor
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U avelor -d avelor_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Avelor API Application (optional: run whole project in Docker)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: avelor-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://avelor:avelor@postgres:5432/avelor_dev
+      PORT: 3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
