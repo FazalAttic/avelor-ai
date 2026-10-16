@@ -1,5 +1,14 @@
 import { describe, expect, it } from "bun:test";
-import { orderItems, orders, productVariants, products } from "../src/index";
+import {
+  accounts,
+  orderItems,
+  orders,
+  productVariants,
+  products,
+  sessions,
+  users,
+  verifications,
+} from "../src/index";
 
 describe("Database schema definitions", () => {
   it("defines products table with required columns", () => {
@@ -30,5 +39,20 @@ describe("Database schema definitions", () => {
 
     expect(orderItems.orderId.name).toBe("order_id");
     expect(orderItems.unitPriceAmount.name).toBe("unit_price_amount");
+  });
+
+  it("defines Better Auth tables with merchant/customer roles and tenant scoping", () => {
+    expect(users.id.name).toBe("id");
+    expect(users.email.name).toBe("email");
+    expect(users.role.name).toBe("role");
+    expect(users.tenantId.name).toBe("tenant_id");
+
+    expect(sessions.token.name).toBe("token");
+    expect(sessions.userId.name).toBe("user_id");
+
+    expect(accounts.userId.name).toBe("user_id");
+    expect(accounts.providerId.name).toBe("provider_id");
+
+    expect(verifications.identifier.name).toBe("identifier");
   });
 });

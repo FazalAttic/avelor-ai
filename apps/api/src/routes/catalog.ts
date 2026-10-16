@@ -6,6 +6,7 @@ import {
 } from "@avelor/core";
 import { Hono } from "hono";
 import type { AppEnv } from "../app";
+import type { createAuthMiddleware } from "../middleware/auth";
 import { requireTenant } from "../middleware/tenant";
 
 interface CreateProductPayload {
@@ -32,11 +33,22 @@ interface UpdateInventoryPayload {
   delta: number;
 }
 
-export function createCatalogRoutes(repo: CatalogRepository) {
+export function createCatalogRoutes(
+  repo: CatalogRepository,
+  authMiddleware?: ReturnType<typeof createAuthMiddleware> | undefined
+) {
   const router = new Hono<AppEnv>();
 
   // All catalog routes require verified tenant scoping
   router.use("*", requireTenant);
+
+  // If merchant auth middleware is configured, protect all mutation methods
+  if (authMiddleware) {
+    router.post("*", authMiddleware.requireAuth, authMiddleware.requireRole("merchant"));
+    router.put("*", authMiddleware.requireAuth, authMiddleware.requireRole("merchant"));
+    router.delete("*", authMiddleware.requireAuth, authMiddleware.requireRole("merchant"));
+    router.patch("*", authMiddleware.requireAuth, authMiddleware.requireRole("merchant"));
+  }
 
   // List products with filtering
   router.get("/", async (c) => {
@@ -121,7 +133,7 @@ export function createCatalogRoutes(repo: CatalogRepository) {
   // Create variant for product
   router.post("/:id/variants", async (c) => {
     const tenantId = c.get("tenantId");
-    const productId = c.req.param("id");
+    const productId = c.req.param("id") ?? "";
 
     let body: CreateVariantPayload;
     try {
@@ -166,7 +178,7 @@ export function createCatalogRoutes(repo: CatalogRepository) {
   // Update inventory
   router.patch("/variants/:variantId/inventory", async (c) => {
     const tenantId = c.get("tenantId");
-    const variantId = c.req.param("variantId");
+    const variantId = c.req.param("variantId") ?? "";
 
     let body: UpdateInventoryPayload;
     try {

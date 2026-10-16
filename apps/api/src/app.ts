@@ -11,9 +11,12 @@ import {
   type TenantId,
 } from "@avelor/core";
 import { Hono } from "hono";
+import { type AuthInstance, type AuthSession, type AuthUser, createAuth } from "./auth";
+import { createAuthMiddleware } from "./middleware/auth";
 import { createCartRoutes } from "./routes/cart";
 import { createCatalogRoutes } from "./routes/catalog";
 import { createChatRoutes } from "./routes/chat";
+import { createMerchantRoutes } from "./routes/merchant";
 import { createOrderRoutes } from "./routes/orders";
 import { createPaymentRoutes } from "./routes/payments";
 
@@ -21,6 +24,8 @@ export type AppEnv = {
   Variables: {
     requestId: string;
     tenantId: TenantId;
+    user?: AuthUser | undefined;
+    session?: AuthSession | undefined;
   };
 };
 
@@ -31,6 +36,8 @@ export interface AppOptions {
   readonly paymentProvider?: PaymentProvider | undefined;
   readonly webhookSecret?: string | undefined;
   readonly chatModel?: ChatModel | undefined;
+  readonly auth?: AuthInstance | undefined;
+  readonly enforceMerchantAuth?: boolean | undefined;
 }
 
 export function createApp(options: AppOptions = {}) {
@@ -41,12 +48,20 @@ export function createApp(options: AppOptions = {}) {
   const paymentProvider = options.paymentProvider ?? new MockPaymentProvider();
   const chatModel = options.chatModel ?? new MockChatModel();
 
+  const auth = options.auth ?? createAuth();
+  const authMiddleware = createAuthMiddleware(auth);
+
   // Request ID middleware
   app.use("*", async (c, next) => {
     const requestId = c.req.header("x-request-id") ?? crypto.randomUUID();
     c.set("requestId", requestId);
     c.header("x-request-id", requestId);
     await next();
+  });
+
+  // Better Auth handler for /api/auth/*
+  app.on(["POST", "GET"], "/api/auth/**", (c) => {
+    return auth.handler(c.req.raw);
   });
 
   // Health check endpoint
@@ -58,8 +73,21 @@ export function createApp(options: AppOptions = {}) {
     });
   });
 
-  // Mount catalog routes
-  app.route("/api/v1/products", createCatalogRoutes(catalogRepo));
+  // Mount catalog routes (with optional merchant auth enforcement)
+  app.route(
+    "/api/v1/products",
+    createCatalogRoutes(catalogRepo, options.enforceMerchantAuth ? authMiddleware : undefined)
+  );
+
+  // Mount merchant dashboard and management routes (strictly locked to merchant role)
+  app.route(
+    "/api/v1/merchant",
+    createMerchantRoutes({
+      orderRepo,
+      catalogRepo,
+      authMiddleware,
+    })
+  );
 
   // Mount cart routes
   app.route("/api/v1/carts", createCartRoutes(cartRepo, catalogRepo));
