@@ -5,5 +5,9 @@
     "noEmit": true
   },
   "include": [],
-  "references": [{ "path": "./packages/core" }, { "path": "./apps/api" }]
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/database" },
+    { "path": "./apps/api" }
+  ]
 }

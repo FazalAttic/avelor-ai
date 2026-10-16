@@ -37,7 +37,7 @@ Application Use Cases & Domain Rules (Packages: core, contracts)
 ## Implementation Status
 
 - [x] **Phase 0: Project Foundation** (Bun monorepo, strict TypeScript, Biome, CI, Ponytail standards)
-- [ ] **Phase 1: Commerce Foundation** (Store/tenant models, catalog, variants, PostgreSQL schema)
+- [x] **Phase 1: Commerce Foundation** (Store/tenant isolation, catalog, variants, inventory, PostgreSQL Drizzle schema, HTTP catalog API)
 - [ ] **Phase 2: AI Discovery** (Grounded search tools, provider adapter, detail exploration)
 - [ ] **Phase 3: Transactions** (Cart management, checkout calculation, payment webhooks)
 - [ ] **Phase 4: Extensibility** (Hybrid search, vector store adapters, background jobs)

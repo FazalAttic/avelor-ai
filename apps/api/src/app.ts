@@ -1,13 +1,21 @@
+import { type CatalogRepository, InMemoryCatalogRepository, type TenantId } from "@avelor/core";
 import { Hono } from "hono";
+import { createCatalogRoutes } from "./routes/catalog";
 
 export type AppEnv = {
   Variables: {
     requestId: string;
+    tenantId: TenantId;
   };
 };
 
-export function createApp() {
+export interface AppOptions {
+  readonly catalogRepo?: CatalogRepository | undefined;
+}
+
+export function createApp(options: AppOptions = {}) {
   const app = new Hono<AppEnv>();
+  const catalogRepo = options.catalogRepo ?? new InMemoryCatalogRepository();
 
   // Request ID middleware
   app.use("*", async (c, next) => {
@@ -26,6 +34,9 @@ export function createApp() {
     });
   });
 
+  // Mount catalog routes
+  app.route("/api/v1/products", createCatalogRoutes(catalogRepo));
+
   // Structured not-found handler
   app.notFound((c) => {
     return c.json(
@@ -41,7 +52,6 @@ export function createApp() {
 
   // Global structured error handler
   app.onError((err, c) => {
-    // Redact internal error traces from production responses
     const isDev = process.env.NODE_ENV !== "production";
     return c.json(
       {
