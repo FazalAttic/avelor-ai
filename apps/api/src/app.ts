@@ -1,8 +1,18 @@
 import { type ChatModel, MockChatModel } from "@avelor/ai";
-import { type CatalogRepository, InMemoryCatalogRepository, type TenantId } from "@avelor/core";
+import {
+  type CartRepository,
+  type CatalogRepository,
+  InMemoryCartRepository,
+  InMemoryCatalogRepository,
+  InMemoryOrderRepository,
+  type OrderRepository,
+  type TenantId,
+} from "@avelor/core";
 import { Hono } from "hono";
+import { createCartRoutes } from "./routes/cart";
 import { createCatalogRoutes } from "./routes/catalog";
 import { createChatRoutes } from "./routes/chat";
+import { createOrderRoutes } from "./routes/orders";
 
 export type AppEnv = {
   Variables: {
@@ -13,12 +23,16 @@ export type AppEnv = {
 
 export interface AppOptions {
   readonly catalogRepo?: CatalogRepository | undefined;
+  readonly cartRepo?: CartRepository | undefined;
+  readonly orderRepo?: OrderRepository | undefined;
   readonly chatModel?: ChatModel | undefined;
 }
 
 export function createApp(options: AppOptions = {}) {
   const app = new Hono<AppEnv>();
   const catalogRepo = options.catalogRepo ?? new InMemoryCatalogRepository();
+  const cartRepo = options.cartRepo ?? new InMemoryCartRepository();
+  const orderRepo = options.orderRepo ?? new InMemoryOrderRepository();
   const chatModel = options.chatModel ?? new MockChatModel();
 
   // Request ID middleware
@@ -40,6 +54,12 @@ export function createApp(options: AppOptions = {}) {
 
   // Mount catalog routes
   app.route("/api/v1/products", createCatalogRoutes(catalogRepo));
+
+  // Mount cart routes
+  app.route("/api/v1/carts", createCartRoutes(cartRepo, catalogRepo));
+
+  // Mount order & checkout routes
+  app.route("/api/v1/orders", createOrderRoutes(orderRepo, cartRepo, catalogRepo));
 
   // Mount AI chat discovery routes
   app.route("/api/v1/chat", createChatRoutes(chatModel, catalogRepo));
