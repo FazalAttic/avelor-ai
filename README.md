@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./avelor-ai-banner.png" alt="Avelor AI Banner" width="100%" />
+  <img src="./assets/avelor-ai-banner.png" alt="Avelor AI Banner" width="100%" />
 </p>
 
 <p align="center">
