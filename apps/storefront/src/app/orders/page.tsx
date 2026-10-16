@@ -61,51 +61,58 @@ export default function OrdersPage() {
           <PageHeader title="Orders" sub={`${ORDERS.length} orders`} />
           <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-1 pb-1">
             {ORDERS.map((order) => (
-            <article
-              key={order.id}
-              className="rounded-3xl border border-border bg-surface p-4 shadow-card sm:p-5"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-foreground">{order.id}</p>
-                  <p className="pt-0.5 text-xs text-subtle">
-                    {order.date} · {order.items.length} {order.items.length === 1 ? "item" : "items"}
-                  </p>
-                </div>
-                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand-wash px-2.5 py-1 text-xs font-medium text-foreground">
-                  <span
-                    aria-hidden
-                    className={cn("size-1.5 rounded-full", STATUS_DOT[order.status] ?? "bg-border-strong")}
-                  />
-                  {order.status}
-                </span>
-              </div>
-              <div className="mt-4 flex flex-col gap-3">
-                {order.items.map((item) => (
-                  <div key={item.name} className="flex items-center gap-3">
-                    <ProductThumb src={item.image} alt={item.name} className="size-12 rounded-xl" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">{item.name}</p>
-                      {item.qty > 1 && <p className="text-xs text-subtle">Qty {item.qty}</p>}
-                    </div>
-                    <p className="text-sm text-muted">{item.price}</p>
+              <article
+                key={order.id}
+                className="rounded-3xl border border-border bg-surface p-4 shadow-card sm:p-5"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-foreground">{order.id}</p>
+                    <p className="pt-0.5 text-xs text-subtle">
+                      {order.date} · {order.items.length}{" "}
+                      {order.items.length === 1 ? "item" : "items"}
+                    </p>
                   </div>
-                ))}
-              </div>
-              <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
-                <p className="text-sm text-subtle">
-                  Total{" "}
-                  <span className="ml-1 font-semibold text-foreground">{order.total}</span>
-                </p>
-                <button
-                  type="button"
-                  className="text-sm font-semibold text-foreground transition-opacity duration-150 ease-expo hover:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
-                >
-                  View details
-                </button>
-              </div>
-            </article>
-          ))}
+                  <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand-wash px-2.5 py-1 text-xs font-medium text-foreground">
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "size-1.5 rounded-full",
+                        STATUS_DOT[order.status] ?? "bg-border-strong"
+                      )}
+                    />
+                    {order.status}
+                  </span>
+                </div>
+                <div className="mt-4 flex flex-col gap-3">
+                  {order.items.map((item) => (
+                    <div key={item.name} className="flex items-center gap-3">
+                      <ProductThumb
+                        src={item.image}
+                        alt={item.name}
+                        className="size-12 rounded-xl"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">{item.name}</p>
+                        {item.qty > 1 && <p className="text-xs text-subtle">Qty {item.qty}</p>}
+                      </div>
+                      <p className="text-sm text-muted">{item.price}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+                  <p className="text-sm text-subtle">
+                    Total <span className="ml-1 font-semibold text-foreground">{order.total}</span>
+                  </p>
+                  <button
+                    type="button"
+                    className="text-sm font-semibold text-foreground transition-opacity duration-150 ease-expo hover:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+                  >
+                    View details
+                  </button>
+                </div>
+              </article>
+            ))}
           </div>
         </section>
       </div>

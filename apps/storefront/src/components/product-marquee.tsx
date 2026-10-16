@@ -10,11 +10,36 @@ export type MarqueeProduct = {
 };
 
 const DEFAULT_PRODUCTS: MarqueeProduct[] = [
-  { name: "Volt Runner", price: "$129", image: "/products/volt-runner.png", href: "/product/volt-runner" },
-  { name: "Pulse Buds", price: "$79", image: "/products/pulse-buds.png", href: "/product/pulse-buds" },
-  { name: "Aura Watch", price: "$199", image: "/products/aura-watch.png", href: "/product/aura-watch" },
-  { name: "Drift Hoodie", price: "$89", image: "/products/drift-hoodie.png", href: "/product/drift-hoodie" },
-  { name: "Trail Pack", price: "$59", image: "/products/trail-pack.png", href: "/product/trail-pack" },
+  {
+    name: "Volt Runner",
+    price: "$129",
+    image: "/products/volt-runner.png",
+    href: "/product/volt-runner",
+  },
+  {
+    name: "Pulse Buds",
+    price: "$79",
+    image: "/products/pulse-buds.png",
+    href: "/product/pulse-buds",
+  },
+  {
+    name: "Aura Watch",
+    price: "$199",
+    image: "/products/aura-watch.png",
+    href: "/product/aura-watch",
+  },
+  {
+    name: "Drift Hoodie",
+    price: "$89",
+    image: "/products/drift-hoodie.png",
+    href: "/product/drift-hoodie",
+  },
+  {
+    name: "Trail Pack",
+    price: "$59",
+    image: "/products/trail-pack.png",
+    href: "/product/trail-pack",
+  },
   { name: "Arc Cap", price: "$29", image: "/products/arc-cap.png", href: "/product/arc-cap" },
 ];
 
@@ -33,10 +58,7 @@ export type ProductMarqueeProps = {
   className?: string;
 };
 
-export function ProductMarquee({
-  products = DEFAULT_PRODUCTS,
-  className,
-}: ProductMarqueeProps) {
+export function ProductMarquee({ products = DEFAULT_PRODUCTS, className }: ProductMarqueeProps) {
   // The track must stay wider than viewport + one copy, or the screen drains
   // empty near the end of each cycle. 8 copies covers 4K widths; the drift
   // duration in globals.css is scaled to match (speed = copies-per-cycle).
@@ -48,7 +70,7 @@ export function ProductMarquee({
       className={cn(
         "marquee pointer-events-none absolute inset-x-0 top-16 z-10 overflow-hidden",
         "[mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]",
-        className,
+        className
       )}
     >
       <div className="marquee-track flex w-max items-center gap-8 py-5 pr-8 md:gap-12 md:py-7 md:pr-12">

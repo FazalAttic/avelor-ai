@@ -19,7 +19,7 @@ export function SideNavItem({ href, label, icon, active = false }: SideNavItemPr
         "flex h-10 shrink-0 items-center gap-3 rounded-xl px-2.5 text-sm font-medium transition-colors duration-150 ease-expo",
         active
           ? "bg-brand-wash text-brand-blue"
-          : "text-muted hover:bg-surface-hover hover:text-foreground",
+          : "text-muted hover:bg-surface-hover hover:text-foreground"
       )}
     >
       <HugeiconsIcon icon={icon} size={20} strokeWidth={1.8} className="shrink-0" />

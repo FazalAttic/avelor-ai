@@ -56,7 +56,10 @@ export default function Home() {
         <span className="whitespace-nowrap">Free 30-day returns</span>
         <span aria-hidden className="size-1 rounded-full bg-border-strong" />
         <span className="hidden whitespace-nowrap min-[420px]:block">Free shipping over $75</span>
-        <span aria-hidden className="hidden size-1 rounded-full bg-border-strong min-[420px]:block" />
+        <span
+          aria-hidden
+          className="hidden size-1 rounded-full bg-border-strong min-[420px]:block"
+        />
         <span className="whitespace-nowrap">Secure checkout</span>
       </div>
     </ChatShell>

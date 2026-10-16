@@ -1,7 +1,7 @@
 "use client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
 import { FavouriteIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import { ChatShell } from "@/components/chat-shell";
 import { IconButton } from "@/components/icon-button";
@@ -58,29 +58,29 @@ export default function FavouritesPage() {
           ) : (
             <ul className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-1 pb-1">
               {items.map((item) => (
-              <li
-                key={item.id}
-                className="flex items-center gap-3 rounded-3xl border border-border bg-surface p-3 shadow-card sm:gap-4 sm:p-4"
-              >
-                <ProductThumb src={item.image} alt={item.name} className="size-14 sm:size-16" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">{item.name}</p>
-                  <p className="pt-0.5 text-xs text-subtle">{item.category}</p>
-                </div>
-                <p className="text-sm font-semibold text-foreground">{item.price}</p>
-                <IconButton
-                  label={`Remove ${item.name} from favourites`}
-                  onClick={() => setItems((current) => current.filter((i) => i.id !== item.id))}
+                <li
+                  key={item.id}
+                  className="flex items-center gap-3 rounded-3xl border border-border bg-surface p-3 shadow-card sm:gap-4 sm:p-4"
                 >
-                  <HugeiconsIcon icon={FavouriteIcon} size={20} strokeWidth={1.8} />
-                </IconButton>
-                <button
-                  type="button"
-                  className="shrink-0 rounded-full bg-foreground px-3.5 py-1.5 text-xs font-semibold text-background transition-opacity duration-150 ease-expo hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue sm:px-4 sm:text-[13px]"
-                >
-                  Add <span className="hidden sm:inline">to cart</span>
-                </button>
-              </li>
+                  <ProductThumb src={item.image} alt={item.name} className="size-14 sm:size-16" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{item.name}</p>
+                    <p className="pt-0.5 text-xs text-subtle">{item.category}</p>
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">{item.price}</p>
+                  <IconButton
+                    label={`Remove ${item.name} from favourites`}
+                    onClick={() => setItems((current) => current.filter((i) => i.id !== item.id))}
+                  >
+                    <HugeiconsIcon icon={FavouriteIcon} size={20} strokeWidth={1.8} />
+                  </IconButton>
+                  <button
+                    type="button"
+                    className="shrink-0 rounded-full bg-foreground px-3.5 py-1.5 text-xs font-semibold text-background transition-opacity duration-150 ease-expo hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue sm:px-4 sm:text-[13px]"
+                  >
+                    Add <span className="hidden sm:inline">to cart</span>
+                  </button>
+                </li>
               ))}
             </ul>
           )}

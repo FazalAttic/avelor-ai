@@ -1,5 +1,5 @@
-import { Plus_Jakarta_Sans } from "next/font/google";
 import type { Metadata } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -18,6 +18,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={jakarta.variable} suppressHydrationWarning>
       <body>
         <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: inline no-flash theme init
           dangerouslySetInnerHTML={{
             __html:
               "(function(){try{var t=localStorage.getItem('avelor-theme');var d=t?t==='night':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark')}catch(e){}})()",

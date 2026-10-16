@@ -1,7 +1,7 @@
 "use client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
 import { Moon02Icon, Sun03Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useState } from "react";
 import { IconButton } from "@/components/icon-button";
 import { cn } from "@/lib/utils";
@@ -31,7 +31,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       className={cn(
         "size-10 border border-white/50 bg-white/40 shadow-card backdrop-blur-xl hover:bg-white/60",
         "dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15",
-        className,
+        className
       )}
     >
       <HugeiconsIcon icon={Sun03Icon} size={20} strokeWidth={1.8} className="hidden dark:block" />

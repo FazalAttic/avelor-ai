@@ -89,7 +89,7 @@ export function createAuth(options: CreateAuthOptions = {}) {
     options.secret ??
     process.env.BETTER_AUTH_SECRET ??
     "avelor_dev_secret_auth_32_chars_random_string_xyz";
-  const baseURL = options.baseURL ?? process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+  const baseURL = options.baseURL ?? process.env.BETTER_AUTH_URL ?? "http://localhost:5000";
 
   let dbConfig: unknown;
   if (options.database) {
@@ -107,9 +107,17 @@ export function createAuth(options: CreateAuthOptions = {}) {
     dbConfig = initializeInMemorySqlite();
   }
 
+  // Better Auth rejects cookie-authenticated POSTs from origins not on this list (CSRF guard).
+  // Reuse the CORS allowlist so the storefront origin is trusted in one place.
+  const trustedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? "http://localhost:3000")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   return betterAuth({
     secret,
     baseURL,
+    trustedOrigins,
     database: dbConfig as never,
     emailAndPassword: {
       enabled: true,

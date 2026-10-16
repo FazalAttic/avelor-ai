@@ -27,16 +27,20 @@
   --ring: rgba(32, 56, 248, 0.45);
 
   /* Signature gradient — the logo's flow */
-  --gradient-brand: linear-gradient(135deg,
-      var(--brand-violet) 0%,
-      var(--brand-blue) 52%,
-      var(--brand-cyan) 100%);
+  --gradient-brand: linear-gradient(
+    135deg,
+    var(--brand-violet) 0%,
+    var(--brand-blue) 52%,
+    var(--brand-cyan) 100%
+  );
 
   /* Canvas glow — tight brand aura under the hero content, Gemini-style */
-  --glow-canvas: radial-gradient(65% 42% at 50% 56%,
-      rgba(32, 56, 248, 0.15) 0%,
-      rgba(96, 32, 248, 0.07) 45%,
-      transparent 70%);
+  --glow-canvas: radial-gradient(
+    65% 42% at 50% 56%,
+    rgba(32, 56, 248, 0.15) 0%,
+    rgba(96, 32, 248, 0.07) 45%,
+    transparent 70%
+  );
 
   /* Elevation */
   --shadow-card: 0 1px 2px rgba(23, 23, 30, 0.04), 0 4px 16px rgba(23, 23, 30, 0.06);
@@ -92,10 +96,12 @@ body {
   --brand-wash: #1b2145;
   --ring: rgba(120, 140, 255, 0.55);
 
-  --glow-canvas: radial-gradient(65% 42% at 50% 56%,
-      rgba(72, 96, 255, 0.22) 0%,
-      rgba(96, 32, 248, 0.12) 45%,
-      transparent 70%);
+  --glow-canvas: radial-gradient(
+    65% 42% at 50% 56%,
+    rgba(72, 96, 255, 0.22) 0%,
+    rgba(96, 32, 248, 0.12) 45%,
+    transparent 70%
+  );
 
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.4);
   --shadow-pop: 0 4px 12px rgba(0, 0, 0, 0.45), 0 16px 48px rgba(0, 0, 0, 0.55);
@@ -193,7 +199,6 @@ body {
  * hover, blur out of the way while typing
  * ------------------------------------------------------------------------- */
 @keyframes float-soft {
-
   0%,
   100% {
     transform: translateY(0);

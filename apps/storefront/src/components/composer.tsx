@@ -1,8 +1,8 @@
 "use client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
 import { Add01Icon, ArrowUp01Icon, Mic01Icon } from "@hugeicons/core-free-icons";
-import { useRef, useState, type Ref } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { type Ref, useRef, useState } from "react";
 import { IconButton } from "@/components/icon-button";
 import { cn } from "@/lib/utils";
 
@@ -65,7 +65,7 @@ export function Composer({
       className={cn(
         "w-full rounded-[28px] border border-border bg-surface p-2 shadow-card transition-shadow duration-200 ease-expo",
         "focus-within:border-brand-blue/40 focus-within:shadow-pop",
-        className,
+        className
       )}
     >
       <textarea
@@ -106,7 +106,7 @@ export function Composer({
               "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue",
               canSend
                 ? "bg-[image:var(--gradient-brand)] shadow-[0_4px_16px_rgba(32,56,248,0.35)] hover:opacity-90"
-                : "cursor-default bg-border-strong",
+                : "cursor-default bg-border-strong"
             )}
           >
             <HugeiconsIcon icon={ArrowUp01Icon} size={20} strokeWidth={2} />

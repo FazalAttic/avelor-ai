@@ -1,17 +1,31 @@
 "use client";
 
+import {
+  FavouriteIcon,
+  Logout03Icon,
+  PackageIcon,
+  SidebarLeftIcon,
+  UserIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { FavouriteIcon, PackageIcon, SidebarLeftIcon } from "@hugeicons/core-free-icons";
+import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
+import { AuthModal } from "@/components/auth-modal";
 import { IconButton } from "@/components/icon-button";
 import { IconLink } from "@/components/icon-link";
 import { Sidebar } from "@/components/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { authClient, useSession } from "@/lib/auth-client";
+import { cn } from "@/lib/utils";
 
 export function ChatShell({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { data: session, isPending } = useSession();
+  const user = session?.user ?? null;
 
   useEffect(() => {
     if (!sidebarOpen) return;
@@ -22,12 +36,29 @@ export function ChatShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [sidebarOpen]);
 
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenuOpen(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [menuOpen]);
+
+  async function signOut() {
+    setMenuOpen(false);
+    await authClient.signOut();
+  }
+
   return (
     <div className="relative flex min-h-dvh flex-col">
       {sidebarOpen && (
         <div aria-hidden className="fixed inset-0 z-30" onClick={() => setSidebarOpen(false)} />
       )}
-      <Sidebar open={sidebarOpen} />
+      {menuOpen && (
+        <div aria-hidden className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
+      )}
+      <Sidebar open={sidebarOpen} onSignIn={() => setAuthOpen(true)} />
 
       <div className="fixed left-3 top-3 z-40 flex items-center gap-2">
         <Link
@@ -58,11 +89,70 @@ export function ChatShell({ children }: { children: ReactNode }) {
           <IconLink label="Favourites" href="/favourites" className="size-8">
             <HugeiconsIcon icon={FavouriteIcon} size={20} strokeWidth={1.8} />
           </IconLink>
-          <IconLink label="Sign in" href="/sign-in" className="ml-0.5 size-8">
-            <span className="flex size-full items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background">
-              G
-            </span>
-          </IconLink>
+
+          {isPending ? (
+            <div aria-hidden className="ml-0.5 size-8 rounded-full bg-foreground/10" />
+          ) : user ? (
+            <div className="relative ml-0.5">
+              <button
+                type="button"
+                title={user.name}
+                aria-haspopup="menu"
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen((value) => !value)}
+                className="flex size-8 items-center justify-center rounded-full transition-transform duration-150 ease-expo hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+              >
+                <span className="flex size-full items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background">
+                  {user.name.charAt(0).toUpperCase()}
+                </span>
+              </button>
+
+              {menuOpen && (
+                <motion.div
+                  role="menu"
+                  initial={{ opacity: 0, scale: 0.96, y: -6 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  className="absolute right-0 top-[calc(100%+10px)] w-56 rounded-3xl border border-white/50 bg-white/60 p-2 shadow-pop backdrop-blur-2xl dark:border-white/10 dark:bg-[#15182b]/80"
+                >
+                  <div className="flex items-center gap-2.5 px-2 py-2">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
+                      {user.name.charAt(0).toUpperCase()}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold text-foreground">
+                        {user.name}
+                      </span>
+                      <span className="block truncate text-xs text-muted">{user.email}</span>
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={signOut}
+                    className={cn(
+                      "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium text-foreground",
+                      "transition-colors duration-150 ease-expo hover:bg-white/70 dark:hover:bg-white/10"
+                    )}
+                  >
+                    <HugeiconsIcon icon={Logout03Icon} size={18} strokeWidth={1.8} />
+                    Sign out
+                  </button>
+                </motion.div>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              title="Sign in"
+              onClick={() => setAuthOpen(true)}
+              className="ml-0.5 flex size-8 items-center justify-center rounded-full transition-transform duration-150 ease-expo hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+            >
+              <span className="flex size-full items-center justify-center rounded-full bg-foreground text-background">
+                <HugeiconsIcon icon={UserIcon} size={14} strokeWidth={2.2} />
+              </span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -78,6 +168,8 @@ export function ChatShell({ children }: { children: ReactNode }) {
         </div>
         {children}
       </main>
+
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   );
 }

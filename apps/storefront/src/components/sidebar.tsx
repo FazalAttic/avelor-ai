@@ -1,9 +1,10 @@
 "use client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
 import { Edit01Icon, FavouriteIcon, PackageIcon, UserIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { SideNavItem } from "@/components/side-nav-item";
+import { useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 export type RecentChat = { id: string; title: string };
@@ -11,6 +12,7 @@ export type RecentChat = { id: string; title: string };
 export type SidebarProps = {
   open: boolean;
   recentChats?: RecentChat[];
+  onSignIn: () => void;
 };
 
 const NAV_ITEMS = [
@@ -27,7 +29,10 @@ const DEFAULT_RECENT_CHATS: RecentChat[] = [
   { id: "r5", title: "4K monitor deals this week" },
 ];
 
-export function Sidebar({ open, recentChats = DEFAULT_RECENT_CHATS }: SidebarProps) {
+export function Sidebar({ open, recentChats = DEFAULT_RECENT_CHATS, onSignIn }: SidebarProps) {
+  const { data: session } = useSession();
+  const user = session?.user ?? null;
+
   return (
     <aside
       aria-hidden={!open}
@@ -35,7 +40,7 @@ export function Sidebar({ open, recentChats = DEFAULT_RECENT_CHATS }: SidebarPro
         "fixed bottom-3 left-3 top-16 z-40 flex w-[280px] max-w-[calc(100dvw-24px)] flex-col p-3",
         "rounded-3xl border border-border bg-surface shadow-pop",
         "transition-all duration-300 ease-expo",
-        open ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-3 opacity-0",
+        open ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-3 opacity-0"
       )}
     >
       <button
@@ -44,7 +49,7 @@ export function Sidebar({ open, recentChats = DEFAULT_RECENT_CHATS }: SidebarPro
         className={cn(
           "flex h-10 shrink-0 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold text-white",
           "bg-[image:var(--gradient-brand)] shadow-[0_4px_16px_rgba(32,56,248,0.35)] transition-opacity duration-150 ease-expo hover:opacity-90",
-          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue",
+          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
         )}
       >
         <HugeiconsIcon icon={Edit01Icon} size={18} strokeWidth={2} className="shrink-0" />
@@ -75,16 +80,33 @@ export function Sidebar({ open, recentChats = DEFAULT_RECENT_CHATS }: SidebarPro
         </div>
       )}
 
-      <Link
-        href="/sign-in"
-        title="Sign in"
-        className="flex shrink-0 items-center gap-3 rounded-xl p-2 transition-colors duration-150 ease-expo hover:bg-surface-hover"
-      >
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background">
-          G
-        </span>
-        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">Sign in</span>
-      </Link>
+      {user ? (
+        <div className="flex shrink-0 items-center gap-3 rounded-xl p-2">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background">
+            {user.name.charAt(0).toUpperCase()}
+          </span>
+          <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+            {user.name}
+          </span>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={onSignIn}
+          title="Sign in"
+          className={cn(
+            "flex shrink-0 items-center gap-3 rounded-xl p-2 text-left",
+            "transition-colors duration-150 ease-expo hover:bg-surface-hover"
+          )}
+        >
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
+            <HugeiconsIcon icon={UserIcon} size={14} strokeWidth={2.2} />
+          </span>
+          <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+            Sign in
+          </span>
+        </button>
+      )}
     </aside>
   );
 }
