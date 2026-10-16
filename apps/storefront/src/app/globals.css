@@ -1,1 +1,248 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+ * Theme tokens — light theme (default). Dark theme later = overrides here.
+ * ------------------------------------------------------------------------- */
+:root {
+  /* Neutrals */
+  --background: #f8fafd;
+  --surface: #ffffff;
+  --surface-hover: #f2f2f6;
+  --border: #e9e9ef;
+  --border-strong: #d9d9e3;
+  --foreground: #17171e;
+  --muted: #64646f;
+  --subtle: #90909c;
+
+  /* Brand — extracted from the Avelor logo */
+  --brand-blue: #2038f8;
+  --brand-blue-deep: #1a2cd6;
+  --brand-violet: #6020f8;
+  --brand-cyan: #22d3ee;
+  --brand-pink: #f0a6e8;
+  --brand-wash: #eef0fe;
+
+  --ring: rgba(32, 56, 248, 0.45);
+
+  /* Signature gradient — the logo's flow */
+  --gradient-brand: linear-gradient(
+    135deg,
+    var(--brand-violet) 0%,
+    var(--brand-blue) 52%,
+    var(--brand-cyan) 100%
+  );
+
+  /* Canvas glow — tight brand aura under the hero content, Gemini-style */
+  --glow-canvas: radial-gradient(
+    65% 42% at 50% 56%,
+    rgba(32, 56, 248, 0.15) 0%,
+    rgba(96, 32, 248, 0.07) 45%,
+    transparent 70%
+  );
+
+  /* Elevation */
+  --shadow-card: 0 1px 2px rgba(23, 23, 30, 0.04), 0 4px 16px rgba(23, 23, 30, 0.06);
+  --shadow-pop: 0 4px 12px rgba(23, 23, 30, 0.08), 0 16px 48px rgba(23, 23, 30, 0.12);
+
+  /* Motion */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Expose tokens as Tailwind utilities (bg-*, text-*, border-*, font-sans, ease-*) */
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-blue-deep: var(--brand-blue-deep);
+  --color-brand-violet: var(--brand-violet);
+  --color-brand-cyan: var(--brand-cyan);
+  --color-brand-pink: var(--brand-pink);
+  --color-brand-wash: var(--brand-wash);
+
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --ease-expo: var(--ease-out-expo);
+  --ease-spring: var(--ease-spring);
+}
+
+body {
+  background-color: var(--background);
+  background-image: var(--glow-canvas);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Night theme — flips every token; components never change, only values here */
+.dark {
+  --background: #0a0c18;
+  --surface: #14172a;
+  --surface-hover: #1c2036;
+  --border: #262b45;
+  --border-strong: #3a4062;
+  --foreground: #eef0fb;
+  --muted: #9ba0bd;
+  --subtle: #6a6f8d;
+  --brand-wash: #1b2145;
+  --ring: rgba(120, 140, 255, 0.55);
+
+  --glow-canvas: radial-gradient(
+    65% 42% at 50% 56%,
+    rgba(72, 96, 255, 0.22) 0%,
+    rgba(96, 32, 248, 0.12) 45%,
+    transparent 70%
+  );
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-pop: 0 4px 12px rgba(0, 0, 0, 0.45), 0 16px 48px rgba(0, 0, 0, 0.55);
+}
+
+/* ---------------------------------------------------------------------------
+ * Sky — day/night cloudscapes behind the top of the stage, grain over both
+ * ------------------------------------------------------------------------- */
+.sky {
+  -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+}
+
+.sky::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  mix-blend-mode: overlay;
+  opacity: 0.16;
+}
+
+.sky-layer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center top;
+  transition: opacity 700ms var(--ease-out-expo);
+}
+
+.sky-day {
+  background-image: url("/sky/sky-day.png");
+}
+
+.sky-night {
+  background-image: url("/sky/sky-night.png");
+  opacity: 0;
+}
+
+.dark .sky-night {
+  opacity: 1;
+}
+
+.dark .sky-day {
+  opacity: 0;
+}
+
+/* Parallax echo — the same texture mirrored, drifting against the base layer */
+.sky-echo {
+  inset: -6%;
+  opacity: 0;
+  transition: opacity 700ms var(--ease-out-expo);
+}
+
+.sky-day-echo {
+  background-image: url("/sky/sky-day.png");
+  opacity: 0.45;
+}
+
+.sky-night-echo {
+  background-image: url("/sky/sky-night.png");
+}
+
+.dark .sky-day-echo {
+  opacity: 0;
+}
+
+.dark .sky-night-echo {
+  opacity: 0.5;
+}
+
+@keyframes sky-drift {
+  from {
+    transform: scale(1.02) translateX(0);
+  }
+  to {
+    transform: scale(1.07) translateX(-1.5%);
+  }
+}
+
+@keyframes sky-drift-reverse {
+  from {
+    transform: scaleX(-1) scale(1.07) translateX(0);
+  }
+  to {
+    transform: scaleX(-1) scale(1.02) translateX(-1.6%);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Product marquee — bubbles drift along the bottom of the hero; pause on
+ * hover, blur out of the way while typing
+ * ------------------------------------------------------------------------- */
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes marquee-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .float-soft {
+    animation: float-soft 7s ease-in-out infinite;
+  }
+  .marquee-track {
+    /* -50% of an 8-copy track = 4 copies per cycle; 192s keeps the drift at
+       the same gentle speed as the original 48s / 2-copy version */
+    animation: marquee-drift 192s linear infinite;
+  }
+  .marquee:hover .marquee-track {
+    animation-play-state: paused;
+  }
+  .sky {
+    animation: sky-drift 90s ease-in-out infinite alternate;
+  }
+  .sky-echo {
+    animation: sky-drift-reverse 64s ease-in-out infinite alternate;
+  }
+}
+
+.app-stage:has(textarea:focus) .product-marquee-item,
+.app-stage:has(textarea:not(:placeholder-shown)) .product-marquee-item {
+  filter: blur(6px);
+  opacity: 0.35;
+}
+
+.app-stage:has(textarea:focus) .product-marquee-item:hover,
+.app-stage:has(textarea:focus) .product-marquee-item:focus-visible {
+  filter: blur(0);
+  opacity: 1;
+}
