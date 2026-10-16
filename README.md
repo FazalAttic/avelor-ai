@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/avelor-ai/avelor-ai/actions/workflows/ci.yml"><img src="https://github.com/avelor-ai/avelor-ai/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
+  <a href="https://github.com/FazalAttic/avelor-ai/actions/workflows/ci.yml"><img src="https://github.com/FazalAttic/avelor-ai/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0" /></a>
   <a href="https://bun.sh"><img src="https://img.shields.io/badge/Runtime-Bun_v1.2+-black.svg" alt="Runtime: Bun" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-Strict_5.7+-3178C6.svg" alt="TypeScript Strict" /></a>
