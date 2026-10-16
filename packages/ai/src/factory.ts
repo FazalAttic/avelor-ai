@@ -21,7 +21,7 @@ export interface AiEnvironmentConfig {
 
 /**
  * Creates the production ChatModel.
- * Automatically loads OpenAI (gpt-4o-mini) or Google Gemini (gemini-1.5-flash) when API keys are configured.
+ * Automatically loads OpenAI (gpt-4o-mini) or Google Gemini (gemini-flash-latest) when API keys are configured.
  * Defaults safely to MockChatModel when no API key is present (e.g. offline CI).
  */
 export function createProductionChatModel(config: AiEnvironmentConfig = {}): ChatModel {

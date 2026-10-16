@@ -1,9 +1,23 @@
 export type ChatRole = "system" | "user" | "assistant" | "tool";
 
+export type ProviderMetadataValue =
+  | string
+  | number
+  | boolean
+  | null
+  | ProviderMetadataValue[]
+  | { [key: string]: ProviderMetadataValue };
+
 export interface ToolCall {
   readonly id: string;
   readonly name: string;
   readonly arguments: Readonly<Record<string, unknown>>;
+  /**
+   * Opaque vendor metadata attached by the provider (e.g. Gemini thought
+   * signatures), which must be round-tripped on multi-step tool calls or the
+   * provider rejects follow-up requests.
+   */
+  readonly providerMetadata?: Record<string, Record<string, ProviderMetadataValue>> | undefined;
 }
 
 export interface ChatMessage {

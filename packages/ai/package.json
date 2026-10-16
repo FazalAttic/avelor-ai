@@ -9,11 +9,11 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@ai-sdk/google": "^1.1.0",
-    "@ai-sdk/openai": "^1.1.0",
+    "@ai-sdk/google": "^2.0.103",
+    "@ai-sdk/openai": "^2.0.135",
     "@avelor/core": "workspace:*",
     "@typesafe-ai/sdk": "0.7.0",
-    "ai": "^4.1.0",
+    "ai": "^5.0.277",
     "zod": "4.6.7"
   }
 }

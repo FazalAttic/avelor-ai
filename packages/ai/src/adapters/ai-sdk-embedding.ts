@@ -1,4 +1,4 @@
-import { type EmbeddingModel as AiSdkModelType, embed, embedMany } from "ai";
+import { embed, embedMany } from "ai";
 import type { EmbeddingInput, EmbeddingModel, EmbeddingResult } from "../contracts/embedding";
 
 export interface AiSdkEmbeddingModelOptions {
