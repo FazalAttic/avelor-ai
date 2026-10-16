@@ -35,6 +35,7 @@ bun test
 ```
 
 ### Scripts
+- `bun run dev`: Start API server with hot-reload (`http://localhost:3000`)
 - `bun test`: Run test suite across packages
 - `bun run typecheck`: Run TypeScript compiler checks
 - `bun run lint`: Check linting and formatting with Biome

@@ -1,6 +1,8 @@
+import { type ChatModel, MockChatModel } from "@avelor/ai";
 import { type CatalogRepository, InMemoryCatalogRepository, type TenantId } from "@avelor/core";
 import { Hono } from "hono";
 import { createCatalogRoutes } from "./routes/catalog";
+import { createChatRoutes } from "./routes/chat";
 
 export type AppEnv = {
   Variables: {
@@ -11,11 +13,13 @@ export type AppEnv = {
 
 export interface AppOptions {
   readonly catalogRepo?: CatalogRepository | undefined;
+  readonly chatModel?: ChatModel | undefined;
 }
 
 export function createApp(options: AppOptions = {}) {
   const app = new Hono<AppEnv>();
   const catalogRepo = options.catalogRepo ?? new InMemoryCatalogRepository();
+  const chatModel = options.chatModel ?? new MockChatModel();
 
   // Request ID middleware
   app.use("*", async (c, next) => {
@@ -36,6 +40,9 @@ export function createApp(options: AppOptions = {}) {
 
   // Mount catalog routes
   app.route("/api/v1/products", createCatalogRoutes(catalogRepo));
+
+  // Mount AI chat discovery routes
+  app.route("/api/v1/chat", createChatRoutes(chatModel, catalogRepo));
 
   // Structured not-found handler
   app.notFound((c) => {

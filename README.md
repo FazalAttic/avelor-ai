@@ -38,7 +38,7 @@ Application Use Cases & Domain Rules (Packages: core, contracts)
 
 - [x] **Phase 0: Project Foundation** (Bun monorepo, strict TypeScript, Biome, CI, Ponytail standards)
 - [x] **Phase 1: Commerce Foundation** (Store/tenant isolation, catalog, variants, inventory, PostgreSQL Drizzle schema, HTTP catalog API)
-- [ ] **Phase 2: AI Discovery** (Grounded search tools, provider adapter, detail exploration)
+- [x] **Phase 2: AI Discovery** (Grounded search tools, ChatModel contract, DiscoveryAgent, /api/v1/chat endpoint)
 - [ ] **Phase 3: Transactions** (Cart management, checkout calculation, payment webhooks)
 - [ ] **Phase 4: Extensibility** (Hybrid search, vector store adapters, background jobs)
 
@@ -63,6 +63,9 @@ bun install
 # Run checks & test suite
 bun run check
 bun test
+
+# Start the development server
+bun run dev
 ```
 
 ## Documentation

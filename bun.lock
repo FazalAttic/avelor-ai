@@ -14,8 +14,16 @@
       "name": "@avelor/api",
       "version": "0.1.0",
       "dependencies": {
+        "@avelor/ai": "workspace:*",
         "@avelor/core": "workspace:*",
         "hono": "^4.7.2",
+      },
+    },
+    "packages/ai": {
+      "name": "@avelor/ai",
+      "version": "0.1.0",
+      "dependencies": {
+        "@avelor/core": "workspace:*",
       },
     },
     "packages/core": {
@@ -36,6 +44,8 @@
     },
   },
   "packages": {
+    "@avelor/ai": ["@avelor/ai@workspace:packages/ai"],
+
     "@avelor/api": ["@avelor/api@workspace:apps/api"],
 
     "@avelor/core": ["@avelor/core@workspace:packages/core"],

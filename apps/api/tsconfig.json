@@ -5,6 +5,6 @@
     "outDir": "./dist",
     "composite": true
   },
-  "references": [{ "path": "../../packages/core" }],
+  "references": [{ "path": "../../packages/core" }, { "path": "../../packages/ai" }],
   "include": ["src/**/*"]
 }
