@@ -1,9 +1,9 @@
 import type { TenantId } from "../tenant";
 import {
   type CreateOrderInput,
+  isValidOrderStatusTransition,
   type Order,
   type OrderStatus,
-  isValidOrderStatusTransition,
 } from "./types";
 
 export class InvalidStateTransitionError extends Error {

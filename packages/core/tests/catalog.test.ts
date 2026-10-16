@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import { InMemoryCatalogRepository, createMoney, parseTenantId } from "../src/index";
+import { createMoney, InMemoryCatalogRepository, parseTenantId } from "../src/index";
 
 describe("Catalog Repository & Domain Rules", () => {
   let repo: InMemoryCatalogRepository;

@@ -1,4 +1,4 @@
-import { type Money, addMoney, createMoney, multiplyMoney } from "../money";
+import { addMoney, createMoney, multiplyMoney } from "../money";
 import type { Cart, CartItem } from "./types";
 
 export class CartCalculationError extends Error {

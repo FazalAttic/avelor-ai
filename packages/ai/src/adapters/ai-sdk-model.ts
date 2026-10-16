@@ -1,5 +1,5 @@
 import type { CatalogRepository, TenantId } from "@avelor/core";
-import { type ModelMessage, type ToolSet, generateText, tool } from "ai";
+import { generateText, type ModelMessage, type ToolSet, tool } from "ai";
 import { z } from "zod";
 import type {
   ChatInput,

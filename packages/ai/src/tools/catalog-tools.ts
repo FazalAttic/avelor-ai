@@ -1,9 +1,9 @@
 import {
   type CatalogRepository,
+  formatMoney,
   type PolicyRepository,
   type PolicyTopic,
   type TenantId,
-  formatMoney,
 } from "@avelor/core";
 import type { EmbeddingModel } from "../contracts/embedding";
 import type { ToolDefinition } from "../contracts/model";

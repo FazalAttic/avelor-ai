@@ -1,4 +1,4 @@
-import { TypeSafeClient, choice, noul } from "@typesafe-ai/sdk";
+import { choice, noul, TypeSafeClient } from "@typesafe-ai/sdk";
 import type {
   GuardrailCheckInput,
   GuardrailCheckResult,

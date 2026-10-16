@@ -1,8 +1,8 @@
 import {
-  InMemoryVectorStore,
   createProductionChatModel,
   createProductionEmbeddingModel,
   createProductionGuardrail,
+  InMemoryVectorStore,
   reindexCatalog,
 } from "@avelor/ai";
 import { InMemoryCatalogRepository, InMemoryPolicyRepository, parseTenantId } from "@avelor/core";

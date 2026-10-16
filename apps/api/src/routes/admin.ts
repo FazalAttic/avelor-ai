@@ -1,4 +1,4 @@
-import { type EmbeddingModel, type VectorStore, reindexCatalog } from "@avelor/ai";
+import { type EmbeddingModel, reindexCatalog, type VectorStore } from "@avelor/ai";
 import type {
   CatalogRepository,
   OrderRepository,

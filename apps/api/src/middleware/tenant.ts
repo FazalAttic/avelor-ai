@@ -1,4 +1,4 @@
-import { InvalidTenantIdError, type TenantId, parseTenantId } from "@avelor/core";
+import { InvalidTenantIdError, parseTenantId, type TenantId } from "@avelor/core";
 import { createMiddleware } from "hono/factory";
 
 export type TenantVariables = {

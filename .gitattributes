@@ -1,0 +1,18 @@
+# Normalize all text files to LF in the working tree and repository,
+# so lint/format results are identical on Windows, macOS, and Linux.
+* text=auto eol=lf
+
+# Windows scripts that require CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binaries
+*.png binary
+*.gif binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.webm binary
+*.woff binary
+*.woff2 binary

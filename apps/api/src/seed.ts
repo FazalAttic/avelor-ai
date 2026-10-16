@@ -1,9 +1,9 @@
 import {
   type CatalogRepository,
+  createMoney,
   type PolicyRepository,
   type PolicyTopic,
   type TenantId,
-  createMoney,
 } from "@avelor/core";
 
 interface SeedVariant {

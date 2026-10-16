@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import { InMemoryCatalogRepository, createMoney, parseTenantId } from "@avelor/core";
+import { createMoney, InMemoryCatalogRepository, parseTenantId } from "@avelor/core";
 import { DiscoveryAgent } from "../src/agent/discovery-agent";
 import { MockChatModel } from "../src/models/mock-model";
 import { executeToolCall } from "../src/tools/catalog-tools";
