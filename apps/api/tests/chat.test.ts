@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import { MockChatModel } from "@avelor/ai";
+import { InMemoryVectorStore, MockChatModel, MockEmbeddingModel, reindexCatalog } from "@avelor/ai";
 import { InMemoryCatalogRepository, parseTenantId } from "@avelor/core";
 import { createApp } from "../src/app";
 
@@ -7,6 +7,8 @@ describe("AI Chat HTTP API Endpoints", () => {
   let app: ReturnType<typeof createApp>;
   let repo: InMemoryCatalogRepository;
   let model: MockChatModel;
+  let embeddingModel: MockEmbeddingModel;
+  let vectorStore: InMemoryVectorStore;
 
   const tenantA = "store_alpha";
   const tenantB = "store_beta";
@@ -14,7 +16,15 @@ describe("AI Chat HTTP API Endpoints", () => {
   beforeEach(async () => {
     repo = new InMemoryCatalogRepository();
     model = new MockChatModel();
-    app = createApp({ catalogRepo: repo, chatModel: model });
+    embeddingModel = new MockEmbeddingModel(64);
+    vectorStore = new InMemoryVectorStore();
+
+    app = createApp({
+      catalogRepo: repo,
+      chatModel: model,
+      embeddingModel,
+      vectorStore,
+    });
 
     // Seed product for Tenant A
     await repo.createProduct({
@@ -23,6 +33,23 @@ describe("AI Chat HTTP API Endpoints", () => {
       description: "Coarse ground dark roast coffee beans for cold brewing",
       status: "active",
       categories: ["coffee"],
+    });
+
+    // Seed an outerwear item with NO keyword overlap to "rainy storm"
+    await repo.createProduct({
+      tenantId: parseTenantId(tenantA),
+      name: "Alpine Gore-Tex Technical Shell",
+      description: "Waterproof protective coat engineered for heavy mountain downpours",
+      status: "active",
+      categories: ["outerwear"],
+    });
+
+    // Reindex catalog into vector store
+    await reindexCatalog({
+      tenantId: parseTenantId(tenantA),
+      catalogRepo: repo,
+      embeddingModel,
+      vectorStore,
     });
   });
 
@@ -71,6 +98,23 @@ describe("AI Chat HTTP API Endpoints", () => {
     expect(Array.isArray(body.toolCalls)).toBe(true);
     expect(body.toolCalls.length).toBeGreaterThan(0);
     expect(body.toolCalls[0].name).toBe("search_products");
+  });
+
+  it("executes hybrid semantic search when customer uses conceptual phrasing", async () => {
+    const res = await app.request("/api/v1/chat", {
+      method: "POST",
+      headers: {
+        "x-tenant-id": tenantA,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        message: "search for rainy storm gear",
+      }),
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.reply).toContain("Alpine Gore-Tex Technical Shell");
   });
 
   it("enforces tenant boundaries during chat discovery", async () => {

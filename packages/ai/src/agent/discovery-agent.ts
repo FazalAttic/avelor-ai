@@ -1,5 +1,7 @@
 import type { CatalogRepository, TenantId } from "@avelor/core";
+import type { EmbeddingModel } from "../contracts/embedding";
 import type { ChatMessage, ChatModel, ToolCall } from "../contracts/model";
+import type { VectorStore } from "../contracts/vector-store";
 import { DISCOVERY_SYSTEM_PROMPT } from "../prompts/discovery";
 import { CATALOG_TOOLS, executeToolCall } from "../tools/catalog-tools";
 
@@ -9,11 +11,17 @@ export interface AgentExecutionResult {
   readonly toolCallsExecuted: readonly ToolCall[];
 }
 
+export interface DiscoveryAgentOptions {
+  readonly embeddingModel?: EmbeddingModel | undefined;
+  readonly vectorStore?: VectorStore | undefined;
+}
+
 export class DiscoveryAgent {
   constructor(
     private readonly model: ChatModel,
     private readonly catalogRepo: CatalogRepository,
-    private readonly tenantId: TenantId
+    private readonly tenantId: TenantId,
+    private readonly options?: DiscoveryAgentOptions | undefined
   ) {}
 
   async chat(
@@ -57,6 +65,8 @@ export class DiscoveryAgent {
         const resultString = await executeToolCall(call.name, call.arguments, {
           tenantId: this.tenantId,
           catalogRepo: this.catalogRepo,
+          ...(this.options?.embeddingModel ? { embeddingModel: this.options.embeddingModel } : {}),
+          ...(this.options?.vectorStore ? { vectorStore: this.options.vectorStore } : {}),
         });
 
         messages.push({

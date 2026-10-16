@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "bun:test";
+import { InMemoryVectorStore, MockEmbeddingModel } from "@avelor/ai";
 import {
   InMemoryCartRepository,
   InMemoryCatalogRepository,
@@ -28,11 +29,16 @@ describe("Better Auth & Admin / Customer Role Isolation", () => {
     orderRepo = new InMemoryOrderRepository();
     auth = createAuth({ secret: "test_secret_for_auth_32_characters_long" });
 
+    const embeddingModel = new MockEmbeddingModel(64);
+    const vectorStore = new InMemoryVectorStore();
+
     app = createApp({
       catalogRepo,
       cartRepo,
       orderRepo,
       auth,
+      embeddingModel,
+      vectorStore,
       enforceAdminAuth: true,
     });
 
@@ -135,6 +141,45 @@ describe("Better Auth & Admin / Customer Role Isolation", () => {
       expect(body.tenantId).toBe(tenantA);
       expect(body.catalog).toBeDefined();
       expect(body.catalog.totalProducts).toBe(0);
+    });
+
+    it("blocks customer from triggering semantic catalog reindexing", async () => {
+      const res = await app.request("/api/v1/admin/reindex", {
+        method: "POST",
+        headers: {
+          "x-tenant-id": tenantA,
+          authorization: `Bearer ${customerToken}`,
+        },
+      });
+
+      expect(res.status).toBe(403);
+      const body = await res.json();
+      expect(body.error.code).toBe("FORBIDDEN");
+    });
+
+    it("allows authenticated Admin A to trigger catalog reindexing", async () => {
+      // Seed a product
+      await catalogRepo.createProduct({
+        tenantId: parseTenantId(tenantA),
+        name: "Mountain Rain Coat",
+        description: "Waterproof technical outer jacket",
+        status: "active",
+      });
+
+      const res = await app.request("/api/v1/admin/reindex", {
+        method: "POST",
+        headers: {
+          "x-tenant-id": tenantA,
+          authorization: `Bearer ${adminTokenA}`,
+        },
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.status).toBe("success");
+      expect(body.tenantId).toBe(tenantA);
+      expect(body.totalIndexed).toBe(1);
+      expect(body.durationMs).toBeGreaterThanOrEqual(0);
     });
   });
 

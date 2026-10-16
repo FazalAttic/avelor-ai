@@ -1,5 +1,7 @@
 import type { CatalogRepository, TenantId } from "@avelor/core";
+import type { EmbeddingModel } from "../contracts/embedding";
 import type { ToolDefinition } from "../contracts/model";
+import type { VectorStore } from "../contracts/vector-store";
 
 export const SEARCH_PRODUCTS_TOOL: ToolDefinition = {
   name: "search_products",
@@ -48,6 +50,8 @@ export const CATALOG_TOOLS: readonly ToolDefinition[] = Object.freeze([
 export interface ToolExecutorContext {
   readonly tenantId: TenantId;
   readonly catalogRepo: CatalogRepository;
+  readonly embeddingModel?: EmbeddingModel | undefined;
+  readonly vectorStore?: VectorStore | undefined;
 }
 
 export async function executeToolCall(
@@ -65,6 +69,7 @@ export async function executeToolCall(
       const rawLimit = typeof args.limit === "number" ? Math.floor(args.limit) : 5;
       const limit = Math.max(1, Math.min(rawLimit, 10));
 
+      // 1. Structured keyword search
       const result = await catalogRepo.listProducts(tenantId, {
         query,
         category,
@@ -72,7 +77,43 @@ export async function executeToolCall(
         limit,
       });
 
-      if (result.items.length === 0) {
+      const matchedIds = new Set(result.items.map((p) => p.id));
+      const combinedItems = [...result.items];
+
+      // 2. Hybrid semantic vector search
+      if (query && context.embeddingModel && context.vectorStore && combinedItems.length < limit) {
+        try {
+          const { embeddings } = await context.embeddingModel.embed({
+            texts: [query],
+            taskType: "query",
+          });
+          const queryVec = embeddings[0];
+          if (queryVec && queryVec.length > 0) {
+            const vectorHits = await context.vectorStore.search(queryVec, {
+              tenantId,
+              topK: limit,
+              minScore: 0.35,
+            });
+
+            for (const hit of vectorHits) {
+              if (combinedItems.length >= limit) {
+                break;
+              }
+              if (!matchedIds.has(hit.id)) {
+                const prod = await catalogRepo.getProductWithVariants(tenantId, hit.id);
+                if (prod && prod.status === "active") {
+                  matchedIds.add(hit.id);
+                  combinedItems.push(prod);
+                }
+              }
+            }
+          }
+        } catch {
+          // Gracefully fallback to keyword search results if vector search encounters an issue
+        }
+      }
+
+      if (combinedItems.length === 0) {
         return JSON.stringify({
           status: "empty",
           message: "No products matched the given criteria.",
@@ -81,7 +122,7 @@ export async function executeToolCall(
       }
 
       // Format bounded, grounded summary
-      const items = result.items.map((p) => ({
+      const items = combinedItems.map((p) => ({
         id: p.id,
         name: p.name,
         description: p.description,
@@ -91,7 +132,7 @@ export async function executeToolCall(
 
       return JSON.stringify({
         status: "success",
-        total: result.total,
+        total: Math.max(result.total, items.length),
         count: items.length,
         products: items,
       });

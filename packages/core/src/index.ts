@@ -15,3 +15,6 @@ export * from "./payments/mock-provider";
 
 export * from "./money";
 export * from "./tenant";
+
+export * from "./vector/types";
+export * from "./ai/embedding-types";

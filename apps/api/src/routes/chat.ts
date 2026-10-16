@@ -1,4 +1,10 @@
-import { type ChatMessage, type ChatModel, DiscoveryAgent } from "@avelor/ai";
+import {
+  type ChatMessage,
+  type ChatModel,
+  DiscoveryAgent,
+  type EmbeddingModel,
+  type VectorStore,
+} from "@avelor/ai";
 import type { CatalogRepository } from "@avelor/core";
 import { Hono } from "hono";
 import type { AppEnv } from "../app";
@@ -9,7 +15,16 @@ interface ChatRequestBody {
   history?: readonly ChatMessage[] | undefined;
 }
 
-export function createChatRoutes(model: ChatModel, repo: CatalogRepository) {
+export interface ChatRoutesOptions {
+  readonly embeddingModel?: EmbeddingModel | undefined;
+  readonly vectorStore?: VectorStore | undefined;
+}
+
+export function createChatRoutes(
+  model: ChatModel,
+  repo: CatalogRepository,
+  options?: ChatRoutesOptions | undefined
+) {
   const router = new Hono<AppEnv>();
 
   // Ensure every chat query is scoped by tenant identity
@@ -45,7 +60,7 @@ export function createChatRoutes(model: ChatModel, repo: CatalogRepository) {
       );
     }
 
-    const agent = new DiscoveryAgent(model, repo, tenantId);
+    const agent = new DiscoveryAgent(model, repo, tenantId, options);
     const result = await agent.chat(body.message, body.history ?? []);
 
     return c.json({

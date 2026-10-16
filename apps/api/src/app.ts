@@ -1,4 +1,4 @@
-import { type ChatModel, MockChatModel } from "@avelor/ai";
+import { type ChatModel, type EmbeddingModel, MockChatModel, type VectorStore } from "@avelor/ai";
 import {
   type CartRepository,
   type CatalogRepository,
@@ -36,6 +36,8 @@ export interface AppOptions {
   readonly paymentProvider?: PaymentProvider | undefined;
   readonly webhookSecret?: string | undefined;
   readonly chatModel?: ChatModel | undefined;
+  readonly embeddingModel?: EmbeddingModel | undefined;
+  readonly vectorStore?: VectorStore | undefined;
   readonly auth?: AuthInstance | undefined;
   readonly enforceAdminAuth?: boolean | undefined;
 }
@@ -86,6 +88,8 @@ export function createApp(options: AppOptions = {}) {
       orderRepo,
       catalogRepo,
       authMiddleware,
+      embeddingModel: options.embeddingModel,
+      vectorStore: options.vectorStore,
     })
   );
 
@@ -106,8 +110,14 @@ export function createApp(options: AppOptions = {}) {
     })
   );
 
-  // Mount AI chat discovery routes
-  app.route("/api/v1/chat", createChatRoutes(chatModel, catalogRepo));
+  // Mount AI chat discovery routes with hybrid semantic vector search support
+  app.route(
+    "/api/v1/chat",
+    createChatRoutes(chatModel, catalogRepo, {
+      embeddingModel: options.embeddingModel,
+      vectorStore: options.vectorStore,
+    })
+  );
 
   // Structured not-found handler
   app.notFound((c) => {

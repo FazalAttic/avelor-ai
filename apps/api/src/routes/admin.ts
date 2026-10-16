@@ -1,3 +1,4 @@
+import { type EmbeddingModel, type VectorStore, reindexCatalog } from "@avelor/ai";
 import type { CatalogRepository, OrderRepository } from "@avelor/core";
 import { Hono } from "hono";
 import type { AppEnv } from "../app";
@@ -8,6 +9,8 @@ export interface AdminRoutesDependencies {
   orderRepo: OrderRepository;
   catalogRepo: CatalogRepository;
   authMiddleware: ReturnType<typeof createAuthMiddleware>;
+  embeddingModel?: EmbeddingModel | undefined;
+  vectorStore?: VectorStore | undefined;
 }
 
 export function createAdminRoutes(deps: AdminRoutesDependencies) {
@@ -45,6 +48,37 @@ export function createAdminRoutes(deps: AdminRoutesDependencies) {
       },
       currency: "USD",
       timestamp: new Date().toISOString(),
+    });
+  });
+
+  // Store Admin Catalog Re-indexing for Semantic Search
+  router.post("/reindex", async (c) => {
+    const tenantId = c.get("tenantId");
+
+    if (!deps.embeddingModel || !deps.vectorStore) {
+      return c.json(
+        {
+          error: {
+            code: "VECTOR_SEARCH_DISABLED",
+            message: "Embedding model and vector store are not configured on this instance",
+          },
+        },
+        400
+      );
+    }
+
+    const result = await reindexCatalog({
+      tenantId,
+      catalogRepo: deps.catalogRepo,
+      embeddingModel: deps.embeddingModel,
+      vectorStore: deps.vectorStore,
+    });
+
+    return c.json({
+      status: "success",
+      tenantId,
+      totalIndexed: result.totalIndexed,
+      durationMs: result.durationMs,
     });
   });
 

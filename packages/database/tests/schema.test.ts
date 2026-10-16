@@ -3,6 +3,7 @@ import {
   accounts,
   orderItems,
   orders,
+  productEmbeddings,
   productVariants,
   products,
   sessions,
@@ -54,5 +55,14 @@ describe("Database schema definitions", () => {
     expect(accounts.providerId.name).toBe("provider_id");
 
     expect(verifications.identifier.name).toBe("identifier");
+  });
+
+  it("defines productEmbeddings table with 1536-dim vector and tenant isolation", () => {
+    expect(productEmbeddings.id.name).toBe("id");
+    expect(productEmbeddings.productId.name).toBe("product_id");
+    expect(productEmbeddings.tenantId.name).toBe("tenant_id");
+    expect(productEmbeddings.embedding.name).toBe("embedding");
+    expect(productEmbeddings.model.name).toBe("model");
+    expect(productEmbeddings.contentHash.name).toBe("content_hash");
   });
 });
