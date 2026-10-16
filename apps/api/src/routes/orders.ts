@@ -1,4 +1,10 @@
-import type { CartRepository, CatalogRepository, OrderItem, OrderRepository } from "@avelor/core";
+import type {
+  CartRepository,
+  CatalogRepository,
+  OrderItem,
+  OrderRepository,
+  PaymentProvider,
+} from "@avelor/core";
 import { Hono } from "hono";
 import type { AppEnv } from "../app";
 import { requireTenant } from "../middleware/tenant";
@@ -12,7 +18,8 @@ interface CheckoutPayload {
 export function createOrderRoutes(
   orderRepo: OrderRepository,
   cartRepo: CartRepository,
-  catalogRepo: CatalogRepository
+  catalogRepo: CatalogRepository,
+  paymentProvider?: PaymentProvider
 ) {
   const router = new Hono<AppEnv>();
 
@@ -115,10 +122,28 @@ export function createOrderRoutes(
       idempotencyKey: body.idempotencyKey,
     });
 
+    let finalOrder = order;
+    if (paymentProvider) {
+      const session = await paymentProvider.createSession({
+        tenantId,
+        orderId: order.id,
+        amount: order.total,
+        customerEmail: order.customerEmail,
+      });
+
+      finalOrder = await orderRepo.updateOrderStatus(
+        tenantId,
+        order.id,
+        "pending",
+        session.id,
+        session.checkoutUrl
+      );
+    }
+
     // 4. Clear cart after successful order creation
     await cartRepo.clearCart(tenantId, cart.id);
 
-    return c.json(order, 201);
+    return c.json(finalOrder, 201);
   });
 
   // Get order by ID

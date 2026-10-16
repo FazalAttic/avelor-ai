@@ -22,7 +22,8 @@ export interface OrderRepository {
     tenantId: TenantId,
     orderId: string,
     status: OrderStatus,
-    paymentSessionId?: string | undefined
+    paymentSessionId?: string | undefined,
+    checkoutUrl?: string | undefined
   ): Promise<Order>;
 }
 
@@ -99,7 +100,8 @@ export class InMemoryOrderRepository implements OrderRepository {
     tenantId: TenantId,
     orderId: string,
     nextStatus: OrderStatus,
-    paymentSessionId?: string | undefined
+    paymentSessionId?: string | undefined,
+    checkoutUrl?: string | undefined
   ): Promise<Order> {
     const order = await this.getOrder(tenantId, orderId);
     if (!order) {
@@ -110,8 +112,12 @@ export class InMemoryOrderRepository implements OrderRepository {
       throw new InvalidStateTransitionError(order.status, nextStatus);
     }
 
-    // Idempotent no-op if status is unchanged
-    if (order.status === nextStatus) {
+    // Idempotent no-op if status is unchanged and no new session details provided
+    const hasSessionUpdate =
+      (paymentSessionId !== undefined && paymentSessionId !== order.paymentSessionId) ||
+      (checkoutUrl !== undefined && checkoutUrl !== order.checkoutUrl);
+
+    if (order.status === nextStatus && !hasSessionUpdate) {
       return order;
     }
 
@@ -119,6 +125,7 @@ export class InMemoryOrderRepository implements OrderRepository {
       ...order,
       status: nextStatus,
       paymentSessionId: paymentSessionId ?? order.paymentSessionId,
+      checkoutUrl: checkoutUrl ?? order.checkoutUrl,
       updatedAt: new Date(),
     };
 

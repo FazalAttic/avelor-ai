@@ -5,7 +5,9 @@ import {
   InMemoryCartRepository,
   InMemoryCatalogRepository,
   InMemoryOrderRepository,
+  MockPaymentProvider,
   type OrderRepository,
+  type PaymentProvider,
   type TenantId,
 } from "@avelor/core";
 import { Hono } from "hono";
@@ -13,6 +15,7 @@ import { createCartRoutes } from "./routes/cart";
 import { createCatalogRoutes } from "./routes/catalog";
 import { createChatRoutes } from "./routes/chat";
 import { createOrderRoutes } from "./routes/orders";
+import { createPaymentRoutes } from "./routes/payments";
 
 export type AppEnv = {
   Variables: {
@@ -25,6 +28,8 @@ export interface AppOptions {
   readonly catalogRepo?: CatalogRepository | undefined;
   readonly cartRepo?: CartRepository | undefined;
   readonly orderRepo?: OrderRepository | undefined;
+  readonly paymentProvider?: PaymentProvider | undefined;
+  readonly webhookSecret?: string | undefined;
   readonly chatModel?: ChatModel | undefined;
 }
 
@@ -33,6 +38,7 @@ export function createApp(options: AppOptions = {}) {
   const catalogRepo = options.catalogRepo ?? new InMemoryCatalogRepository();
   const cartRepo = options.cartRepo ?? new InMemoryCartRepository();
   const orderRepo = options.orderRepo ?? new InMemoryOrderRepository();
+  const paymentProvider = options.paymentProvider ?? new MockPaymentProvider();
   const chatModel = options.chatModel ?? new MockChatModel();
 
   // Request ID middleware
@@ -59,7 +65,18 @@ export function createApp(options: AppOptions = {}) {
   app.route("/api/v1/carts", createCartRoutes(cartRepo, catalogRepo));
 
   // Mount order & checkout routes
-  app.route("/api/v1/orders", createOrderRoutes(orderRepo, cartRepo, catalogRepo));
+  app.route("/api/v1/orders", createOrderRoutes(orderRepo, cartRepo, catalogRepo, paymentProvider));
+
+  // Mount payment & webhook routes
+  app.route(
+    "/api/v1/payments",
+    createPaymentRoutes({
+      paymentProvider,
+      orderRepo,
+      catalogRepo,
+      webhookSecret: options.webhookSecret,
+    })
+  );
 
   // Mount AI chat discovery routes
   app.route("/api/v1/chat", createChatRoutes(chatModel, catalogRepo));

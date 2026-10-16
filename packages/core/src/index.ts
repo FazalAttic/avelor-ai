@@ -10,5 +10,8 @@ export * from "./cart/types";
 export * from "./orders/repository";
 export * from "./orders/types";
 
+export * from "./payments/types";
+export * from "./payments/mock-provider";
+
 export * from "./money";
 export * from "./tenant";

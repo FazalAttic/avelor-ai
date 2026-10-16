@@ -23,6 +23,7 @@ export interface Order {
   readonly status: OrderStatus;
   readonly idempotencyKey?: string | undefined;
   readonly paymentSessionId?: string | undefined;
+  readonly checkoutUrl?: string | undefined;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
