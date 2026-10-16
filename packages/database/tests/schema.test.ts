@@ -41,7 +41,7 @@ describe("Database schema definitions", () => {
     expect(orderItems.unitPriceAmount.name).toBe("unit_price_amount");
   });
 
-  it("defines Better Auth tables with merchant/customer roles and tenant scoping", () => {
+  it("defines Better Auth tables with admin/customer roles and tenant scoping", () => {
     expect(users.id.name).toBe("id");
     expect(users.email.name).toBe("email");
     expect(users.role.name).toBe("role");

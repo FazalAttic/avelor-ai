@@ -13,10 +13,10 @@ import {
 import { Hono } from "hono";
 import { type AuthInstance, type AuthSession, type AuthUser, createAuth } from "./auth";
 import { createAuthMiddleware } from "./middleware/auth";
+import { createAdminRoutes } from "./routes/admin";
 import { createCartRoutes } from "./routes/cart";
 import { createCatalogRoutes } from "./routes/catalog";
 import { createChatRoutes } from "./routes/chat";
-import { createMerchantRoutes } from "./routes/merchant";
 import { createOrderRoutes } from "./routes/orders";
 import { createPaymentRoutes } from "./routes/payments";
 
@@ -37,7 +37,7 @@ export interface AppOptions {
   readonly webhookSecret?: string | undefined;
   readonly chatModel?: ChatModel | undefined;
   readonly auth?: AuthInstance | undefined;
-  readonly enforceMerchantAuth?: boolean | undefined;
+  readonly enforceAdminAuth?: boolean | undefined;
 }
 
 export function createApp(options: AppOptions = {}) {
@@ -73,16 +73,16 @@ export function createApp(options: AppOptions = {}) {
     });
   });
 
-  // Mount catalog routes (with optional merchant auth enforcement)
+  // Mount catalog routes (with optional admin auth enforcement)
   app.route(
     "/api/v1/products",
-    createCatalogRoutes(catalogRepo, options.enforceMerchantAuth ? authMiddleware : undefined)
+    createCatalogRoutes(catalogRepo, options.enforceAdminAuth ? authMiddleware : undefined)
   );
 
-  // Mount merchant dashboard and management routes (strictly locked to merchant role)
+  // Mount admin dashboard and management routes (strictly locked to admin role)
   app.route(
-    "/api/v1/merchant",
-    createMerchantRoutes({
+    "/api/v1/admin",
+    createAdminRoutes({
       orderRepo,
       catalogRepo,
       authMiddleware,

@@ -5,7 +5,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer } from "better-auth/plugins";
 
-export type UserRole = "merchant" | "customer";
+export type UserRole = "admin" | "customer";
 
 export interface AuthUser {
   id: string;

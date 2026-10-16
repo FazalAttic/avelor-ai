@@ -3,13 +3,12 @@ import {
   InMemoryCartRepository,
   InMemoryCatalogRepository,
   InMemoryOrderRepository,
-  createMoney,
   parseTenantId,
 } from "@avelor/core";
 import { createApp } from "../src/app";
 import { createAuth } from "../src/auth";
 
-describe("Better Auth & Merchant / Customer Role Isolation", () => {
+describe("Better Auth & Admin / Customer Role Isolation", () => {
   let app: ReturnType<typeof createApp>;
   let catalogRepo: InMemoryCatalogRepository;
   let cartRepo: InMemoryCartRepository;
@@ -19,8 +18,8 @@ describe("Better Auth & Merchant / Customer Role Isolation", () => {
   const tenantA = "store_alpha";
   const tenantB = "store_beta";
 
-  let merchantTokenA: string;
-  let merchantTokenB: string;
+  let adminTokenA: string;
+  let adminTokenB: string;
   let customerToken: string;
 
   beforeEach(async () => {
@@ -34,40 +33,40 @@ describe("Better Auth & Merchant / Customer Role Isolation", () => {
       cartRepo,
       orderRepo,
       auth,
-      enforceMerchantAuth: true,
+      enforceAdminAuth: true,
     });
 
-    // 1. Sign up Merchant A (scoped to tenantA)
-    const merchantResA = await app.request("/api/auth/sign-up/email", {
+    // 1. Sign up Admin A (scoped to tenantA)
+    const adminResA = await app.request("/api/auth/sign-up/email", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        email: "merchantA@store.com",
+        email: "adminA@store.com",
         password: "Password123!",
-        name: "Merchant Alpha",
-        role: "merchant",
+        name: "Admin Alpha",
+        role: "admin",
         tenantId: tenantA,
       }),
     });
-    expect(merchantResA.status).toBe(200);
-    const merchantDataA = await merchantResA.json();
-    merchantTokenA = merchantDataA.token;
+    expect(adminResA.status).toBe(200);
+    const adminDataA = await adminResA.json();
+    adminTokenA = adminDataA.token;
 
-    // 2. Sign up Merchant B (scoped to tenantB)
-    const merchantResB = await app.request("/api/auth/sign-up/email", {
+    // 2. Sign up Admin B (scoped to tenantB)
+    const adminResB = await app.request("/api/auth/sign-up/email", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        email: "merchantB@store.com",
+        email: "adminB@store.com",
         password: "Password123!",
-        name: "Merchant Beta",
-        role: "merchant",
+        name: "Admin Beta",
+        role: "admin",
         tenantId: tenantB,
       }),
     });
-    expect(merchantResB.status).toBe(200);
-    const merchantDataB = await merchantResB.json();
-    merchantTokenB = merchantDataB.token;
+    expect(adminResB.status).toBe(200);
+    const adminDataB = await adminResB.json();
+    adminTokenB = adminDataB.token;
 
     // 3. Sign up Customer (public shopper, role = customer)
     const customerRes = await app.request("/api/auth/sign-up/email", {
@@ -85,9 +84,9 @@ describe("Better Auth & Merchant / Customer Role Isolation", () => {
     customerToken = customerData.token;
   });
 
-  describe("Merchant Dashboard & Metrics (/api/v1/merchant/metrics)", () => {
+  describe("Store Admin Dashboard & Metrics (/api/v1/admin/metrics)", () => {
     it("rejects unauthenticated requests with 401 Unauthorized", async () => {
-      const res = await app.request("/api/v1/merchant/metrics", {
+      const res = await app.request("/api/v1/admin/metrics", {
         headers: { "x-tenant-id": tenantA },
       });
 
@@ -97,7 +96,7 @@ describe("Better Auth & Merchant / Customer Role Isolation", () => {
     });
 
     it("rejects customer accounts with 403 Forbidden", async () => {
-      const res = await app.request("/api/v1/merchant/metrics", {
+      const res = await app.request("/api/v1/admin/metrics", {
         headers: {
           "x-tenant-id": tenantA,
           authorization: `Bearer ${customerToken}`,
@@ -107,14 +106,14 @@ describe("Better Auth & Merchant / Customer Role Isolation", () => {
       expect(res.status).toBe(403);
       const body = await res.json();
       expect(body.error.code).toBe("FORBIDDEN");
-      expect(body.error.message).toContain("merchant");
+      expect(body.error.message).toContain("admin");
     });
 
-    it("rejects Merchant B attempting to access Store A metrics (cross-tenant attack)", async () => {
-      const res = await app.request("/api/v1/merchant/metrics", {
+    it("rejects Admin B attempting to access Store A metrics (cross-tenant attack)", async () => {
+      const res = await app.request("/api/v1/admin/metrics", {
         headers: {
           "x-tenant-id": tenantA, // Target Store A
-          authorization: `Bearer ${merchantTokenB}`, // But authenticated as Store B merchant
+          authorization: `Bearer ${adminTokenB}`, // But authenticated as Store B admin
         },
       });
 
@@ -123,11 +122,11 @@ describe("Better Auth & Merchant / Customer Role Isolation", () => {
       expect(body.error.code).toBe("TENANT_MISMATCH");
     });
 
-    it("allows authenticated Merchant A to access Store A metrics", async () => {
-      const res = await app.request("/api/v1/merchant/metrics", {
+    it("allows authenticated Admin A to access Store A metrics", async () => {
+      const res = await app.request("/api/v1/admin/metrics", {
         headers: {
           "x-tenant-id": tenantA,
-          authorization: `Bearer ${merchantTokenA}`,
+          authorization: `Bearer ${adminTokenA}`,
         },
       });
 
@@ -177,12 +176,12 @@ describe("Better Auth & Merchant / Customer Role Isolation", () => {
       expect(body.error.code).toBe("UNAUTHORIZED");
     });
 
-    it("allows authenticated Merchant A to create products for Store A", async () => {
+    it("allows authenticated Admin A to create products for Store A", async () => {
       const res = await app.request("/api/v1/products", {
         method: "POST",
         headers: {
           "x-tenant-id": tenantA,
-          authorization: `Bearer ${merchantTokenA}`,
+          authorization: `Bearer ${adminTokenA}`,
           "content-type": "application/json",
         },
         body: JSON.stringify({

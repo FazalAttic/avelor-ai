@@ -42,12 +42,12 @@ export function createCatalogRoutes(
   // All catalog routes require verified tenant scoping
   router.use("*", requireTenant);
 
-  // If merchant auth middleware is configured, protect all mutation methods
+  // If admin auth middleware is configured, protect all mutation methods
   if (authMiddleware) {
-    router.post("*", authMiddleware.requireAuth, authMiddleware.requireRole("merchant"));
-    router.put("*", authMiddleware.requireAuth, authMiddleware.requireRole("merchant"));
-    router.delete("*", authMiddleware.requireAuth, authMiddleware.requireRole("merchant"));
-    router.patch("*", authMiddleware.requireAuth, authMiddleware.requireRole("merchant"));
+    router.post("*", authMiddleware.requireAuth, authMiddleware.requireRole("admin"));
+    router.put("*", authMiddleware.requireAuth, authMiddleware.requireRole("admin"));
+    router.delete("*", authMiddleware.requireAuth, authMiddleware.requireRole("admin"));
+    router.patch("*", authMiddleware.requireAuth, authMiddleware.requireRole("admin"));
   }
 
   // List products with filtering

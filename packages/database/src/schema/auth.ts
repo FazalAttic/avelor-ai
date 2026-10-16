@@ -1,6 +1,6 @@
 import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
-export type UserRole = "merchant" | "customer";
+export type UserRole = "admin" | "customer";
 
 export const users = pgTable(
   "user",
@@ -11,7 +11,7 @@ export const users = pgTable(
     emailVerified: boolean("email_verified").notNull().default(false),
     image: text("image"),
     role: text("role").notNull().default("customer"),
-    tenantId: text("tenant_id"), // Merchant store scoping
+    tenantId: text("tenant_id"), // Optional store scoping
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

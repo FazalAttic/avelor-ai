@@ -1,29 +1,24 @@
-import {
-  type CatalogRepository,
-  type Order,
-  type OrderRepository,
-  createMoney,
-} from "@avelor/core";
+import type { CatalogRepository, OrderRepository } from "@avelor/core";
 import { Hono } from "hono";
 import type { AppEnv } from "../app";
 import type { createAuthMiddleware } from "../middleware/auth";
 import { requireTenant } from "../middleware/tenant";
 
-export interface MerchantRoutesDependencies {
+export interface AdminRoutesDependencies {
   orderRepo: OrderRepository;
   catalogRepo: CatalogRepository;
   authMiddleware: ReturnType<typeof createAuthMiddleware>;
 }
 
-export function createMerchantRoutes(deps: MerchantRoutesDependencies) {
+export function createAdminRoutes(deps: AdminRoutesDependencies) {
   const router = new Hono<AppEnv>();
 
-  // All merchant routes require tenant header, authenticated session, and merchant role
+  // All admin routes require store tenant header, authenticated session, and admin role
   router.use("*", requireTenant);
   router.use("*", deps.authMiddleware.requireAuth);
-  router.use("*", deps.authMiddleware.requireRole("merchant"));
+  router.use("*", deps.authMiddleware.requireRole("admin"));
 
-  // Merchant Analytics & Sales Metrics
+  // Store Admin Analytics & Inventory Metrics
   router.get("/metrics", async (c) => {
     const tenantId = c.get("tenantId");
 
@@ -42,8 +37,6 @@ export function createMerchantRoutes(deps: MerchantRoutesDependencies) {
       }
     }
 
-    // In a production SQL database, this would be an indexed aggregation query.
-    // For our modular repository, we calculate tenant analytics safely.
     return c.json({
       tenantId,
       catalog: {

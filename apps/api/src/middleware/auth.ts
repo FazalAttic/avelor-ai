@@ -64,15 +64,15 @@ export function createAuthMiddleware(auth: AuthInstance) {
         );
       }
 
-      // Enforce merchant tenant boundary
-      if (allowedRole === "merchant" && user.tenantId) {
+      // Enforce admin store boundary if configured
+      if (allowedRole === "admin" && user.tenantId) {
         const tenantId = c.get("tenantId");
         if (tenantId && user.tenantId !== tenantId) {
           return c.json(
             {
               error: {
                 code: "TENANT_MISMATCH",
-                message: "Merchant account does not have access to this store tenant",
+                message: "Admin account does not have access to this store",
               },
             },
             403
