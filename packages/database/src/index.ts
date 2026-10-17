@@ -6,6 +6,9 @@ import * as ordersSchema from "./schema/orders";
 import * as policiesSchema from "./schema/policies";
 import * as productsSchema from "./schema/products";
 
+export * from "./redis/cache";
+export * from "./redis/cart-repository";
+export * from "./redis/client";
 export * from "./schema/auth";
 export * from "./schema/embeddings";
 export * from "./schema/orders";

@@ -10,11 +10,11 @@
   ],
   "scripts": {
     "dev": "concurrently -n \"api,storefront\" -c \"cyan,magenta\" \"bun run dev:api\" \"bun run dev:storefront\"",
-    "dev:all": "docker compose up -d postgres && bun run dev",
+    "dev:all": "docker compose up -d postgres redis && bun run dev",
     "dev:api": "bun --filter @avelor/api dev",
     "dev:storefront": "bun --filter storefront dev",
     "start": "bun --filter @avelor/api start",
-    "docker:db": "docker compose up -d postgres",
+    "docker:db": "docker compose up -d postgres redis",
     "docker:down": "docker compose down",
     "db:push": "bun --filter @avelor/database db:push",
     "test": "bun test",

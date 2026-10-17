@@ -13,6 +13,7 @@
   "dependencies": {
     "@avelor/core": "workspace:*",
     "drizzle-orm": "^0.39.3",
+    "ioredis": "6.0.0",
     "postgres": "^3.4.5"
   },
   "devDependencies": {

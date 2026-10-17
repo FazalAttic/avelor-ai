@@ -19,6 +19,22 @@ services:
       timeout: 5s
       retries: 5
 
+  # Redis 7 (in-memory cache & ephemeral cart store with persistence)
+  redis:
+    image: redis:7-alpine
+    container_name: avelor-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   # Avelor API Application (optional: run whole project in Docker)
   api:
     build:
@@ -32,10 +48,14 @@ services:
       - .env
     environment:
       DATABASE_URL: postgres://avelor:avelor@postgres:5432/avelor_dev
+      REDIS_URL: redis://redis:6379
       PORT: 3000
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   postgres_data:
+  redis_data:
