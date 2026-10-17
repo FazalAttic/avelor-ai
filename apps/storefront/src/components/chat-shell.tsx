@@ -16,28 +16,20 @@ import { type ReactNode, useEffect, useState } from "react";
 import { AuthModal } from "@/components/auth-modal";
 import { IconButton } from "@/components/icon-button";
 import { IconLink } from "@/components/icon-link";
+import { SettingsModal } from "@/components/settings-modal";
 import { Sidebar } from "@/components/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserAvatar } from "@/components/user-avatar";
 import { authClient, useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
-export function ChatShell({
-  children,
-  requireAuth,
-}: {
-  children: ReactNode;
-  requireAuth?: boolean;
-}) {
+export function ChatShell({ children }: { children: ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { data: session, isPending } = useSession();
   const user = session?.user ?? null;
-
-  useEffect(() => {
-    if (requireAuth && !isPending && !user) setAuthOpen(true);
-  }, [requireAuth, isPending, user]);
 
   useEffect(() => {
     if (!sidebarOpen) return;
@@ -70,7 +62,11 @@ export function ChatShell({
       {menuOpen && (
         <div aria-hidden className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
       )}
-      <Sidebar open={sidebarOpen} onSignIn={() => setAuthOpen(true)} />
+      <Sidebar
+        open={sidebarOpen}
+        onSignIn={() => setAuthOpen(true)}
+        onSettings={() => setSettingsOpen(true)}
+      />
 
       <div className="fixed left-6 top-5 z-40 flex items-center gap-2 sm:left-8 sm:top-6">
         <Link
@@ -153,10 +149,13 @@ export function ChatShell({
                 <span className="block truncate text-xs text-muted">{user.email}</span>
               </span>
             </div>
-            <Link
-              href="/account"
+            <button
+              type="button"
               role="menuitem"
-              onClick={() => setMenuOpen(false)}
+              onClick={() => {
+                setMenuOpen(false);
+                setSettingsOpen(true);
+              }}
               className={cn(
                 "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium text-foreground",
                 "transition-colors duration-150 ease-expo hover:bg-white/70 dark:hover:bg-white/10"
@@ -164,7 +163,7 @@ export function ChatShell({
             >
               <HugeiconsIcon icon={AccountSettingIcon} size={18} strokeWidth={1.8} />
               Account settings
-            </Link>
+            </button>
             <button
               type="button"
               role="menuitem"
@@ -195,6 +194,14 @@ export function ChatShell({
       </main>
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onSignIn={() => {
+          setSettingsOpen(false);
+          setAuthOpen(true);
+        }}
+      />
     </div>
   );
 }

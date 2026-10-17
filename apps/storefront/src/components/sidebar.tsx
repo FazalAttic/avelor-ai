@@ -15,12 +15,12 @@ export type SidebarProps = {
   open: boolean;
   recentChats?: RecentChat[];
   onSignIn: () => void;
+  onSettings: () => void;
 };
 
-const NAV_ITEMS = [
+const NAV_LINKS = [
   { label: "Favourites", icon: FavouriteIcon, href: "/favourites" },
   { label: "Orders", icon: PackageIcon, href: "/orders" },
-  { label: "Account", icon: UserIcon, href: "/account" },
 ] as const;
 
 const DEFAULT_RECENT_CHATS: RecentChat[] = [
@@ -31,7 +31,12 @@ const DEFAULT_RECENT_CHATS: RecentChat[] = [
   { id: "r5", title: "4K monitor deals this week" },
 ];
 
-export function Sidebar({ open, recentChats = DEFAULT_RECENT_CHATS, onSignIn }: SidebarProps) {
+export function Sidebar({
+  open,
+  recentChats = DEFAULT_RECENT_CHATS,
+  onSignIn,
+  onSettings,
+}: SidebarProps) {
   const { data: session } = useSession();
   const user = session?.user ?? null;
 
@@ -59,9 +64,10 @@ export function Sidebar({ open, recentChats = DEFAULT_RECENT_CHATS, onSignIn }: 
       </button>
 
       <nav aria-label="Main" className="mt-3 flex shrink-0 flex-col gap-1">
-        {NAV_ITEMS.map((item) => (
+        {NAV_LINKS.map((item) => (
           <SideNavItem key={item.href} {...item} />
         ))}
+        <SideNavItem label="Account settings" icon={UserIcon} onSelect={onSettings} />
       </nav>
 
       {recentChats.length > 0 && (
