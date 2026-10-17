@@ -1,7 +1,10 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import { type ChatProduct, formatPrice } from "@/lib/chat-api";
 import { cn } from "@/lib/utils";
 
@@ -70,6 +73,96 @@ function ProductCard({ product }: { product: ChatProduct }) {
   );
 }
 
+const CARD_STRIDE = 188; // w-44 card + gap-3
+
+const ARROW_CLASS = cn(
+  "flex size-8 items-center justify-center rounded-full border border-white/50 bg-white/70 text-foreground shadow-card backdrop-blur-xl",
+  "transition-all duration-150 ease-expo hover:bg-white hover:shadow-pop active:scale-95",
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue",
+  "dark:border-white/15 dark:bg-[#15182b]/70 dark:hover:bg-[#15182b]"
+);
+
+function ProductCarousel({ products }: { products: readonly ChatProduct[] }) {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [overflow, setOverflow] = useState({ left: false, right: false });
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-measure when the row's products change
+  useEffect(() => {
+    const el = rowRef.current;
+    if (!el) return;
+    function measure() {
+      const node = rowRef.current;
+      if (!node) return;
+      const remaining = node.scrollWidth - node.clientWidth - node.scrollLeft;
+      setOverflow({ left: node.scrollLeft > 4, right: remaining > 4 });
+    }
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    el.addEventListener("scroll", measure, { passive: true });
+    return () => {
+      observer.disconnect();
+      el.removeEventListener("scroll", measure);
+    };
+  }, [products.length]);
+
+  function scroll(direction: 1 | -1) {
+    rowRef.current?.scrollBy({ left: direction * CARD_STRIDE, behavior: "smooth" });
+  }
+
+  return (
+    <div className="relative w-full">
+      <div
+        ref={rowRef}
+        className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {products.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+      <AnimatePresence initial={false}>
+        {overflow.left ? (
+          <motion.div
+            key="left"
+            initial={{ opacity: 0, x: 8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 8 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute left-2 top-[72px] z-10"
+          >
+            <button
+              type="button"
+              aria-label="Scroll to previous products"
+              onClick={() => scroll(-1)}
+              className={ARROW_CLASS}
+            >
+              <HugeiconsIcon icon={ArrowLeft01Icon} size={16} strokeWidth={2.2} />
+            </button>
+          </motion.div>
+        ) : null}
+        {overflow.right ? (
+          <motion.div
+            key="right"
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -8 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute right-2 top-[72px] z-10"
+          >
+            <button
+              type="button"
+              aria-label="Scroll to more products"
+              onClick={() => scroll(1)}
+              className={ARROW_CLASS}
+            >
+              <HugeiconsIcon icon={ArrowRight01Icon} size={16} strokeWidth={2.2} />
+            </button>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export function ChatMessageItem({ message }: { message: UiChatMessage }) {
   const isUser = message.role === "user";
   return (
@@ -98,11 +191,7 @@ export function ChatMessageItem({ message }: { message: UiChatMessage }) {
         {renderContent(message.content)}
       </div>
       {!isUser && message.products.length > 0 ? (
-        <div className="flex max-w-full gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {message.products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <ProductCarousel products={message.products} />
       ) : null}
     </motion.div>
   );
