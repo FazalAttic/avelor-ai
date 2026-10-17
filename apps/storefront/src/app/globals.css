@@ -122,6 +122,31 @@ body:has(#admin-login-shell) {
   background-image: none;
 }
 
+/* Console dialogs enter softly and leave instantly — no animation callback
+   stands between closing a dialog and the node being gone. */
+@keyframes admin-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes admin-sheet {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.99);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .admin-fade {
+    animation: admin-fade 160ms var(--ease-out-expo) both;
+  }
+
+  .admin-sheet {
+    animation: admin-sheet 260ms var(--ease-out-expo) both;
+  }
+}
+
 /* Document scrollbar (routes outside a custom ScrollArea): thin, ink-tinted. */
 html {
   scrollbar-width: thin;

@@ -58,6 +58,35 @@ export interface AdminMetrics {
   };
 }
 
+export type PolicyTopic = "returns" | "shipping" | "privacy" | "terms" | "faq" | "general";
+
+export interface AdminPolicy {
+  readonly id: string;
+  readonly topic: PolicyTopic;
+  readonly title: string;
+  readonly content: string;
+  readonly updatedAt: string;
+}
+
+export interface ProductQuery {
+  readonly limit?: number;
+  readonly offset?: number;
+  readonly search?: string;
+  readonly category?: string;
+}
+
+export interface NewProduct {
+  readonly name: string;
+  readonly description: string;
+  readonly categories: readonly string[];
+  readonly variants: readonly {
+    sku: string;
+    title: string;
+    priceAmount: number;
+    inventoryQuantity: number;
+  }[];
+}
+
 interface ApiErrorBody {
   readonly error?: { readonly code?: string; readonly message?: string };
 }
@@ -65,9 +94,10 @@ interface ApiErrorBody {
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api/v1";
 const TENANT_ID = process.env.NEXT_PUBLIC_AVELOR_TENANT_ID ?? "store_alpha";
 
-async function request<T>(path: string): Promise<T> {
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
-    headers: { "x-tenant-id": TENANT_ID },
+    ...init,
+    headers: { "x-tenant-id": TENANT_ID, ...(init.headers ?? {}) },
     credentials: "include",
   });
 
@@ -85,13 +115,49 @@ async function request<T>(path: string): Promise<T> {
   return (await response.json()) as T;
 }
 
+const json = (body: unknown): RequestInit => ({
+  headers: { "content-type": "application/json" },
+  body: JSON.stringify(body),
+});
+
 export const fetchMetrics = () => request<AdminMetrics>("/admin/metrics");
 
 export const fetchOrders = () =>
   request<{ orders: readonly AdminOrder[] }>("/admin/orders").then((r) => r.orders);
 
-export const fetchProducts = (limit = 60) =>
-  request<{ items: readonly AdminProduct[]; total: number }>(`/admin/products?limit=${limit}`);
+export const setOrderStatus = (id: string, status: OrderStatus) =>
+  request<AdminOrder>(`/admin/orders/${id}/status`, { method: "PATCH", ...json({ status }) });
+
+export function fetchProducts(query: ProductQuery = {}) {
+  const params = new URLSearchParams({ limit: String(query.limit ?? 60) });
+  if (query.offset) params.set("offset", String(query.offset));
+  if (query.search) params.set("q", query.search);
+  if (query.category) params.set("category", query.category);
+  return request<{ items: readonly AdminProduct[]; total: number }>(
+    `/admin/products?${params.toString()}`
+  );
+}
+
+export const createProduct = (input: NewProduct) =>
+  request<AdminProduct>("/admin/products", { method: "POST", ...json(input) });
+
+export interface ProductPatch {
+  name?: string;
+  description?: string;
+  categories?: readonly string[];
+  status?: ProductStatus;
+}
+
+export const updateProduct = (id: string, patch: ProductPatch) =>
+  request<AdminProduct>(`/admin/products/${id}`, { method: "PATCH", ...json(patch) });
+
+export const removeProduct = (id: string) =>
+  request<{ status: string; id: string }>(`/admin/products/${id}`, { method: "DELETE" });
+
+export const fetchPolicies = () => request<readonly AdminPolicy[]>("/admin/policies");
+
+export const savePolicy = (topic: PolicyTopic, input: { title: string; content: string }) =>
+  request<AdminPolicy>(`/admin/policies/${topic}`, { method: "PUT", ...json(input) });
 
 export function formatMoney(money: AdminMoney): string {
   const value = money.amount / 100;
