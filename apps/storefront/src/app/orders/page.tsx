@@ -56,7 +56,7 @@ const STATUS_DOT: Record<string, string> = {
 export default function OrdersPage() {
   return (
     <ChatShell>
-      <div className="relative z-10 flex h-full w-full flex-col items-center justify-end pb-4 sm:pb-6">
+      <div className="relative z-10 flex h-full w-full flex-col items-center justify-end px-6 pb-4 sm:px-8 sm:pb-6">
         <section className="flex max-h-full w-full max-w-2xl flex-col rounded-[32px] border border-white/50 bg-white/25 p-3 shadow-card backdrop-blur-2xl sm:p-4 dark:border-white/10 dark:bg-white/5">
           <PageHeader title="Orders" sub={`${ORDERS.length} orders`} />
           <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-1 pb-1">

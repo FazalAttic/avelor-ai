@@ -38,7 +38,7 @@ export function Sidebar({ open, recentChats = DEFAULT_RECENT_CHATS, onSignIn }: 
     <aside
       aria-hidden={!open}
       className={cn(
-        "fixed bottom-3 left-3 top-16 z-40 flex w-[280px] max-w-[calc(100dvw-24px)] flex-col p-3",
+        "fixed bottom-5 left-6 top-20 z-40 flex w-[280px] max-w-[calc(100dvw-48px)] flex-col p-3 sm:bottom-6 sm:left-8 sm:max-w-[calc(100dvw-64px)]",
         "rounded-3xl border border-border bg-surface shadow-pop",
         "transition-all duration-300 ease-expo",
         open ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-3 opacity-0"

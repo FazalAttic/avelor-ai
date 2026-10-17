@@ -52,7 +52,7 @@ export function ChatShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="relative flex min-h-dvh flex-col">
+    <div className="relative flex h-dvh max-h-dvh flex-col overflow-hidden">
       {sidebarOpen && (
         <div aria-hidden className="fixed inset-0 z-30" onClick={() => setSidebarOpen(false)} />
       )}
@@ -61,7 +61,7 @@ export function ChatShell({ children }: { children: ReactNode }) {
       )}
       <Sidebar open={sidebarOpen} onSignIn={() => setAuthOpen(true)} />
 
-      <div className="fixed left-3 top-3 z-40 flex items-center gap-2">
+      <div className="fixed left-6 top-5 z-40 flex items-center gap-2 sm:left-8 sm:top-6">
         <Link
           href="/"
           title="Avelor"
@@ -89,7 +89,7 @@ export function ChatShell({ children }: { children: ReactNode }) {
         <ThemeToggle />
       </div>
 
-      <div className="fixed right-3 top-3 z-40">
+      <div className="fixed right-6 top-5 z-40 sm:right-8 sm:top-6">
         <div className="flex h-10 items-center gap-0.5 rounded-full border border-white/50 bg-white/40 p-1 shadow-card backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
           <IconLink label="Orders" href="/orders" className="size-8">
             <HugeiconsIcon icon={PackageIcon} size={20} strokeWidth={1.8} />
@@ -158,10 +158,10 @@ export function ChatShell({ children }: { children: ReactNode }) {
         )}
       </div>
 
-      <main className="app-stage relative flex min-h-0 flex-1 items-center justify-center overflow-hidden px-4">
+      <main className="app-stage relative flex min-h-0 flex-1 items-center justify-center overflow-hidden">
         <div
           aria-hidden
-          className="sky pointer-events-none absolute inset-x-0 top-0 z-0 h-[46vh] max-h-[520px]"
+          className="sky pointer-events-none fixed inset-x-0 top-0 z-0 h-[46vh] max-h-[520px]"
         >
           <div className="sky-layer sky-day" />
           <div className="sky-layer sky-night" />

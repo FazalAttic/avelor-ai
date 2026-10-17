@@ -95,14 +95,25 @@ export default function Home() {
 
   return (
     <ChatShell>
-      <ProductMarquee />
+      <AnimatePresence initial={false}>
+        {!isChatting ? (
+          <motion.div
+            key="marquee"
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35 }}
+            className="pointer-events-none absolute inset-0 z-10"
+          >
+            <ProductMarquee />
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
       <AnimatePresence initial={false}>
         {!isChatting ? (
           <motion.div
             key="hero"
-            exit={{ opacity: 0, y: -28, filter: "blur(8px)" }}
-            transition={{ duration: 0.4, ease: EASE }}
-            className="flex w-full max-w-3xl translate-y-10 flex-col items-center gap-10 md:translate-y-14"
+            exit={{ opacity: 0, y: -40, filter: "blur(6px)" }}
+            transition={{ duration: 0.35, ease: EASE }}
+            className="flex w-full max-w-3xl translate-y-10 flex-col items-center gap-10 px-6 sm:px-8 md:translate-y-14"
           >
             <h1 className="text-center text-3xl font-medium tracking-tight text-foreground sm:text-4xl md:text-5xl">
               Find your{" "}
@@ -149,20 +160,20 @@ export default function Home() {
         ) : (
           <motion.div
             key="thread"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.35, delay: 0.1, ease: EASE }}
-            className="relative z-10 flex h-full w-full flex-col"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: EASE }}
+            className="relative z-10 flex h-full min-h-0 w-full flex-col"
           >
-            <div ref={scrollRef} className="flex-1 overflow-y-auto">
-              <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-1 pt-24 pb-56 sm:px-4">
+            <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden">
+              <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-6 pt-24 pb-56 sm:px-8">
                 {messages.map((message) => (
                   <ChatMessageItem key={message.id} message={message} />
                 ))}
                 {sending ? <ThinkingIndicator /> : null}
               </div>
             </div>
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-4 pb-5">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-6 pb-5 sm:px-8 sm:pb-6">
               <motion.div
                 layoutId="chat-dock"
                 className="pointer-events-auto mx-auto w-full max-w-3xl rounded-[32px] border border-white/50 bg-white/25 p-3 shadow-card backdrop-blur-2xl dark:border-white/10 dark:bg-white/5"
@@ -186,7 +197,7 @@ export default function Home() {
             key="trust"
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex items-center justify-center gap-3 px-4 text-[11px] font-medium text-muted sm:gap-5 sm:text-xs"
+            className="pointer-events-none absolute inset-x-0 bottom-3 z-10 flex items-center justify-center gap-3 px-6 text-[11px] font-medium text-muted sm:gap-5 sm:px-8 sm:text-xs"
           >
             <span className="whitespace-nowrap">Free 30-day returns</span>
             <span aria-hidden className="size-1 rounded-full bg-border-strong" />

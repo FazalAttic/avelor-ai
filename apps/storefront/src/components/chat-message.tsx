@@ -17,11 +17,13 @@ function renderContent(content: string) {
   // Gemini answers in light markdown; keep it dependency-free.
   const normalized = content.replace(/^[ \t]*[*-][ \t]+/gm, "• ");
   const parts = normalized.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
-  if (parts.length === 1) return normalized;
-  return parts.map((part, index) => {
+  let cursor = 0;
+  return parts.map((part) => {
+    const key = `${cursor}-${part.length}`;
+    cursor += part.length;
     if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
       return (
-        <strong key={index} className="font-semibold">
+        <strong key={key} className="font-semibold">
           {part.slice(2, -2)}
         </strong>
       );
@@ -29,7 +31,7 @@ function renderContent(content: string) {
     if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
       return (
         <span
-          key={index}
+          key={key}
           className="rounded-md bg-foreground/5 px-1.5 py-px font-mono text-[13px] text-muted"
         >
           {part.slice(1, -1)}
