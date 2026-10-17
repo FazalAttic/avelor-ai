@@ -213,11 +213,11 @@ export default function Home() {
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     className={cn(
-                      "pointer-events-auto mb-3 flex size-9 items-center justify-center rounded-full",
-                      "border border-white/50 bg-white/70 text-foreground shadow-card backdrop-blur-xl",
-                      "transition-shadow duration-200 ease-expo hover:shadow-pop",
+                      "pointer-events-auto mb-3 flex size-10 items-center justify-center rounded-full",
+                      "border border-foreground/10 bg-white/85 text-foreground shadow-pop backdrop-blur-xl",
+                      "transition-colors duration-200 ease-expo hover:bg-white",
                       "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue",
-                      "dark:border-white/15 dark:bg-[#15182b]/70"
+                      "dark:border-white/15 dark:bg-[#15182b]/85 dark:hover:bg-[#1c2036]"
                     )}
                   >
                     <motion.span
@@ -225,7 +225,7 @@ export default function Home() {
                       animate={{ y: [0, 3, 0] }}
                       transition={{ duration: 1.9, repeat: Infinity, ease: "easeInOut" }}
                     >
-                      <HugeiconsIcon icon={ArrowDown01Icon} size={18} strokeWidth={2.2} />
+                      <HugeiconsIcon icon={ArrowDown01Icon} size={20} strokeWidth={2.2} />
                     </motion.span>
                   </motion.button>
                 ) : null}
