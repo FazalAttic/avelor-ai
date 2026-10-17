@@ -30,7 +30,11 @@ describe("Redis Client, Cache & Cart Repository", () => {
 
   describe("Redis Client Health", () => {
     it("reports live status when connected to Docker Redis", () => {
-      // In this environment, docker compose has avelor-redis running on 6379
+      // In CI, services.redis provides Redis on 6379; locally, docker compose runs avelor-redis
+      if (!isLive && !process.env.CI) {
+        console.warn("Skipping Redis health assertion: Redis is not reachable locally");
+        return;
+      }
       expect(isLive).toBe(true);
     });
   });

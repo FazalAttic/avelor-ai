@@ -46,6 +46,22 @@
   --elev-card: 0 1px 2px rgba(23, 23, 30, 0.04), 0 4px 16px rgba(23, 23, 30, 0.06);
   --elev-pop: 0 4px 12px rgba(23, 23, 30, 0.08), 0 16px 48px rgba(23, 23, 30, 0.12);
 
+  /* Admin console — its own surface family: grey rail, white cards, ink accents.
+     The storefront sells with light; the console works with contrast. */
+  --admin-rail: #f0f2ef;
+  --admin-canvas: #f7f8f6;
+  --admin-card: #ffffff;
+  --admin-line: #e3e6e1;
+  --admin-ink: #15171a;
+  --admin-ink-contrast: #ffffff;
+  --delta-up: #12854f;
+  --delta-up-wash: #e7f4ec;
+  --delta-down: #c8392b;
+  --delta-down-wash: #fbebe7;
+  --chart-grid: #e9ebe6;
+  --chart-line: #15171a;
+  --chart-area: rgba(21, 23, 26, 0.08);
+
   /* Motion */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -70,6 +86,20 @@
   --color-brand-wash: var(--brand-wash);
 
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-admin-rail: var(--admin-rail);
+  --color-admin-canvas: var(--admin-canvas);
+  --color-admin-card: var(--admin-card);
+  --color-admin-line: var(--admin-line);
+  --color-admin-ink: var(--admin-ink);
+  --color-admin-ink-contrast: var(--admin-ink-contrast);
+  --color-delta-up: var(--delta-up);
+  --color-delta-up-wash: var(--delta-up-wash);
+  --color-delta-down: var(--delta-down);
+  --color-delta-down-wash: var(--delta-down-wash);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-line: var(--chart-line);
+  --color-chart-area: var(--chart-area);
 
   --ease-expo: var(--ease-out-expo);
   --ease-spring: var(--ease-spring);
@@ -120,6 +150,32 @@ html {
 
   --elev-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.4);
   --elev-pop: 0 4px 12px rgba(0, 0, 0, 0.45), 0 16px 48px rgba(0, 0, 0, 0.55);
+
+  --admin-rail: #0e1122;
+  --admin-canvas: #0a0c18;
+  --admin-card: #14172a;
+  --admin-line: #232840;
+  --admin-ink: #eef0fb;
+  --admin-ink-contrast: #0a0c18;
+  --delta-up: #4ade80;
+  --delta-up-wash: #12291d;
+  --delta-down: #f97066;
+  --delta-down-wash: #2b1620;
+  --chart-grid: #1b1f34;
+  --chart-line: #eef0fb;
+  --chart-area: rgba(238, 240, 251, 0.1);
+}
+
+/* Chrome paints its own autofill background over bg-*, so an autofilled input
+   never flips with the theme. Fill with the current background instead. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--background) inset;
+  box-shadow: 0 0 0 1000px var(--background) inset;
+  -webkit-text-fill-color: var(--foreground);
+  caret-color: var(--foreground);
+  transition: background-color 9999s ease-in-out 0s;
 }
 
 /* ---------------------------------------------------------------------------

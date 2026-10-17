@@ -1,11 +1,12 @@
 "use client";
 
 import {
-  ArrowLeft02Icon,
+  ArrowUpRight01Icon,
   Book03Icon,
   DashboardSquare01Icon,
   Logout03Icon,
   PackageIcon,
+  Settings01Icon,
   Shield01Icon,
   ShoppingBag01Icon,
 } from "@hugeicons/core-free-icons";
@@ -15,7 +16,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { BrandMark } from "@/components/ui/brand-mark";
-import { Button, buttonClass } from "@/components/ui/button";
+import { buttonClass } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
 import { authClient, useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -23,7 +24,7 @@ import { cn } from "@/lib/utils";
 type AdminUser = { name: string; email: string; image?: string | null };
 
 const NAV: { href: string; label: string; icon: IconSvgElement }[] = [
-  { href: "/admin", label: "Overview", icon: DashboardSquare01Icon },
+  { href: "/admin", label: "Dashboard", icon: DashboardSquare01Icon },
   { href: "/admin/products", label: "Products", icon: PackageIcon },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag01Icon },
   { href: "/admin/policies", label: "AI policies", icon: Book03Icon },
@@ -42,12 +43,17 @@ function titleFor(pathname: string) {
       (item.href === "/admin" && pathname === "/admin") ||
       (item.href !== "/admin" && pathname.startsWith(item.href))
   );
-  return match?.label ?? "Overview";
+  return match?.label ?? "Dashboard";
 }
 
 const GHOST_BUTTON = buttonClass({ variant: "secondary", size: "md" });
 
 const PRIMARY_BUTTON = buttonClass({ variant: "primary", size: "md" });
+
+const INK_BUTTON = buttonClass({ variant: "ink", size: "md" });
+
+const RAIL_BUTTON =
+  "flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-medium text-muted transition-colors duration-150 ease-expo hover:bg-admin-line/60 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue max-lg:justify-center max-lg:px-0";
 
 function NavLink({
   href,
@@ -66,23 +72,20 @@ function NavLink({
       title={label}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "relative flex h-10 shrink-0 items-center gap-3 rounded-xl px-2.5 text-sm font-medium",
+        "flex h-10 shrink-0 items-center gap-3 rounded-xl px-2.5 text-sm font-medium",
         "transition-colors duration-150 ease-expo max-lg:justify-center max-lg:px-0",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue",
         active
-          ? "bg-brand-wash text-brand-blue"
-          : "text-muted hover:bg-surface-hover hover:text-foreground"
+          ? "bg-admin-card text-admin-ink shadow-card"
+          : "text-muted hover:bg-admin-line/60 hover:text-foreground"
       )}
     >
-      <span
-        aria-hidden
-        className={cn(
-          "absolute top-1/2 -left-3 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand-blue",
-          "transition-opacity duration-150 ease-expo",
-          active ? "opacity-100" : "opacity-0"
-        )}
+      <HugeiconsIcon
+        icon={icon}
+        size={18}
+        strokeWidth={active ? 2 : 1.7}
+        className="shrink-0"
       />
-      <HugeiconsIcon icon={icon} size={18} strokeWidth={1.8} className="shrink-0" />
       <span className="truncate max-lg:hidden">{label}</span>
     </Link>
   );
@@ -101,9 +104,9 @@ function AdminShell({ user, children }: { user: AdminUser; children: ReactNode }
   }
 
   return (
-    <div id="admin-shell" className="flex min-h-screen bg-background text-foreground">
-      <aside className="flex w-[236px] shrink-0 flex-col gap-1 border-r border-border bg-surface px-3 py-4 max-lg:w-[74px]">
-        <Link href="/admin" title="Avelor Admin" className="px-1.5 pb-4 max-lg:px-0">
+    <div id="admin-shell" className="flex min-h-screen bg-admin-canvas text-foreground">
+      <aside className="sticky top-0 flex h-dvh w-[248px] shrink-0 flex-col gap-1 border-r border-admin-line bg-admin-rail px-3 py-4 max-lg:w-[74px]">
+        <Link href="/admin" title="Avelor Admin" className="px-1.5 pb-5 max-lg:px-0">
           <BrandMark caption="Admin" wordmarkClassName="max-lg:hidden" />
         </Link>
 
@@ -125,14 +128,50 @@ function AdminShell({ user, children }: { user: AdminUser; children: ReactNode }
           />
         ))}
 
-        <Link href="/" title="View storefront" className={cn(GHOST_BUTTON, "mt-auto max-lg:px-0")}>
-          <HugeiconsIcon icon={ArrowLeft02Icon} size={16} strokeWidth={1.8} className="shrink-0" />
-          <span className="max-lg:hidden">Storefront</span>
-        </Link>
+        <div className="mt-auto flex flex-col gap-1 pt-4">
+          <Link href="/admin/security" title="Security" className={RAIL_BUTTON}>
+            <HugeiconsIcon icon={Settings01Icon} size={17} strokeWidth={1.8} className="shrink-0" />
+            <span className="max-lg:hidden">Settings</span>
+          </Link>
+
+          <div className="flex flex-col gap-2.5 rounded-xl border border-admin-line bg-admin-card p-2.5 max-lg:hidden">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <UserAvatar name={user.name} image={user.image} size="sm" />
+              <span className="min-w-0">
+                <span className="block truncate text-[13px] leading-tight font-semibold">
+                  {user.name}
+                </span>
+                <span className="block truncate text-[11px] leading-tight text-subtle">
+                  {user.email}
+                </span>
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={signOut}
+              disabled={signingOut}
+              className={cn(RAIL_BUTTON, "border border-admin-line disabled:opacity-60")}
+            >
+              <HugeiconsIcon icon={Logout03Icon} size={17} strokeWidth={1.8} className="shrink-0" />
+              <span>{signingOut ? "Signing out…" : "Log out"}</span>
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={signOut}
+            disabled={signingOut}
+            title="Log out"
+            aria-label="Log out"
+            className={cn(RAIL_BUTTON, "max-lg:mt-1 lg:hidden")}
+          >
+            <HugeiconsIcon icon={Logout03Icon} size={17} strokeWidth={1.8} className="shrink-0" />
+          </button>
+        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border px-6 max-lg:px-4">
+        <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-admin-line px-6 max-lg:px-4">
           <div className="flex min-w-0 items-center gap-2.5">
             <h1 className="truncate text-[15px] font-semibold tracking-tight">
               {titleFor(pathname)}
@@ -141,23 +180,11 @@ function AdminShell({ user, children }: { user: AdminUser; children: ReactNode }
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            <div className="flex items-center gap-2.5 rounded-full border border-border bg-surface py-1.5 pr-3 pl-1.5">
-              <UserAvatar name={user.name} image={user.image} size="sm" />
-              <span className="min-w-0 text-left">
-                <span className="block max-w-[140px] truncate text-[13px] leading-tight font-semibold">
-                  {user.name}
-                </span>
-                <span className="block max-w-[140px] truncate text-[11px] leading-tight text-subtle max-sm:hidden">
-                  {user.email}
-                </span>
-              </span>
-              <Badge tone="brand">Admin</Badge>
-            </div>
-
-            <Button variant="secondary" size="md" onClick={signOut} disabled={signingOut}>
-              <HugeiconsIcon icon={Logout03Icon} size={16} strokeWidth={1.8} className="shrink-0" />
-              <span className="max-sm:hidden">{signingOut ? "Signing out…" : "Sign out"}</span>
-            </Button>
+            <Link href="/" className={INK_BUTTON}>
+              <HugeiconsIcon icon={ArrowUpRight01Icon} size={15} strokeWidth={2} />
+              <span className="max-sm:hidden">View storefront</span>
+              <span className="sm:hidden">Store</span>
+            </Link>
           </div>
         </header>
 
@@ -171,20 +198,25 @@ function AdminShell({ user, children }: { user: AdminUser; children: ReactNode }
 
 function ShellSkeleton() {
   return (
-    <div className="flex min-h-screen bg-background">
-      <aside className="w-[236px] shrink-0 border-r border-border bg-surface p-4 max-lg:w-[74px]">
-        <div className="size-8 animate-pulse rounded-[10px] bg-surface-hover" />
+    <div className="flex min-h-screen bg-admin-canvas">
+      <aside className="w-[248px] shrink-0 border-r border-admin-line bg-admin-rail p-4 max-lg:w-[74px]">
+        <div className="size-8 animate-pulse rounded-[10px] bg-admin-line" />
         <div className="mt-6 flex flex-col gap-2">
           {[0, 1, 2, 3, 4].map((row) => (
-            <div key={row} className="h-10 animate-pulse rounded-xl bg-surface-hover" />
+            <div key={row} className="h-10 animate-pulse rounded-xl bg-admin-line" />
           ))}
         </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="h-16 shrink-0 border-b border-border" />
+        <header className="h-16 shrink-0 border-b border-admin-line" />
         <main className="flex flex-col gap-3 p-6">
-          <div className="h-7 w-44 animate-pulse rounded-lg bg-surface-hover" />
-          <div className="h-40 animate-pulse rounded-2xl bg-surface-hover" />
+          <div className="h-7 w-44 animate-pulse rounded-lg bg-admin-line" />
+          <div className="grid grid-cols-4 gap-3">
+            {[0, 1, 2, 3].map((row) => (
+              <div key={row} className="h-32 animate-pulse rounded-2xl bg-admin-card" />
+            ))}
+          </div>
+          <div className="h-72 animate-pulse rounded-2xl bg-admin-card" />
         </main>
       </div>
     </div>
