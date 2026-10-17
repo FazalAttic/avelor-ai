@@ -297,6 +297,98 @@ describe("Better Auth & Admin / Customer Role Isolation", () => {
       const body = await res.json();
       expect(body.name).toBe("Official Espresso Beans");
     });
+
+    it("serves GET /api/v1/admin/me with current admin user profile", async () => {
+      const res = await app.request("/api/v1/admin/me", {
+        method: "GET",
+        headers: {
+          "x-tenant-id": tenantA,
+          authorization: `Bearer ${adminTokenA}`,
+        },
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.user.email).toBe("admina@store.com");
+      expect(body.user.role).toBe("admin");
+      expect(body.tenantId).toBe(tenantA);
+    });
+
+    it("allows admin to create and list products via /api/v1/admin/products", async () => {
+      const createRes = await app.request("/api/v1/admin/products", {
+        method: "POST",
+        headers: {
+          "x-tenant-id": tenantA,
+          authorization: `Bearer ${adminTokenA}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          name: "Admin Leather Boots",
+          description: "Premium boots",
+          categories: ["footwear"],
+          variants: [
+            {
+              sku: "BOOT-42",
+              priceAmount: 18900,
+              currency: "USD",
+              inventoryQuantity: 20,
+            },
+          ],
+        }),
+      });
+
+      expect(createRes.status).toBe(201);
+      const created = await createRes.json();
+      expect(created.name).toBe("Admin Leather Boots");
+      expect(created.variants).toHaveLength(1);
+      expect(created.variants[0].sku).toBe("BOOT-42");
+
+      const listRes = await app.request("/api/v1/admin/products", {
+        method: "GET",
+        headers: {
+          "x-tenant-id": tenantA,
+          authorization: `Bearer ${adminTokenA}`,
+        },
+      });
+
+      expect(listRes.status).toBe(200);
+      const listData = await listRes.json();
+      expect(listData.total).toBeGreaterThanOrEqual(1);
+    });
+
+    it("allows admin to list store orders via /api/v1/admin/orders", async () => {
+      const res = await app.request("/api/v1/admin/orders", {
+        method: "GET",
+        headers: {
+          "x-tenant-id": tenantA,
+          authorization: `Bearer ${adminTokenA}`,
+        },
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(Array.isArray(body.orders)).toBe(true);
+    });
+
+    it("exposes two-factor authentication endpoints via Better Auth", async () => {
+      const res = await app.request("/api/auth/two-factor/enable", {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${adminTokenA}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          password: "Password123!",
+        }),
+      });
+
+      // Returns 200 with TOTP URI and backup codes for Google Authenticator
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.totpURI).toBeDefined();
+      expect(data.totpURI).toContain("otpauth://totp/");
+      expect(Array.isArray(data.backupCodes)).toBe(true);
+    });
   });
 
   describe("Public Shopper Catalog Browsing (GET /api/v1/products)", () => {

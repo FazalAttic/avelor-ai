@@ -19,10 +19,12 @@ import {
   type PolicyRepository,
   type TenantId,
 } from "@avelor/core";
+import type { RedisTokenBucket } from "@avelor/database";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { type AuthInstance, type AuthSession, type AuthUser, createAuth } from "./auth";
 import { createAuthMiddleware } from "./middleware/auth";
+import { createRateLimiterMiddleware } from "./middleware/rate-limit";
 import { createAdminRoutes } from "./routes/admin";
 import { createCartRoutes } from "./routes/cart";
 import { createCatalogRoutes } from "./routes/catalog";
@@ -53,6 +55,8 @@ export interface AppOptions {
   readonly guardrail?: GuardrailEngine | undefined;
   readonly auth?: AuthInstance | undefined;
   readonly enforceAdminAuth?: boolean | undefined;
+  readonly chatRateLimiter?: RedisTokenBucket | undefined;
+  readonly apiRateLimiter?: RedisTokenBucket | undefined;
 }
 
 export function createApp(options: AppOptions = {}) {
@@ -121,6 +125,14 @@ export function createApp(options: AppOptions = {}) {
       timestamp: new Date().toISOString(),
     });
   });
+
+  // Apply Token Bucket rate limiting when configured
+  if (options.apiRateLimiter) {
+    app.use("/api/v1/*", createRateLimiterMiddleware(options.apiRateLimiter));
+  }
+  if (options.chatRateLimiter) {
+    app.use("/api/v1/chat*", createRateLimiterMiddleware(options.chatRateLimiter, { cost: 1 }));
+  }
 
   // Mount catalog routes (with optional admin auth enforcement)
   app.route(

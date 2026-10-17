@@ -8,6 +8,7 @@ import {
   productVariants,
   sessions,
   storePolicies,
+  twoFactors,
   users,
   verifications,
 } from "../src/index";
@@ -48,6 +49,7 @@ describe("Database schema definitions", () => {
     expect(users.email.name).toBe("email");
     expect(users.role.name).toBe("role");
     expect(users.tenantId.name).toBe("tenant_id");
+    expect(users.twoFactorEnabled.name).toBe("two_factor_enabled");
 
     expect(sessions.token.name).toBe("token");
     expect(sessions.userId.name).toBe("user_id");
@@ -56,6 +58,11 @@ describe("Database schema definitions", () => {
     expect(accounts.providerId.name).toBe("provider_id");
 
     expect(verifications.identifier.name).toBe("identifier");
+
+    expect(twoFactors.secret.name).toBe("secret");
+    expect(twoFactors.backupCodes.name).toBe("backup_codes");
+    expect(twoFactors.userId.name).toBe("user_id");
+    expect(twoFactors.verified.name).toBe("verified");
   });
 
   it("defines productEmbeddings table with 1536-dim vector and tenant isolation", () => {

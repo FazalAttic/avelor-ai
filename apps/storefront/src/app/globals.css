@@ -86,6 +86,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* The admin console is a tool, not a landing page: no brand aura behind it. */
+body:has(#admin-shell),
+body:has(#admin-login-shell) {
+  background-image: none;
+}
+
 /* Document scrollbar (routes outside a custom ScrollArea): thin, ink-tinted. */
 html {
   scrollbar-width: thin;

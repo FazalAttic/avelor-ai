@@ -18,6 +18,7 @@ import {
   createRedisClient,
   type Database,
   RedisCartRepository,
+  RedisTokenBucket,
 } from "@avelor/database";
 import { createApp } from "./app";
 import { createAuth } from "./auth";
@@ -31,15 +32,30 @@ const database: Database = createDatabaseClient(
 );
 const auth = createAuth({ database });
 
-// Cart storage: use Redis when available, otherwise fall back to in-memory store
+// Cart storage & Token Bucket rate limiting: use Redis when available
 let cartRepo: CartRepository = new InMemoryCartRepository();
+let chatRateLimiter: RedisTokenBucket | undefined;
+let apiRateLimiter: RedisTokenBucket | undefined;
+
 const redisUrl = process.env.REDIS_URL;
 if (redisUrl) {
   const redisClient = createRedisClient(redisUrl);
   const isHealthy = await checkRedisHealth(redisClient);
   if (isHealthy) {
     cartRepo = new RedisCartRepository(redisClient);
-    console.log(`[Avelor Redis] Connected to Redis at ${redisUrl} (cart TTL active)`);
+    chatRateLimiter = new RedisTokenBucket(redisClient, {
+      capacity: 20,
+      refillRatePerSecond: 1 / 1.5, // 1 token every 1.5s (20 burst queries, steady brainstorm refill)
+      keyPrefix: "ratelimit:chat:",
+    });
+    apiRateLimiter = new RedisTokenBucket(redisClient, {
+      capacity: 50,
+      refillRatePerSecond: 2, // 2 tokens/s (fast human navigation, chokes scrapers)
+      keyPrefix: "ratelimit:api:",
+    });
+    console.log(
+      `[Avelor Redis] Connected to Redis at ${redisUrl} (cart TTL & Token Bucket rate limiting active)`
+    );
   } else {
     console.warn(
       `[Avelor Redis] Could not reach Redis at ${redisUrl}, falling back to in-memory cart store.`
@@ -68,6 +84,8 @@ const app = createApp({
   catalogRepo,
   policyRepo,
   enforceAdminAuth: true,
+  chatRateLimiter,
+  apiRateLimiter,
 });
 
 console.log(`[Avelor API] Server starting on http://localhost:${port}`);

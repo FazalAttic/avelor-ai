@@ -5,7 +5,7 @@ import type { Database } from "@avelor/database";
 import * as schema from "@avelor/database";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { bearer } from "better-auth/plugins";
+import { bearer, twoFactor } from "better-auth/plugins";
 
 function ensureEnvLoaded(): void {
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) return;
@@ -38,6 +38,7 @@ export interface AuthUser {
   role: UserRole;
   tenantId?: string | undefined;
   emailVerified: boolean;
+  twoFactorEnabled?: boolean | undefined;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -59,6 +60,28 @@ export interface CreateAuthOptions {
   googleClientSecret?: string | undefined;
 }
 
+export interface AuthInstance {
+  handler: (request: Request) => Promise<Response>;
+  api: {
+    getSession: (context: { headers: Headers }) => Promise<{
+      user?: unknown;
+      session?: unknown;
+    } | null>;
+    [key: string]: unknown;
+  };
+  options: {
+    account?: {
+      accountLinking?: {
+        enabled?: boolean;
+        trustedProviders?: string[];
+        updateUserInfoOnLink?: boolean;
+      };
+    };
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 function initializeInMemorySqlite(): SqliteDatabase {
   const db = new SqliteDatabase(":memory:");
   db.run(`
@@ -70,6 +93,7 @@ function initializeInMemorySqlite(): SqliteDatabase {
       image TEXT,
       role TEXT NOT NULL DEFAULT 'customer',
       tenantId TEXT,
+      twoFactorEnabled BOOLEAN NOT NULL DEFAULT 0,
       createdAt DATETIME NOT NULL,
       updatedAt DATETIME NOT NULL
     );
@@ -106,11 +130,20 @@ function initializeInMemorySqlite(): SqliteDatabase {
       createdAt DATETIME,
       updatedAt DATETIME
     );
+    CREATE TABLE IF NOT EXISTS twoFactor (
+      id TEXT PRIMARY KEY,
+      secret TEXT NOT NULL,
+      backupCodes TEXT NOT NULL,
+      userId TEXT NOT NULL REFERENCES user(id),
+      verified BOOLEAN NOT NULL DEFAULT 1,
+      failedVerificationCount INTEGER NOT NULL DEFAULT 0,
+      lockedUntil DATETIME
+    );
   `);
   return db;
 }
 
-export function createAuth(options: CreateAuthOptions = {}) {
+export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
   ensureEnvLoaded();
 
   const secret =
@@ -132,6 +165,7 @@ export function createAuth(options: CreateAuthOptions = {}) {
         session: schema.sessions,
         account: schema.accounts,
         verification: schema.verifications,
+        twoFactor: schema.twoFactors,
       },
     });
   } else {
@@ -182,10 +216,18 @@ export function createAuth(options: CreateAuthOptions = {}) {
           type: "string",
           required: false,
         },
+        twoFactorEnabled: {
+          type: "boolean",
+          required: false,
+          defaultValue: false,
+        },
       },
     },
-    plugins: [bearer()],
-  });
+    plugins: [
+      bearer(),
+      twoFactor({
+        issuer: "Avelor Admin",
+      }),
+    ],
+  }) as unknown as AuthInstance;
 }
-
-export type AuthInstance = ReturnType<typeof createAuth>;

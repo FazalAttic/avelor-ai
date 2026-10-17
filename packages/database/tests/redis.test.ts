@@ -1,7 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { createMoney, parseTenantId } from "@avelor/core";
 import type Redis from "ioredis";
-import { checkRedisHealth, createRedisClient, RedisCache, RedisCartRepository } from "../src/index";
+import {
+  checkRedisHealth,
+  createRedisClient,
+  RedisCache,
+  RedisCartRepository,
+  RedisTokenBucket,
+} from "../src/index";
 
 describe("Redis Client, Cache & Cart Repository", () => {
   let redis: Redis;
@@ -196,6 +202,88 @@ describe("Redis Client, Cache & Cart Repository", () => {
       const cleared = await repo.clearCart(tenantA, cart.id);
       expect(cleared.items).toHaveLength(0);
       expect(cleared.subtotal.amount).toBe(0);
+    });
+  });
+
+  describe("RedisTokenBucket", () => {
+    it("permits initial requests up to capacity and calculates remaining tokens", async () => {
+      if (!isLive) return;
+      const bucket = new RedisTokenBucket(redis, {
+        capacity: 3,
+        refillRatePerSecond: 1,
+        keyPrefix: "test:ratelimit:burst:",
+      });
+      const clientId = "client_alpha";
+      await bucket.reset(clientId);
+
+      // Request 1: uses 1 token, 2 remaining
+      const r1 = await bucket.consume(clientId, 1);
+      expect(r1.allowed).toBe(true);
+      expect(r1.remaining).toBe(2);
+      expect(r1.retryAfterSeconds).toBe(0);
+
+      // Request 2: uses 1 token, 1 remaining
+      const r2 = await bucket.consume(clientId, 1);
+      expect(r2.allowed).toBe(true);
+      expect(r2.remaining).toBe(1);
+
+      // Request 3: uses 1 token, 0 remaining
+      const r3 = await bucket.consume(clientId, 1);
+      expect(r3.allowed).toBe(true);
+      expect(r3.remaining).toBe(0);
+
+      // Request 4: rejected! Capacity exhausted
+      const r4 = await bucket.consume(clientId, 1);
+      expect(r4.allowed).toBe(false);
+      expect(r4.retryAfterSeconds).toBeGreaterThanOrEqual(1);
+    });
+
+    it("supports variable token costs for expensive operations like LLM chat", async () => {
+      if (!isLive) return;
+      const bucket = new RedisTokenBucket(redis, {
+        capacity: 10,
+        refillRatePerSecond: 2,
+        keyPrefix: "test:ratelimit:llm:",
+      });
+      const userId = "user_llm_heavy";
+      await bucket.reset(userId);
+
+      // AI chat request with cost of 5 tokens
+      const r1 = await bucket.consume(userId, 5);
+      expect(r1.allowed).toBe(true);
+      expect(r1.remaining).toBe(5);
+
+      // Second AI chat request with cost of 5 tokens
+      const r2 = await bucket.consume(userId, 5);
+      expect(r2.allowed).toBe(true);
+      expect(r2.remaining).toBe(0);
+
+      // Third AI chat request rejected because remaining is 0 < 5
+      const r3 = await bucket.consume(userId, 5);
+      expect(r3.allowed).toBe(false);
+      expect(r3.retryAfterSeconds).toBeGreaterThanOrEqual(1);
+    });
+
+    it("refills tokens over elapsed time", async () => {
+      if (!isLive) return;
+      const bucket = new RedisTokenBucket(redis, {
+        capacity: 2,
+        refillRatePerSecond: 10, // 10 tokens/sec = 1 token every 100ms
+        keyPrefix: "test:ratelimit:refill:",
+      });
+      const clientId = "client_refill";
+      await bucket.reset(clientId);
+
+      // Drain all 2 tokens
+      await bucket.consume(clientId, 2);
+      const drained = await bucket.consume(clientId, 1);
+      expect(drained.allowed).toBe(false);
+
+      // Wait 150ms for tokens to replenish
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      const refilled = await bucket.consume(clientId, 1);
+      expect(refilled.allowed).toBe(true);
     });
   });
 });

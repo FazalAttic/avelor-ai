@@ -9,6 +9,7 @@ import * as productsSchema from "./schema/products";
 export * from "./redis/cache";
 export * from "./redis/cart-repository";
 export * from "./redis/client";
+export * from "./redis/token-bucket";
 export * from "./schema/auth";
 export * from "./schema/embeddings";
 export * from "./schema/orders";

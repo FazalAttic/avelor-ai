@@ -18,6 +18,7 @@ export interface OrderRepository {
   getOrder(tenantId: TenantId, orderId: string): Promise<Order | null>;
   getOrderByCart(tenantId: TenantId, cartId: string): Promise<Order | null>;
   getByIdempotencyKey(tenantId: TenantId, idempotencyKey: string): Promise<Order | null>;
+  listOrders(tenantId: TenantId): Promise<readonly Order[]>;
   updateOrderStatus(
     tenantId: TenantId,
     orderId: string,
@@ -93,6 +94,12 @@ export class InMemoryOrderRepository implements OrderRepository {
     const orderId = this.idempotencyIndex.get(`${tenantId}:${idempotencyKey}`);
     if (!orderId) return null;
     return this.getOrder(tenantId, orderId);
+  }
+
+  async listOrders(tenantId: TenantId): Promise<readonly Order[]> {
+    return Array.from(this.orders.values())
+      .filter((o) => o.tenantId === tenantId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
   async updateOrderStatus(
