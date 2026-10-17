@@ -17,7 +17,8 @@ export function Segmented<T extends string | number>({
     <fieldset
       aria-label={ariaLabel}
       className={cn(
-        "inline-flex shrink-0 items-center gap-0.5 rounded-full border border-admin-line bg-admin-rail p-0.5",
+        "inline-flex max-w-full min-w-0 shrink-0 items-center gap-0.5 overflow-x-auto rounded-full",
+        "border border-admin-line bg-admin-rail p-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         className
       )}
     >

@@ -47,7 +47,7 @@ export function DataTable<T>({
   className,
 }: DataTableProps<T>) {
   return (
-    <div className={cn("min-w-0 overflow-x-auto", className)}>
+    <div className={cn("relative min-w-0 overflow-x-auto", className)}>
       <table className="w-full border-collapse text-left text-[13px] text-admin-ink">
         <caption className="sr-only">{caption}</caption>
         <thead>
