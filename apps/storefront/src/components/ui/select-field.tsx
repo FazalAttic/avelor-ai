@@ -7,17 +7,29 @@ export type SelectFieldProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, "id
   label: string;
   options: readonly { value: string; label: string }[];
   id?: string;
+  /** Keep the label for screen readers only — for controls inside a table row. */
+  hideLabel?: boolean;
 };
 
 /** Native select on purpose: keyboard, mobile and screen readers come free. */
-export function SelectField({ label, options, className, id, ...props }: SelectFieldProps) {
+export function SelectField({
+  label,
+  options,
+  hideLabel,
+  className,
+  id,
+  ...props
+}: SelectFieldProps) {
   const generated = useId();
   const selectId = id ?? generated;
   return (
-    <div className={cn("flex shrink-0 items-center gap-2", className)}>
+    <div className={cn("flex shrink-0 items-center gap-2", hideLabel && "gap-0", className)}>
       <label
         htmlFor={selectId}
-        className="text-[11px] font-semibold tracking-[0.08em] text-muted uppercase"
+        className={cn(
+          "text-[11px] font-semibold tracking-[0.08em] text-muted uppercase",
+          hideLabel && "sr-only"
+        )}
       >
         {label}
       </label>
