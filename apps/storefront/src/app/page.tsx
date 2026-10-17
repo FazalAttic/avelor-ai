@@ -1,5 +1,7 @@
 "use client";
 
+import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { ChatMessageItem, type UiChatMessage } from "@/components/chat-message";
@@ -8,6 +10,7 @@ import { Composer } from "@/components/composer";
 import { ProductMarquee } from "@/components/product-marquee";
 import { ScrollArea } from "@/components/scroll-area";
 import { sendChatMessage } from "@/lib/chat-api";
+import { cn } from "@/lib/utils";
 
 const STARTERS = [
   { emoji: "👟", text: "Running shoes under $100", tilt: "rotate-[1.4deg] translate-y-[2px]" },
@@ -45,13 +48,33 @@ export default function Home() {
   const [sending, setSending] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const pinnedRef = useRef(true);
+  const [showJump, setShowJump] = useState(false);
   const isChatting = sending || messages.length > 0;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: scroll on every message/phase change
+  // Follow the thread only while the reader is already at the bottom, so a new
+  // reply never yanks them out of something they were re-reading.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-check on every message and phase change
   useEffect(() => {
     const el = scrollRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    if (el && pinnedRef.current) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages, sending]);
+
+  function trackPinned() {
+    const el = scrollRef.current;
+    if (!el) return;
+    const gap = el.scrollHeight - el.clientHeight - el.scrollTop;
+    pinnedRef.current = gap < 160;
+    setShowJump(gap > 160);
+  }
+
+  function jumpToLatest() {
+    const el = scrollRef.current;
+    if (!el) return;
+    pinnedRef.current = true;
+    setShowJump(false);
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }
 
   useEffect(() => {
     if (!isChatting) return;
@@ -167,7 +190,7 @@ export default function Home() {
             transition={{ duration: 0.35, ease: EASE }}
             className="relative z-10 flex h-full min-h-0 w-full flex-col"
           >
-            <ScrollArea className="min-h-0 flex-1" viewportRef={scrollRef}>
+            <ScrollArea onScroll={trackPinned} className="min-h-0 flex-1" viewportRef={scrollRef}>
               <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-6 pt-24 pb-56 sm:px-8">
                 {messages.map((message) => (
                   <ChatMessageItem key={message.id} message={message} />
@@ -175,7 +198,38 @@ export default function Home() {
                 {sending ? <ThinkingIndicator /> : null}
               </div>
             </ScrollArea>
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-6 pb-5 sm:px-8 sm:pb-6">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center px-6 pb-5 sm:px-8 sm:pb-6">
+              <AnimatePresence initial={false}>
+                {showJump ? (
+                  <motion.button
+                    key="jump"
+                    type="button"
+                    aria-label="Go to the latest message"
+                    onClick={jumpToLatest}
+                    initial={{ opacity: 0, y: 14, scale: 0.55 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 14, scale: 0.55 }}
+                    transition={{ type: "spring", stiffness: 480, damping: 28 }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className={cn(
+                      "pointer-events-auto mb-3 flex size-9 items-center justify-center rounded-full",
+                      "border border-white/50 bg-white/70 text-foreground shadow-card backdrop-blur-xl",
+                      "transition-shadow duration-200 ease-expo hover:shadow-pop",
+                      "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue",
+                      "dark:border-white/15 dark:bg-[#15182b]/70"
+                    )}
+                  >
+                    <motion.span
+                      aria-hidden
+                      animate={{ y: [0, 3, 0] }}
+                      transition={{ duration: 1.9, repeat: Infinity, ease: "easeInOut" }}
+                    >
+                      <HugeiconsIcon icon={ArrowDown01Icon} size={18} strokeWidth={2.2} />
+                    </motion.span>
+                  </motion.button>
+                ) : null}
+              </AnimatePresence>
               <motion.div
                 layoutId="chat-dock"
                 transition={{ layout: { duration: 0.45, ease: EASE } }}

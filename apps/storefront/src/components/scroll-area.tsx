@@ -20,13 +20,20 @@ export type ScrollAreaProps = {
    * backdrop-blurred surface: the mask makes the viewport a backdrop root.
    */
   edgeFade?: boolean;
+  onScroll?: () => void;
 };
 
 const IDLE_MS = 1000;
 const MIN_THUMB = 28;
 const EDGE_FADE = 28;
 
-export function ScrollArea({ children, className, viewportRef, edgeFade }: ScrollAreaProps) {
+export function ScrollArea({
+  children,
+  className,
+  viewportRef,
+  edgeFade,
+  onScroll,
+}: ScrollAreaProps) {
   const viewport = useRef<HTMLDivElement | null>(null);
   const thumb = useRef<HTMLDivElement | null>(null);
   const idleTimer = useRef<number | null>(null);
@@ -35,6 +42,11 @@ export function ScrollArea({ children, className, viewportRef, edgeFade }: Scrol
   const [active, setActive] = useState(false);
   const [overflowing, setOverflowing] = useState(false);
   const [edges, setEdges] = useState({ top: false, bottom: false });
+  const scrollNotify = useRef(onScroll);
+
+  useEffect(() => {
+    scrollNotify.current = onScroll;
+  });
 
   const measure = useCallback(() => {
     const el = viewport.current;
@@ -63,17 +75,18 @@ export function ScrollArea({ children, className, viewportRef, edgeFade }: Scrol
   useEffect(() => {
     const el = viewport.current;
     if (!el) return;
-    function onScroll() {
+    function handleScroll() {
       measure();
       ping();
+      scrollNotify.current?.();
     }
-    const observer = new ResizeObserver(() => measure());
-    el.addEventListener("scroll", onScroll, { passive: true });
+    const observer = new ResizeObserver(measure);
+    el.addEventListener("scroll", handleScroll, { passive: true });
     observer.observe(el);
     if (el.firstElementChild) observer.observe(el.firstElementChild);
     measure();
     return () => {
-      el.removeEventListener("scroll", onScroll);
+      el.removeEventListener("scroll", handleScroll);
       observer.disconnect();
       if (idleTimer.current) window.clearTimeout(idleTimer.current);
     };
