@@ -100,14 +100,14 @@ export default function Home() {
           <motion.div
             key="marquee"
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.35 }}
+            transition={{ duration: 0.5 }}
             className="pointer-events-none absolute inset-0 z-10"
           >
             <ProductMarquee />
           </motion.div>
         ) : null}
       </AnimatePresence>
-      <AnimatePresence initial={false}>
+      <AnimatePresence initial={false} mode="popLayout">
         {!isChatting ? (
           <motion.div
             key="hero"
@@ -124,6 +124,7 @@ export default function Home() {
             </h1>
             <motion.div
               layoutId="chat-dock"
+              transition={{ layout: { duration: 0.45, ease: EASE } }}
               className="w-full rounded-[32px] border border-white/50 bg-white/25 p-3 shadow-card backdrop-blur-2xl dark:border-white/10 dark:bg-white/5"
             >
               <Composer
@@ -160,8 +161,8 @@ export default function Home() {
         ) : (
           <motion.div
             key="thread"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.35, ease: EASE }}
             className="relative z-10 flex h-full min-h-0 w-full flex-col"
           >
@@ -176,6 +177,7 @@ export default function Home() {
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-6 pb-5 sm:px-8 sm:pb-6">
               <motion.div
                 layoutId="chat-dock"
+                transition={{ layout: { duration: 0.45, ease: EASE } }}
                 className="pointer-events-auto mx-auto w-full max-w-3xl rounded-[32px] border border-white/50 bg-white/25 p-3 shadow-card backdrop-blur-2xl dark:border-white/10 dark:bg-white/5"
               >
                 <Composer
