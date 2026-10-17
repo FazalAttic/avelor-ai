@@ -80,12 +80,7 @@ function NavLink({
           : "text-muted hover:bg-admin-line/60 hover:text-foreground"
       )}
     >
-      <HugeiconsIcon
-        icon={icon}
-        size={18}
-        strokeWidth={active ? 2 : 1.7}
-        className="shrink-0"
-      />
+      <HugeiconsIcon icon={icon} size={18} strokeWidth={active ? 2 : 1.7} className="shrink-0" />
       <span className="truncate max-lg:hidden">{label}</span>
     </Link>
   );

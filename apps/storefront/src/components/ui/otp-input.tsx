@@ -11,6 +11,7 @@ export type OtpInputProps = {
   autoFocus?: boolean;
   onComplete?: (code: string) => void;
   label?: string;
+  className?: string;
 };
 
 export function OtpInput({
@@ -21,6 +22,7 @@ export function OtpInput({
   autoFocus,
   onComplete,
   label = "Verification code",
+  className,
 }: OtpInputProps) {
   const refs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -95,7 +97,8 @@ export function OtpInput({
               "h-12 w-full min-w-0 rounded-xl border bg-background text-center text-lg font-semibold text-foreground tabular-nums",
               "transition-colors duration-150 ease-expo focus:border-brand-blue focus:outline-none",
               "disabled:pointer-events-none disabled:opacity-45",
-              char ? "border-border-strong" : "border-border"
+              char ? "border-border-strong" : "border-border",
+              className
             )}
           />
         );

@@ -1,6 +1,9 @@
 import {
   type CatalogRepository,
   createMoney,
+  type Money,
+  type OrderItem,
+  type OrderRepository,
   type PolicyRepository,
   type PolicyTopic,
   type TenantId,
@@ -193,5 +196,123 @@ export async function seedDemoStore(
     for (const policy of DEMO_POLICIES) {
       await policyRepo.upsertPolicy(tenantId, policy);
     }
+  }
+}
+
+const DEMO_BUYERS = [
+  "maya.reyes@hey.com",
+  "j.okafor@fastmail.com",
+  "lin.wei@proton.me",
+  "sofia.brandt@gmail.com",
+  "theo.lacroix@outlook.com",
+  "ana.costa@hey.com",
+  "idris.khan@fastmail.com",
+  "nora.halvorsen@proton.me",
+];
+
+// Fixed seed keeps the demo series identical across restarts.
+function mulberry32(a: number) {
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const DAY_MS = 86_400_000;
+
+function pick<T>(items: readonly T[], r: number): T {
+  const item = items[Math.floor(r * items.length) % items.length];
+  if (item === undefined) {
+    throw new Error("Avelor seed: expected a non-empty demo collection");
+  }
+  return item;
+}
+
+/**
+ * Backfills ~40 orders across the last 30 days so the admin console has real
+ * revenue history to aggregate. Skipped entirely if any order already exists.
+ */
+export async function seedDemoOrders(
+  orderRepo: OrderRepository,
+  catalogRepo: CatalogRepository,
+  tenantId: TenantId
+): Promise<void> {
+  const existing = await orderRepo.listOrders(tenantId);
+  if (existing.length > 0) {
+    return;
+  }
+
+  const { items: products } = await catalogRepo.listProducts(tenantId, { limit: 100 });
+  const purchasable: {
+    productId: string;
+    variantId: string;
+    sku: string;
+    title: string;
+    price: Money;
+  }[] = [];
+  for (const product of products) {
+    for (const variant of await catalogRepo.listVariants(tenantId, product.id)) {
+      purchasable.push({
+        productId: product.id,
+        variantId: variant.id,
+        sku: variant.sku,
+        title: variant.title,
+        price: variant.price,
+      });
+    }
+  }
+  if (purchasable.length === 0) {
+    return;
+  }
+
+  const rand = mulberry32(20261017);
+  const now = Date.now();
+
+  for (let index = 0; index < 40; index++) {
+    // pow() skews placements toward today, so the trend line reads as growth.
+    const daysAgo = 29 * rand() ** 1.6;
+    const createdAt = new Date(now - daysAgo * DAY_MS - rand() * 0.8 * DAY_MS);
+
+    const lineCount = 1 + Math.floor(rand() * 2);
+    const items: OrderItem[] = [];
+    for (let line = 0; line < lineCount; line++) {
+      const variant = pick(purchasable, rand());
+      const quantity = 1 + Math.floor(rand() * 2);
+      items.push({
+        variantId: variant.variantId,
+        productId: variant.productId,
+        sku: variant.sku,
+        title: variant.title,
+        unitPrice: variant.price,
+        quantity,
+        totalPrice: createMoney(variant.price.amount * quantity, variant.price.currency),
+      });
+    }
+
+    const total = createMoney(
+      items.reduce((sum, item) => sum + item.totalPrice.amount, 0),
+      "USD"
+    );
+
+    const order = await orderRepo.createOrder({
+      tenantId,
+      cartId: `seed_cart_${index}`,
+      customerEmail: pick(DEMO_BUYERS, (index % DEMO_BUYERS.length) / DEMO_BUYERS.length),
+      items,
+      total,
+      createdAt,
+    });
+
+    const roll = rand();
+    if (roll < 0.78) {
+      await orderRepo.updateOrderStatus(tenantId, order.id, "paid", `seed_ps_${index}`);
+    } else if (roll < 0.9) {
+      await orderRepo.updateOrderStatus(tenantId, order.id, "processing");
+    } else if (roll < 0.97) {
+      await orderRepo.updateOrderStatus(tenantId, order.id, "canceled");
+    }
+    // the remainder stays pending
   }
 }

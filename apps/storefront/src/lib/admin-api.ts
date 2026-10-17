@@ -1,0 +1,113 @@
+export type OrderStatus = "pending" | "processing" | "paid" | "failed" | "canceled" | "refunded";
+export type ProductStatus = "draft" | "active" | "archived";
+
+export interface AdminMoney {
+  readonly amount: number;
+  readonly currency: string;
+}
+
+export interface AdminOrderItem {
+  readonly variantId: string;
+  readonly productId: string;
+  readonly sku: string;
+  readonly title: string;
+  readonly unitPrice: AdminMoney;
+  readonly quantity: number;
+  readonly totalPrice: AdminMoney;
+}
+
+export interface AdminOrder {
+  readonly id: string;
+  readonly customerEmail: string;
+  readonly items: readonly AdminOrderItem[];
+  readonly total: AdminMoney;
+  readonly status: OrderStatus;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export interface AdminVariant {
+  readonly id: string;
+  readonly sku: string;
+  readonly title: string;
+  readonly price: AdminMoney;
+  readonly inventoryQuantity: number;
+}
+
+export interface AdminProduct {
+  readonly id: string;
+  readonly name: string;
+  readonly description: string;
+  readonly status: ProductStatus;
+  readonly categories: readonly string[];
+  readonly media: readonly string[];
+  readonly variants: readonly AdminVariant[];
+  readonly createdAt: string;
+}
+
+export interface AdminMetrics {
+  readonly tenantId: string;
+  readonly catalog: {
+    readonly totalProducts: number;
+    readonly lowStockVariants: number;
+  };
+  readonly orders: {
+    readonly totalOrders: number;
+    readonly paidOrders: number;
+    readonly revenue: AdminMoney;
+  };
+}
+
+interface ApiErrorBody {
+  readonly error?: { readonly code?: string; readonly message?: string };
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api/v1";
+const TENANT_ID = process.env.NEXT_PUBLIC_AVELOR_TENANT_ID ?? "store_alpha";
+
+async function request<T>(path: string): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, {
+    headers: { "x-tenant-id": TENANT_ID },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    let detail = `Request failed (${response.status})`;
+    try {
+      const body = (await response.json()) as ApiErrorBody;
+      if (body.error?.message) detail = body.error.message;
+    } catch {
+      // Non-JSON error body — keep the status-based message
+    }
+    throw new Error(detail);
+  }
+
+  return (await response.json()) as T;
+}
+
+export const fetchMetrics = () => request<AdminMetrics>("/admin/metrics");
+
+export const fetchOrders = () =>
+  request<{ orders: readonly AdminOrder[] }>("/admin/orders").then((r) => r.orders);
+
+export const fetchProducts = (limit = 60) =>
+  request<{ items: readonly AdminProduct[]; total: number }>(`/admin/products?limit=${limit}`);
+
+export function formatMoney(money: AdminMoney): string {
+  const value = money.amount / 100;
+  return money.currency === "USD"
+    ? `$${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    : `${value.toLocaleString("en-US")} ${money.currency}`;
+}
+
+/** Chart-friendly money: $1.2K instead of $1,234.56 for axis ticks. */
+export function formatMoneyCompact(amountCents: number): string {
+  const value = amountCents / 100;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    notation: value >= 1000 ? "compact" : "standard",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: value >= 1000 || value < 10 ? 1 : 0,
+  }).format(value);
+}

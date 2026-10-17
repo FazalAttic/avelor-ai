@@ -60,7 +60,7 @@ export class InMemoryOrderRepository implements OrderRepository {
       total: input.total,
       status: "pending",
       idempotencyKey: input.idempotencyKey,
-      createdAt: now,
+      createdAt: input.createdAt ?? now,
       updatedAt: now,
     };
 

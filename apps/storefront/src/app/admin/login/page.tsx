@@ -95,7 +95,7 @@ function AdminLoginForm() {
   }
 
   return (
-    <section className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+    <section className="flex min-h-screen items-center justify-center bg-admin-canvas px-4 py-10">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -104,7 +104,7 @@ function AdminLoginForm() {
       >
         <BrandMark caption="Admin console" className="px-1.5 pb-4" />
 
-        <Panel className="p-5 shadow-card">
+        <Panel className="border-admin-line bg-admin-card p-5 shadow-card">
           <AnimatePresence mode="wait" initial={false}>
             {requires2FA ? (
               <motion.form
@@ -137,10 +137,11 @@ function AdminLoginForm() {
                   }}
                   disabled={loading}
                   autoFocus
+                  className="border-admin-line bg-admin-canvas"
                   onComplete={() => formRef.current?.requestSubmit()}
                 />
 
-                <Button type="submit" variant="primary" size="lg" block disabled={loading}>
+                <Button type="submit" variant="ink" size="lg" block disabled={loading}>
                   {loading ? "Verifying…" : "Verify"}
                 </Button>
 
@@ -197,6 +198,7 @@ function AdminLoginForm() {
                     disabled={loading}
                     autoComplete="username"
                     placeholder="you@avelor.dev"
+                    className="border-admin-line bg-admin-canvas"
                   />
                   <TextField
                     id="admin-password"
@@ -211,10 +213,11 @@ function AdminLoginForm() {
                     disabled={loading}
                     autoComplete="current-password"
                     placeholder="Your password"
+                    className="border-admin-line bg-admin-canvas"
                   />
                 </div>
 
-                <Button type="submit" variant="primary" size="lg" block disabled={loading}>
+                <Button type="submit" variant="ink" size="lg" block disabled={loading}>
                   {loading ? "Authenticating…" : "Continue"}
                 </Button>
               </motion.form>
@@ -230,8 +233,8 @@ export default function AdminLoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-background">
-          <div className="h-40 w-full max-w-[380px] animate-pulse rounded-2xl bg-surface" />
+        <div className="flex min-h-screen items-center justify-center bg-admin-canvas">
+          <div className="h-40 w-full max-w-[380px] animate-pulse rounded-2xl bg-admin-card" />
         </div>
       }
     >

@@ -35,6 +35,8 @@ export interface CreateOrderInput {
   readonly items: readonly OrderItem[];
   readonly total: Money;
   readonly idempotencyKey?: string | undefined;
+  /** Only for importing already-placed orders (seeds, migrations). Defaults to now. */
+  readonly createdAt?: Date | undefined;
 }
 
 /**
