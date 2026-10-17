@@ -46,14 +46,8 @@ const CURRENCIES: { value: Currency; label: string }[] = [
   { value: "GBP", label: "£ GBP" },
 ];
 
-const NOTIFICATIONS: { key: keyof Omit<Prefs, "currency">; label: string; desc: string }[] = [
-  { key: "orderUpdates", label: "Order updates", desc: "Dispatch, delivery and returns." },
-  { key: "priceDrops", label: "Price drops", desc: "When something you liked gets cheaper." },
-  { key: "productPicks", label: "Product picks", desc: "Occasional suggestions from the AI." },
-];
-
 const INPUT_CLASS = cn(
-  "h-11 w-full min-w-0 rounded-2xl border border-border bg-background px-4 text-sm text-foreground",
+  "h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm text-foreground",
   "placeholder:text-subtle transition-colors duration-150 ease-expo",
   "focus:border-brand-blue/50 focus:outline-none dark:focus:border-brand-blue/60"
 );
@@ -205,7 +199,7 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
-          "relative flex h-[min(86dvh,470px)] w-full max-w-3xl flex-col rounded-[32px] border border-white/50",
+          "relative flex h-[min(86dvh,660px)] w-full max-w-[600px] flex-col rounded-[32px] border border-white/50",
           "bg-white/40 p-3 shadow-pop backdrop-blur-2xl sm:p-4",
           "dark:border-white/10 dark:bg-[#15182b]/70"
         )}
@@ -241,12 +235,19 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
         {user ? (
           <>
             <ScrollArea edgeFade className="@container min-h-0 flex-1">
-              <div className="flex flex-col gap-2.5 px-1 pb-1">
-                <SettingGroup icon={UserAccountIcon} title="Profile" desc="How you appear.">
-                  <form onSubmit={saveProfile} className="flex w-full items-center gap-2">
+              <div className="flex flex-col gap-3 px-1 pb-1">
+                <SettingGroup
+                  icon={UserAccountIcon}
+                  title="Profile"
+                  desc="How stores and couriers see you."
+                >
+                  <form
+                    onSubmit={saveProfile}
+                    className="border-t border-border pt-3.5 @xs:flex @xs:items-end @xs:gap-3"
+                  >
                     <TextField
                       id="profile-name"
-                      label="Your name"
+                      label="Name"
                       value={name}
                       onChange={(next) => {
                         setName(next);
@@ -262,24 +263,38 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
                   <FormNote note={profileNote} />
                 </SettingGroup>
 
-                <SettingGroup icon={AccountSettingIcon} title="Preferences" desc="On this device.">
-                  <div className="flex flex-wrap items-center justify-end gap-2">
-                    <Segmented
-                      name="appearance"
-                      value={night ? "night" : "day"}
-                      onChange={(next) => chooseTheme(next === "night")}
-                      options={[
-                        { value: "day", label: "Day", icon: Sun03Icon },
-                        { value: "night", label: "Night", icon: Moon02Icon },
-                      ]}
-                    />
-                    <Segmented
-                      name="currency"
-                      value={prefs.currency}
-                      onChange={(currency) => patch({ currency })}
-                      options={CURRENCIES}
-                    />
-                  </div>
+                <SettingGroup
+                  icon={AccountSettingIcon}
+                  title="Preferences"
+                  desc="Applies on this device."
+                >
+                  <OptionRow
+                    title="Appearance"
+                    desc="Day sky or night sky."
+                    control={
+                      <Segmented
+                        name="appearance"
+                        value={night ? "night" : "day"}
+                        onChange={(next) => chooseTheme(next === "night")}
+                        options={[
+                          { value: "day", label: "Day", icon: Sun03Icon },
+                          { value: "night", label: "Night", icon: Moon02Icon },
+                        ]}
+                      />
+                    }
+                  />
+                  <OptionRow
+                    title="Currency"
+                    desc="Prices shown across the store."
+                    control={
+                      <Segmented
+                        name="currency"
+                        value={prefs.currency}
+                        onChange={(currency) => patch({ currency })}
+                        options={CURRENCIES}
+                      />
+                    }
+                  />
                 </SettingGroup>
 
                 <SettingGroup
@@ -287,48 +302,72 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
                   title="Notifications"
                   desc="We only email what you ask for."
                 >
-                  <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2">
-                    {NOTIFICATIONS.map((item) => (
-                      <span
-                        key={item.key}
-                        title={item.desc}
-                        className="flex items-center gap-2.5 text-sm text-foreground"
-                      >
-                        {item.label}
-                        <Toggle
-                          label={item.label}
-                          checked={prefs[item.key]}
-                          onChange={(next) => patch({ [item.key]: next })}
-                        />
-                      </span>
-                    ))}
-                  </div>
+                  <OptionRow
+                    title="Order updates"
+                    desc="Dispatch, delivery and returns."
+                    control={
+                      <Toggle
+                        label="Order updates"
+                        checked={prefs.orderUpdates}
+                        onChange={(orderUpdates) => patch({ orderUpdates })}
+                      />
+                    }
+                  />
+                  <OptionRow
+                    title="Price drops"
+                    desc="When something you liked gets cheaper."
+                    control={
+                      <Toggle
+                        label="Price drops"
+                        checked={prefs.priceDrops}
+                        onChange={(priceDrops) => patch({ priceDrops })}
+                      />
+                    }
+                  />
+                  <OptionRow
+                    title="Product picks"
+                    desc="Occasional suggestions from the AI."
+                    control={
+                      <Toggle
+                        label="Product picks"
+                        checked={prefs.productPicks}
+                        onChange={(productPicks) => patch({ productPicks })}
+                      />
+                    }
+                  />
                 </SettingGroup>
 
-                <SettingGroup icon={KeyIcon} title="Password" desc="Other devices sign out.">
-                  <form onSubmit={savePassword} className="flex w-full items-center gap-2">
+                <SettingGroup
+                  icon={KeyIcon}
+                  title="Password"
+                  desc="Other devices are signed out when it changes."
+                >
+                  <form
+                    onSubmit={savePassword}
+                    className="flex flex-col gap-3 @lg:flex-row @lg:items-end"
+                  >
                     <TextField
                       id="current-password"
-                      label="Current password"
+                      label="Current"
                       type="password"
                       value={currentPassword}
                       onChange={(next) => {
                         setCurrentPassword(next);
                         setPasswordNote(null);
                       }}
-                      placeholder="Current"
+                      placeholder="Your password"
                       autoComplete="current-password"
                     />
                     <TextField
                       id="new-password"
-                      label="New password"
+                      label="New"
                       type="password"
                       value={newPassword}
                       onChange={(next) => {
                         setNewPassword(next);
                         setPasswordNote(null);
                       }}
-                      placeholder="New, 8+ characters"
+                      placeholder="At least 8 characters"
                       autoComplete="new-password"
                     />
                     <button type="submit" disabled={savingPassword} className={SAVE_CLASS}>
@@ -370,7 +409,6 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
   );
 }
 
-/** One compact row: identity on the left, controls on the right. */
 function SettingGroup({
   icon,
   title,
@@ -383,21 +421,30 @@ function SettingGroup({
   children: ReactNode;
 }) {
   return (
-    <section
-      className={cn(
-        "@container flex flex-wrap items-center gap-x-4 gap-y-2 rounded-3xl",
-        "border border-border bg-surface px-4 py-3 shadow-card"
-      )}
-    >
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-wash text-foreground">
-        <HugeiconsIcon icon={icon} size={18} strokeWidth={1.8} />
-      </span>
-      <div className="w-[7.5rem] min-w-0 shrink-0">
-        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-        <p className="truncate pt-0.5 text-xs text-subtle">{desc}</p>
-      </div>
-      <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2">{children}</div>
+    <section className="@container rounded-3xl border border-border bg-surface p-4 shadow-card">
+      <header className="flex items-start gap-3 pb-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-wash text-foreground">
+          <HugeiconsIcon icon={icon} size={18} strokeWidth={1.8} />
+        </span>
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          <p className="pt-0.5 text-xs text-subtle">{desc}</p>
+        </div>
+      </header>
+      <div className="flex flex-col">{children}</div>
     </section>
+  );
+}
+
+function OptionRow({ title, desc, control }: { title: string; desc: string; control: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border py-3 first:border-t-0 first:pt-1">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-foreground">{title}</p>
+        <p className="pt-0.5 text-xs text-subtle">{desc}</p>
+      </div>
+      {control}
+    </div>
   );
 }
 
@@ -483,7 +530,7 @@ function FormNote({ note }: { note: Note | null }) {
   return (
     <p
       className={cn(
-        "flex w-full items-center justify-end gap-1.5 text-xs",
+        "flex items-center gap-1.5 pt-2 text-xs",
         note.ok ? "text-muted" : "text-red-500"
       )}
     >
@@ -518,17 +565,21 @@ function TextField({
   autoComplete: string;
 }) {
   return (
-    <input
-      id={id}
-      type={type}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      placeholder={placeholder}
-      aria-label={label}
-      autoComplete={autoComplete}
-      required
-      minLength={type === "password" && autoComplete === "new-password" ? 8 : undefined}
-      className={INPUT_CLASS}
-    />
+    <label className="flex min-w-0 flex-1 flex-col gap-1.5">
+      <span className="px-1 text-[11px] font-semibold tracking-wide text-muted uppercase">
+        {label}
+      </span>
+      <input
+        id={id}
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        required
+        minLength={type === "password" && autoComplete === "new-password" ? 8 : undefined}
+        className={INPUT_CLASS}
+      />
+    </label>
   );
 }
