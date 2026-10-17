@@ -52,6 +52,13 @@ const PRIMARY_BUTTON = buttonClass({ variant: "primary", size: "md" });
 
 const INK_BUTTON = buttonClass({ variant: "ink", size: "md" });
 
+/**
+ * Every admin page reads through this column, so the left and right gutters stay
+ * put instead of the content stretching to whatever the viewport allows. The
+ * top bar uses it too, which keeps the page title aligned with the cards below.
+ */
+const CONTENT_WIDTH = "mx-auto w-full max-w-[1240px] px-8 max-lg:px-5";
+
 const RAIL_BUTTON =
   "flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-[13px] font-medium text-muted transition-colors duration-150 ease-expo hover:bg-admin-line/60 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue max-lg:justify-center max-lg:px-0";
 
@@ -166,25 +173,27 @@ function AdminShell({ user, children }: { user: AdminUser; children: ReactNode }
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-admin-line px-6 max-lg:px-4">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <h1 className="truncate text-[15px] font-semibold tracking-tight">
-              {titleFor(pathname)}
-            </h1>
-            <Badge className="max-sm:hidden">{TENANT}</Badge>
-          </div>
+        <header className="h-16 shrink-0 border-b border-admin-line">
+          <div className={cn(CONTENT_WIDTH, "flex h-full items-center justify-between gap-4")}>
+            <div className="flex min-w-0 items-center gap-2.5">
+              <h1 className="truncate text-[15px] font-semibold tracking-tight">
+                {titleFor(pathname)}
+              </h1>
+              <Badge className="max-sm:hidden">{TENANT}</Badge>
+            </div>
 
-          <div className="flex shrink-0 items-center gap-2">
-            <Link href="/" className={INK_BUTTON}>
-              <HugeiconsIcon icon={ArrowUpRight01Icon} size={15} strokeWidth={2} />
-              <span className="max-sm:hidden">View storefront</span>
-              <span className="sm:hidden">Store</span>
-            </Link>
+            <div className="flex shrink-0 items-center gap-2">
+              <Link href="/" className={INK_BUTTON}>
+                <HugeiconsIcon icon={ArrowUpRight01Icon} size={15} strokeWidth={2} />
+                <span className="max-sm:hidden">View storefront</span>
+                <span className="sm:hidden">Store</span>
+              </Link>
+            </div>
           </div>
         </header>
 
-        <main id="admin-main" className="min-w-0 flex-1 px-6 py-6 max-lg:px-4 max-lg:py-5">
-          {children}
+        <main id="admin-main" className="min-w-0 flex-1 py-6 max-lg:py-5">
+          <div className={CONTENT_WIDTH}>{children}</div>
         </main>
       </div>
     </div>

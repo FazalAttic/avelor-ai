@@ -63,7 +63,7 @@ export default function AdminSecurityPage() {
   }
 
   return (
-    <section id="admin-security-page" className="p-8 max-w-xl mx-auto">
+    <section id="admin-security-page" className="mx-auto flex w-full max-w-xl flex-col gap-4">
       {/* Route skeleton for other AI agent to build UI */}
       <h1>Admin Security & 2FA Configuration</h1>
       <p>Configure Google Authenticator (TOTP) for high-security administrator logins.</p>

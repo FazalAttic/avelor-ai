@@ -46,7 +46,7 @@ export default function AdminProductsPage() {
   }, []);
 
   return (
-    <section id="admin-products-page" className="p-6">
+    <section id="admin-products-page" className="flex flex-col gap-4">
       {/* Route skeleton for other AI agent to build UI */}
       <header>
         <h1>Products Management</h1>

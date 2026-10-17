@@ -40,7 +40,7 @@ export default function AdminPoliciesPage() {
   }, []);
 
   return (
-    <section id="admin-policies-page" className="p-6">
+    <section id="admin-policies-page" className="flex flex-col gap-4">
       {/* Route skeleton for other AI agent to build UI */}
       <header>
         <h1>Store Policies & AI Knowledge (RAG)</h1>
