@@ -31,6 +31,8 @@ type Prefs = {
   currency: Currency;
 };
 
+type SectionId = "profile" | "preferences" | "notifications" | "password";
+
 const DEFAULT_PREFS: Prefs = {
   orderUpdates: true,
   priceDrops: true,
@@ -44,6 +46,13 @@ const CURRENCIES: { value: Currency; label: string }[] = [
   { value: "USD", label: "$ USD" },
   { value: "EUR", label: "€ EUR" },
   { value: "GBP", label: "£ GBP" },
+];
+
+const SECTIONS: { id: SectionId; label: string; icon: IconSvgElement }[] = [
+  { id: "profile", label: "Profile", icon: UserAccountIcon },
+  { id: "preferences", label: "Preferences", icon: AccountSettingIcon },
+  { id: "notifications", label: "Notifications", icon: Notification01Icon },
+  { id: "password", label: "Password", icon: KeyIcon },
 ];
 
 const INPUT_CLASS = cn(
@@ -78,6 +87,8 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
   const { data: session } = useSession();
   const user = session?.user ?? null;
 
+  const [section, setSection] = useState<SectionId>("profile");
+
   const [name, setName] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileNote, setProfileNote] = useState<Note | null>(null);
@@ -98,6 +109,7 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
     if (!open) return;
     setNight(document.documentElement.classList.contains("dark"));
     setSaved(readPrefs());
+    setSection("profile");
     setProfileNote(null);
     setPasswordNote(null);
   }, [open]);
@@ -194,209 +206,246 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
       <motion.div
         role="dialog"
         aria-modal="true"
-        aria-labelledby="settings-title"
+        aria-label="Account settings"
         initial={{ opacity: 0, scale: 0.96, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
-          "relative flex h-[min(86dvh,660px)] w-full max-w-[600px] flex-col rounded-[32px] border border-white/50",
-          "bg-white/40 p-3 shadow-pop backdrop-blur-2xl sm:p-4",
+          "relative flex h-[min(78dvh,520px)] w-full max-w-[760px] overflow-hidden rounded-[32px]",
+          "border border-white/50 bg-white/40 shadow-pop backdrop-blur-2xl",
           "dark:border-white/10 dark:bg-[#15182b]/70"
         )}
       >
-        <header className="flex shrink-0 items-center gap-3 px-1 pb-3 sm:px-2">
-          {user ? (
-            <UserAvatar name={user.name} image={user.image} size="md" />
-          ) : (
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
-              U
-            </span>
-          )}
-          <div className="min-w-0 flex-1">
-            <h2
-              id="settings-title"
-              className="truncate text-base font-semibold tracking-tight text-foreground"
-            >
-              {user ? user.name : "Account settings"}
-            </h2>
-            <p className="truncate text-xs text-muted">
-              {user?.email ?? "Settings and preferences"}
-            </p>
-          </div>
-          <IconButton
-            label="Close settings"
-            onClick={onClose}
-            className="size-9 border border-white/50 bg-white/40 hover:bg-white/60 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
-          >
-            <HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={2} />
-          </IconButton>
-        </header>
-
         {user ? (
-          <>
-            <ScrollArea edgeFade className="@container min-h-0 flex-1">
-              <div className="flex flex-col gap-3 px-1 pb-1">
-                <SettingGroup
-                  icon={UserAccountIcon}
-                  title="Profile"
-                  desc="How stores and couriers see you."
-                >
-                  <form
-                    onSubmit={saveProfile}
-                    className="border-t border-border pt-3.5 @xs:flex @xs:items-end @xs:gap-3"
-                  >
-                    <TextField
-                      id="profile-name"
-                      label="Name"
-                      value={name}
-                      onChange={(next) => {
-                        setName(next);
-                        setProfileNote(null);
-                      }}
-                      placeholder="Your name"
-                      autoComplete="name"
-                    />
-                    <button type="submit" disabled={savingProfile} className={SAVE_CLASS}>
-                      {savingProfile ? "Saving…" : "Save"}
-                    </button>
-                  </form>
-                  <FormNote note={profileNote} />
-                </SettingGroup>
-
-                <SettingGroup
-                  icon={AccountSettingIcon}
-                  title="Preferences"
-                  desc="Applies on this device."
-                >
-                  <OptionRow
-                    title="Appearance"
-                    desc="Day sky or night sky."
-                    control={
-                      <Segmented
-                        name="appearance"
-                        value={night ? "night" : "day"}
-                        onChange={(next) => chooseTheme(next === "night")}
-                        options={[
-                          { value: "day", label: "Day", icon: Sun03Icon },
-                          { value: "night", label: "Night", icon: Moon02Icon },
-                        ]}
-                      />
-                    }
-                  />
-                  <OptionRow
-                    title="Currency"
-                    desc="Prices shown across the store."
-                    control={
-                      <Segmented
-                        name="currency"
-                        value={prefs.currency}
-                        onChange={(currency) => patch({ currency })}
-                        options={CURRENCIES}
-                      />
-                    }
-                  />
-                </SettingGroup>
-
-                <SettingGroup
-                  icon={Notification01Icon}
-                  title="Notifications"
-                  desc="We only email what you ask for."
-                >
-                  <OptionRow
-                    title="Order updates"
-                    desc="Dispatch, delivery and returns."
-                    control={
-                      <Toggle
-                        label="Order updates"
-                        checked={prefs.orderUpdates}
-                        onChange={(orderUpdates) => patch({ orderUpdates })}
-                      />
-                    }
-                  />
-                  <OptionRow
-                    title="Price drops"
-                    desc="When something you liked gets cheaper."
-                    control={
-                      <Toggle
-                        label="Price drops"
-                        checked={prefs.priceDrops}
-                        onChange={(priceDrops) => patch({ priceDrops })}
-                      />
-                    }
-                  />
-                  <OptionRow
-                    title="Product picks"
-                    desc="Occasional suggestions from the AI."
-                    control={
-                      <Toggle
-                        label="Product picks"
-                        checked={prefs.productPicks}
-                        onChange={(productPicks) => patch({ productPicks })}
-                      />
-                    }
-                  />
-                </SettingGroup>
-
-                <SettingGroup
-                  icon={KeyIcon}
-                  title="Password"
-                  desc="Other devices are signed out when it changes."
-                >
-                  <form
-                    onSubmit={savePassword}
-                    className="flex flex-col gap-3 @lg:flex-row @lg:items-end"
-                  >
-                    <TextField
-                      id="current-password"
-                      label="Current"
-                      type="password"
-                      value={currentPassword}
-                      onChange={(next) => {
-                        setCurrentPassword(next);
-                        setPasswordNote(null);
-                      }}
-                      placeholder="Your password"
-                      autoComplete="current-password"
-                    />
-                    <TextField
-                      id="new-password"
-                      label="New"
-                      type="password"
-                      value={newPassword}
-                      onChange={(next) => {
-                        setNewPassword(next);
-                        setPasswordNote(null);
-                      }}
-                      placeholder="At least 8 characters"
-                      autoComplete="new-password"
-                    />
-                    <button type="submit" disabled={savingPassword} className={SAVE_CLASS}>
-                      {savingPassword ? "Saving…" : "Update"}
-                    </button>
-                  </form>
-                  <FormNote note={passwordNote} />
-                </SettingGroup>
+          <div className="flex min-h-0 w-full">
+            <aside className="flex w-[216px] shrink-0 flex-col gap-1 border-r border-border/70 bg-white/25 p-3 dark:bg-white/5">
+              <div className="flex min-w-0 items-center gap-3 px-1.5 pb-3">
+                <UserAvatar name={user.name} image={user.image} size="md" />
+                <div className="min-w-0 flex-1 max-sm:hidden">
+                  <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
+                  <p className="truncate text-xs text-muted">{user.email}</p>
+                </div>
               </div>
-            </ScrollArea>
 
-            <footer className="flex shrink-0 justify-end px-2 pt-2.5">
+              {SECTIONS.map((item) => {
+                const active = item.id === section;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    aria-current={active ? "true" : undefined}
+                    title={item.label}
+                    onClick={() => setSection(item.id)}
+                    className={cn(
+                      "flex h-10 shrink-0 items-center gap-3 rounded-xl px-2.5 text-sm font-medium",
+                      "transition-colors duration-150 ease-expo max-sm:justify-center max-sm:px-0",
+                      "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue",
+                      active
+                        ? "bg-brand-wash text-brand-blue"
+                        : "text-muted hover:bg-surface-hover hover:text-foreground"
+                    )}
+                  >
+                    <HugeiconsIcon
+                      icon={item.icon}
+                      size={18}
+                      strokeWidth={1.8}
+                      className="shrink-0"
+                    />
+                    <span className="truncate max-sm:hidden">{item.label}</span>
+                  </button>
+                );
+              })}
+
+              <div className="min-h-0 flex-1" />
               <button
                 type="button"
                 onClick={signOut}
                 className={cn(
-                  "flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold text-muted",
+                  "flex h-10 items-center gap-3 rounded-xl px-2.5 text-sm font-medium text-muted",
                   "transition-colors duration-150 ease-expo hover:bg-surface-hover hover:text-foreground",
+                  "max-sm:justify-center max-sm:px-0",
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
                 )}
               >
-                <HugeiconsIcon icon={Logout03Icon} size={16} strokeWidth={1.8} />
-                Sign out
+                <HugeiconsIcon
+                  icon={Logout03Icon}
+                  size={18}
+                  strokeWidth={1.8}
+                  className="shrink-0"
+                />
+                <span className="max-sm:hidden">Sign out</span>
               </button>
-            </footer>
-          </>
+            </aside>
+
+            <div className="relative flex min-w-0 flex-1 flex-col">
+              <div className="flex shrink-0 justify-end px-2 pt-2">
+                <IconButton
+                  label="Close settings"
+                  onClick={onClose}
+                  className="size-9 border border-white/50 bg-white/40 hover:bg-white/60 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+                >
+                  <HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={2} />
+                </IconButton>
+              </div>
+
+              <ScrollArea edgeFade className="@container min-h-0 flex-1">
+                <div className="flex flex-col gap-3 px-2 pb-2">
+                  {section === "profile" ? (
+                    <SettingGroup
+                      icon={UserAccountIcon}
+                      title="Profile"
+                      desc="How stores and couriers see you."
+                    >
+                      <form
+                        onSubmit={saveProfile}
+                        className="border-t border-border pt-3.5 @xs:flex @xs:items-end @xs:gap-3"
+                      >
+                        <TextField
+                          id="profile-name"
+                          label="Name"
+                          value={name}
+                          onChange={(next) => {
+                            setName(next);
+                            setProfileNote(null);
+                          }}
+                          placeholder="Your name"
+                          autoComplete="name"
+                        />
+                        <button type="submit" disabled={savingProfile} className={SAVE_CLASS}>
+                          {savingProfile ? "Saving…" : "Save"}
+                        </button>
+                      </form>
+                      <FormNote note={profileNote} />
+                    </SettingGroup>
+                  ) : null}
+
+                  {section === "preferences" ? (
+                    <SettingGroup
+                      icon={AccountSettingIcon}
+                      title="Preferences"
+                      desc="Applies on this device."
+                    >
+                      <OptionRow
+                        title="Appearance"
+                        desc="Day sky or night sky."
+                        control={
+                          <Segmented
+                            name="appearance"
+                            value={night ? "night" : "day"}
+                            onChange={(next) => chooseTheme(next === "night")}
+                            options={[
+                              { value: "day", label: "Day", icon: Sun03Icon },
+                              { value: "night", label: "Night", icon: Moon02Icon },
+                            ]}
+                          />
+                        }
+                      />
+                      <OptionRow
+                        title="Currency"
+                        desc="Prices shown across the store."
+                        control={
+                          <Segmented
+                            name="currency"
+                            value={prefs.currency}
+                            onChange={(currency) => patch({ currency })}
+                            options={CURRENCIES}
+                          />
+                        }
+                      />
+                    </SettingGroup>
+                  ) : null}
+
+                  {section === "notifications" ? (
+                    <SettingGroup
+                      icon={Notification01Icon}
+                      title="Notifications"
+                      desc="We only email what you ask for."
+                    >
+                      <OptionRow
+                        title="Order updates"
+                        desc="Dispatch, delivery and returns."
+                        control={
+                          <Toggle
+                            label="Order updates"
+                            checked={prefs.orderUpdates}
+                            onChange={(orderUpdates) => patch({ orderUpdates })}
+                          />
+                        }
+                      />
+                      <OptionRow
+                        title="Price drops"
+                        desc="When something you liked gets cheaper."
+                        control={
+                          <Toggle
+                            label="Price drops"
+                            checked={prefs.priceDrops}
+                            onChange={(priceDrops) => patch({ priceDrops })}
+                          />
+                        }
+                      />
+                      <OptionRow
+                        title="Product picks"
+                        desc="Occasional suggestions from the AI."
+                        control={
+                          <Toggle
+                            label="Product picks"
+                            checked={prefs.productPicks}
+                            onChange={(productPicks) => patch({ productPicks })}
+                          />
+                        }
+                      />
+                    </SettingGroup>
+                  ) : null}
+
+                  {section === "password" ? (
+                    <SettingGroup
+                      icon={KeyIcon}
+                      title="Password"
+                      desc="Other devices are signed out when it changes."
+                    >
+                      <form
+                        onSubmit={savePassword}
+                        className="flex flex-col gap-3 @lg:flex-row @lg:items-end"
+                      >
+                        <TextField
+                          id="current-password"
+                          label="Current"
+                          type="password"
+                          value={currentPassword}
+                          onChange={(next) => {
+                            setCurrentPassword(next);
+                            setPasswordNote(null);
+                          }}
+                          placeholder="Your password"
+                          autoComplete="current-password"
+                        />
+                        <TextField
+                          id="new-password"
+                          label="New"
+                          type="password"
+                          value={newPassword}
+                          onChange={(next) => {
+                            setNewPassword(next);
+                            setPasswordNote(null);
+                          }}
+                          placeholder="At least 8 characters"
+                          autoComplete="new-password"
+                        />
+                        <button type="submit" disabled={savingPassword} className={SAVE_CLASS}>
+                          {savingPassword ? "Saving…" : "Update"}
+                        </button>
+                      </form>
+                      <FormNote note={passwordNote} />
+                    </SettingGroup>
+                  ) : null}
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
         ) : (
-          <div className="flex flex-col items-center gap-4 px-6 pb-8 text-center">
-            <p className="text-sm text-muted">
+          <div className="flex w-full flex-col items-center justify-center gap-4 p-8 text-center">
+            <h2 className="text-base font-semibold text-foreground">Account settings</h2>
+            <p className="max-w-[36ch] text-sm text-muted">
               Sign in to sync your profile, orders and favourites.
             </p>
             <button type="button" onClick={onSignIn} className={SAVE_CLASS}>
