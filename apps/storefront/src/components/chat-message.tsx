@@ -74,6 +74,7 @@ function ProductCard({ product }: { product: ChatProduct }) {
 }
 
 const CARD_STRIDE = 188; // w-44 card + gap-3
+const EDGE_FADE = 40;
 
 const ARROW_CLASS = cn(
   "flex size-8 items-center justify-center rounded-full border border-white/50 bg-white/70 text-foreground shadow-card backdrop-blur-xl",
@@ -99,7 +100,10 @@ function ProductCarousel({ products }: { products: readonly ChatProduct[] }) {
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     el.addEventListener("scroll", measure, { passive: true });
+    measure();
+    const frame = requestAnimationFrame(measure);
     return () => {
+      cancelAnimationFrame(frame);
       observer.disconnect();
       el.removeEventListener("scroll", measure);
     };
@@ -109,10 +113,22 @@ function ProductCarousel({ products }: { products: readonly ChatProduct[] }) {
     rowRef.current?.scrollBy({ left: direction * CARD_STRIDE, behavior: "smooth" });
   }
 
+  // Cards dissolve where the row keeps going instead of ending on a hard edge.
+  const stops = [
+    overflow.left ? "transparent 0" : "black 0",
+    overflow.left ? `black ${EDGE_FADE}px` : null,
+    overflow.right ? `black calc(100% - ${EDGE_FADE}px)` : null,
+    overflow.right ? "transparent 100%" : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const edgeMask = overflow.left || overflow.right ? `linear-gradient(to right, ${stops})` : "none";
+
   return (
     <div className="relative w-full">
       <div
         ref={rowRef}
+        style={{ WebkitMaskImage: edgeMask, maskImage: edgeMask }}
         className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {products.map((product) => (
