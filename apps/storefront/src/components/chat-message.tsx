@@ -5,6 +5,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { BotAvatar } from "@/components/bot-avatar";
 import { type ChatProduct, formatPrice } from "@/lib/chat-api";
 import { cn } from "@/lib/utils";
 
@@ -179,8 +180,46 @@ function ProductCarousel({ products }: { products: readonly ChatProduct[] }) {
   );
 }
 
-export function ChatMessageItem({ message }: { message: UiChatMessage }) {
+const REVEAL_MS = 16;
+const REVEAL_CHARS = 4;
+
+export function ChatMessageItem({
+  message,
+  reveal = false,
+}: {
+  message: UiChatMessage;
+  reveal?: boolean;
+}) {
   const isUser = message.role === "user";
+  const reveals = reveal && !isUser;
+  // Seed empty on the first paint, otherwise the whole answer flashes before the
+  // reveal effect gets a chance to hide it.
+  const [typed, setTyped] = useState(reveals ? "" : message.content);
+  const [writing, setWriting] = useState(reveals);
+
+  // The API answers in one JSON body, so the reply is written out here — that
+  // is what gives the bot something to look like it is generating.
+  useEffect(() => {
+    if (!reveals) {
+      setTyped(message.content);
+      setWriting(false);
+      return;
+    }
+    setTyped("");
+    setWriting(true);
+    const text = message.content;
+    let shown = 0;
+    const timer = window.setInterval(() => {
+      shown = Math.min(text.length, shown + REVEAL_CHARS);
+      setTyped(text.slice(0, shown));
+      if (shown >= text.length) {
+        window.clearInterval(timer);
+        setWriting(false);
+      }
+    }, REVEAL_MS);
+    return () => window.clearInterval(timer);
+  }, [reveals, message.content]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -189,8 +228,8 @@ export function ChatMessageItem({ message }: { message: UiChatMessage }) {
       className={cn("flex flex-col gap-2", isUser ? "items-end" : "items-start")}
     >
       {!isUser ? (
-        <span className="flex items-center gap-1.5 pl-1 text-[11px] font-medium text-muted">
-          <span aria-hidden className="size-1.5 rounded-full bg-[image:var(--gradient-brand)]" />
+        <span className="flex items-center gap-2 pl-1 text-[11px] font-medium text-muted">
+          <BotAvatar mood={writing ? "generating" : "idle"} />
           Avelor
         </span>
       ) : null}
@@ -204,9 +243,15 @@ export function ChatMessageItem({ message }: { message: UiChatMessage }) {
             "border-red-300/60 bg-red-50/70 text-red-900 dark:border-red-400/30 dark:bg-red-950/40 dark:text-red-200"
         )}
       >
-        {renderContent(message.content)}
+        {renderContent(isUser ? message.content : typed)}
+        {writing ? (
+          <span
+            aria-hidden
+            className="ml-0.5 inline-block h-[1.05em] w-[2px] translate-y-[2px] animate-pulse rounded-full bg-muted align-middle"
+          />
+        ) : null}
       </div>
-      {!isUser && message.products.length > 0 ? (
+      {!isUser && !writing && message.products.length > 0 ? (
         <ProductCarousel products={message.products} />
       ) : null}
     </motion.div>

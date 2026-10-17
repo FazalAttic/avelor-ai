@@ -4,6 +4,7 @@ import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { BotAvatar } from "@/components/bot-avatar";
 import { ChatMessageItem, type UiChatMessage } from "@/components/chat-message";
 import { ChatShell } from "@/components/chat-shell";
 import { Composer } from "@/components/composer";
@@ -25,19 +26,26 @@ function ThinkingIndicator() {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -6 }}
       transition={{ duration: 0.25, ease: EASE }}
-      className="flex items-center gap-1.5 rounded-[22px] rounded-bl-lg border border-white/50 bg-white/40 px-4 py-3.5 backdrop-blur-xl dark:border-white/10 dark:bg-white/10"
+      className="flex flex-col items-start gap-2"
     >
-      {[0, 1, 2].map((dot) => (
-        <motion.span
-          key={dot}
-          aria-hidden
-          className="size-1.5 rounded-full bg-muted"
-          animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
-          transition={{ duration: 0.9, repeat: Infinity, delay: dot * 0.15, ease: "easeInOut" }}
-        />
-      ))}
-      <span className="sr-only">Avelor is thinking</span>
+      <span className="flex items-center gap-2 pl-1 text-[11px] font-medium text-muted">
+        <BotAvatar mood="thinking" />
+        Avelor
+      </span>
+      <span className="flex items-center gap-1.5 rounded-[22px] rounded-bl-lg border border-white/50 bg-white/40 px-4 py-3.5 backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
+        {[0, 1, 2].map((dot) => (
+          <motion.span
+            key={dot}
+            aria-hidden
+            className="size-1.5 rounded-full bg-muted"
+            animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 0.9, repeat: Infinity, delay: dot * 0.15, ease: "easeInOut" }}
+          />
+        ))}
+        <span className="sr-only">is thinking</span>
+      </span>
     </motion.div>
   );
 }
@@ -46,8 +54,10 @@ export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<UiChatMessage[]>([]);
   const [sending, setSending] = useState(false);
+  const [liveId, setLiveId] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
   const [showJump, setShowJump] = useState(false);
   const isChatting = sending || messages.length > 0;
@@ -59,6 +69,20 @@ export default function Home() {
     const el = scrollRef.current;
     if (el && pinnedRef.current) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }, [messages, sending]);
+
+  // A reply grows as it is written out, so keep the bottom pinned as it grows
+  // rather than only when the message first lands.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-observe when the thread mounts
+  useEffect(() => {
+    const el = scrollRef.current;
+    const thread = threadRef.current;
+    if (!el || !thread) return;
+    const observer = new ResizeObserver(() => {
+      if (pinnedRef.current) el.scrollTop = el.scrollHeight;
+    });
+    observer.observe(thread);
+    return () => observer.disconnect();
+  }, [messages.length, sending]);
 
   function trackPinned() {
     const el = scrollRef.current;
@@ -92,10 +116,12 @@ export default function Home() {
     try {
       const history = messages.map(({ role, content }) => ({ role, content }));
       const result = await sendChatMessage(text, history);
+      const replyId = crypto.randomUUID();
+      setLiveId(replyId);
       setMessages((prev) => [
         ...prev,
         {
-          id: crypto.randomUUID(),
+          id: replyId,
           role: "assistant",
           content: result.reply,
           products: result.products,
@@ -191,11 +217,20 @@ export default function Home() {
             className="relative z-10 flex h-full min-h-0 w-full flex-col"
           >
             <ScrollArea onScroll={trackPinned} className="min-h-0 flex-1" viewportRef={scrollRef}>
-              <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-6 pt-24 pb-56 sm:px-8">
+              <div
+                ref={threadRef}
+                className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-6 pt-24 pb-56 sm:px-8"
+              >
                 {messages.map((message) => (
-                  <ChatMessageItem key={message.id} message={message} />
+                  <ChatMessageItem
+                    key={message.id}
+                    message={message}
+                    reveal={message.id === liveId}
+                  />
                 ))}
-                {sending ? <ThinkingIndicator /> : null}
+                <AnimatePresence initial={false}>
+                  {sending ? <ThinkingIndicator key="thinking" /> : null}
+                </AnimatePresence>
               </div>
             </ScrollArea>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center px-6 pb-5 sm:px-8 sm:pb-6">
