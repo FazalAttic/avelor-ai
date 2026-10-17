@@ -67,7 +67,7 @@ export function Sidebar({ open, recentChats = DEFAULT_RECENT_CHATS, onSignIn }: 
       {recentChats.length > 0 && (
         <div className="mt-4 flex min-h-0 flex-1 flex-col">
           <p className="px-2.5 pb-1 text-xs font-medium text-subtle">Recents</p>
-          <ScrollArea className="min-h-0 flex-1">
+          <ScrollArea edgeFade className="min-h-0 flex-1">
             <div className="flex flex-col gap-0.5">
               {recentChats.map((chat) => (
                 <Link

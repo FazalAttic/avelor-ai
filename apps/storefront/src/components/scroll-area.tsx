@@ -15,12 +15,18 @@ export type ScrollAreaProps = {
   children: ReactNode;
   className?: string;
   viewportRef?: RefObject<HTMLDivElement | null>;
+  /**
+   * Soften the top/bottom edges where content continues. Don't use this over a
+   * backdrop-blurred surface: the mask makes the viewport a backdrop root.
+   */
+  edgeFade?: boolean;
 };
 
 const IDLE_MS = 1000;
 const MIN_THUMB = 28;
+const EDGE_FADE = 28;
 
-export function ScrollArea({ children, className, viewportRef }: ScrollAreaProps) {
+export function ScrollArea({ children, className, viewportRef, edgeFade }: ScrollAreaProps) {
   const viewport = useRef<HTMLDivElement | null>(null);
   const thumb = useRef<HTMLDivElement | null>(null);
   const idleTimer = useRef<number | null>(null);
@@ -28,6 +34,7 @@ export function ScrollArea({ children, className, viewportRef }: ScrollAreaProps
   const [hovered, setHovered] = useState(false);
   const [active, setActive] = useState(false);
   const [overflowing, setOverflowing] = useState(false);
+  const [edges, setEdges] = useState({ top: false, bottom: false });
 
   const measure = useCallback(() => {
     const el = viewport.current;
@@ -35,11 +42,14 @@ export function ScrollArea({ children, className, viewportRef }: ScrollAreaProps
     if (!el || !bar) return;
     const max = el.scrollHeight - el.clientHeight;
     setOverflowing(max > 2);
+    const top = el.scrollTop > 2;
+    const bottom = max - el.scrollTop > 2;
+    setEdges((prev) => (prev.top === top && prev.bottom === bottom ? prev : { top, bottom }));
     const track = el.clientHeight;
     const height = max > 0 ? Math.max(MIN_THUMB, (track * track) / el.scrollHeight) : track;
-    const top = max > 0 ? (el.scrollTop / max) * (track - height) : 0;
+    const offset = max > 0 ? (el.scrollTop / max) * (track - height) : 0;
     bar.style.height = `${height}px`;
-    bar.style.transform = `translate3d(0, ${top}px, 0)`;
+    bar.style.transform = `translate3d(0, ${offset}px, 0)`;
   }, []);
 
   const ping = useCallback(() => {
@@ -101,6 +111,16 @@ export function ScrollArea({ children, className, viewportRef }: ScrollAreaProps
   }
 
   const shown = overflowing && (active || hovered);
+  const stops = [
+    edges.top ? "transparent 0" : "black 0",
+    edges.top ? `black ${EDGE_FADE}px` : null,
+    edges.bottom ? `black calc(100% - ${EDGE_FADE}px)` : null,
+    edges.bottom ? "transparent 100%" : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const fade =
+    edgeFade && (edges.top || edges.bottom) ? `linear-gradient(to bottom, ${stops})` : "none";
 
   return (
     <div
@@ -110,6 +130,7 @@ export function ScrollArea({ children, className, viewportRef }: ScrollAreaProps
     >
       <div
         ref={setViewport}
+        style={{ WebkitMaskImage: fade, maskImage: fade }}
         className="h-full w-full overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {children}
