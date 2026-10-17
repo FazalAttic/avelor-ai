@@ -5,8 +5,8 @@ import {
   InMemoryVectorStore,
   reindexCatalog,
 } from "@avelor/ai";
-import { createDatabaseClient, type Database } from "@avelor/database";
 import { InMemoryCatalogRepository, InMemoryPolicyRepository, parseTenantId } from "@avelor/core";
+import { createDatabaseClient, type Database } from "@avelor/database";
 import { createApp } from "./app";
 import { createAuth } from "./auth";
 import { seedDemoStore } from "./seed";

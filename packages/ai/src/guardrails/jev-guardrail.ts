@@ -54,7 +54,7 @@ export class JevGuardrail implements GuardrailEngine {
     if (options.client) {
       this.client = options.client;
     } else {
-      const apiKey = options.apiKey ?? process.env.TYPESAFE_API_KEY;
+      const apiKey = "apiKey" in options ? options.apiKey : process.env.TYPESAFE_API_KEY;
       this.client = apiKey
         ? new TypeSafeClient({
             apiKey,

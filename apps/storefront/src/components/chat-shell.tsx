@@ -17,6 +17,7 @@ import { IconButton } from "@/components/icon-button";
 import { IconLink } from "@/components/icon-link";
 import { Sidebar } from "@/components/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserAvatar } from "@/components/user-avatar";
 import { authClient, useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
@@ -66,7 +67,14 @@ export function ChatShell({ children }: { children: ReactNode }) {
           title="Avelor"
           className="flex h-10 items-center gap-2 rounded-full border border-white/50 bg-white/40 px-3 shadow-card backdrop-blur-xl sm:px-3.5 dark:border-white/10 dark:bg-white/10"
         >
-          <Image src="/avelor-logo.png" alt="" width={24} height={24} priority />
+          <Image
+            src="/avelor-logo.png"
+            alt=""
+            width={24}
+            height={24}
+            priority
+            style={{ width: "auto", height: "auto" }}
+          />
           <span className="hidden text-sm font-semibold tracking-tight text-foreground min-[420px]:inline">
             Avelor
           </span>
@@ -101,9 +109,7 @@ export function ChatShell({ children }: { children: ReactNode }) {
               onClick={() => setMenuOpen((value) => !value)}
               className="ml-0.5 flex size-8 items-center justify-center rounded-full transition-transform duration-150 ease-expo hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
             >
-              <span className="flex size-full items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background">
-                {user.name.charAt(0).toUpperCase()}
-              </span>
+              <UserAvatar name={user.name} image={user.image} size="sm" />
             </button>
           ) : (
             <button
@@ -128,9 +134,7 @@ export function ChatShell({ children }: { children: ReactNode }) {
             className="absolute right-0 top-[calc(100%+10px)] w-56 rounded-3xl border border-white/50 bg-white/50 p-2 shadow-pop backdrop-blur-2xl dark:border-white/10 dark:bg-[#15182b]/80"
           >
             <div className="flex items-center gap-2.5 px-2 py-2">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background">
-                {user.name.charAt(0).toUpperCase()}
-              </span>
+              <UserAvatar name={user.name} image={user.image} size="md" />
               <span className="min-w-0">
                 <span className="block truncate text-sm font-semibold text-foreground">
                   {user.name}

@@ -4,6 +4,7 @@ import { Edit01Icon, FavouriteIcon, PackageIcon, UserIcon } from "@hugeicons/cor
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { SideNavItem } from "@/components/side-nav-item";
+import { UserAvatar } from "@/components/user-avatar";
 import { useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
@@ -82,9 +83,7 @@ export function Sidebar({ open, recentChats = DEFAULT_RECENT_CHATS, onSignIn }: 
 
       {user ? (
         <div className="flex shrink-0 items-center gap-3 rounded-xl p-2">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background">
-            {user.name.charAt(0).toUpperCase()}
-          </span>
+          <UserAvatar name={user.name} image={user.image} size="sm" />
           <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
             {user.name}
           </span>

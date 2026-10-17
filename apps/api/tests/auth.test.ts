@@ -319,4 +319,56 @@ describe("Better Auth & Admin / Customer Role Isolation", () => {
       expect(body.items[0].name).toBe("Public Trail Shoes");
     });
   });
+
+  describe("Social Authentication (Google OAuth)", () => {
+    it("configures Google provider and initiates OAuth flow when credentials are provided", async () => {
+      const googleAuth = createAuth({
+        secret: "test_secret_for_auth_32_characters_long",
+        googleClientId: "mock-google-client-id.apps.googleusercontent.com",
+        googleClientSecret: "mock-google-client-secret",
+      });
+
+      expect(googleAuth.options.account?.accountLinking?.enabled).toBe(true);
+      expect(googleAuth.options.account?.accountLinking?.trustedProviders).toContain("google");
+      expect(googleAuth.options.account?.accountLinking?.updateUserInfoOnLink).toBe(true);
+
+      const socialApp = createApp({
+        auth: googleAuth,
+      });
+
+      const res = await socialApp.request("/api/auth/sign-in/social", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          provider: "google",
+          callbackURL: "http://localhost:3000",
+        }),
+      });
+
+      expect([200, 302]).toContain(res.status);
+      const data = await res.json();
+      expect(data.url).toBeDefined();
+      expect(data.url).toContain("accounts.google.com");
+    });
+
+    it("handles root endpoint by redirecting browsers to storefront and responding JSON to API clients", async () => {
+      const app = createApp();
+
+      // Browser request (accept: text/html)
+      const browserRes = await app.request("/", {
+        headers: { accept: "text/html,application/xhtml+xml" },
+      });
+      expect(browserRes.status).toBe(302);
+      expect(browserRes.headers.get("location")).toBe("http://localhost:3000");
+
+      // API client request
+      const apiRes = await app.request("/", {
+        headers: { accept: "application/json" },
+      });
+      expect(apiRes.status).toBe(200);
+      const data = await apiRes.json();
+      expect(data.name).toBe("Avelor API");
+      expect(data.status).toBe("ok");
+    });
+  });
 });

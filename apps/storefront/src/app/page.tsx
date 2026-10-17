@@ -5,7 +5,11 @@ import { ChatShell } from "@/components/chat-shell";
 import { Composer } from "@/components/composer";
 import { ProductMarquee } from "@/components/product-marquee";
 
-const STARTERS = ["Running shoes under $100", "A gift for a gamer", "Cozy hoodie weather"];
+const STARTERS = [
+  { emoji: "👟", text: "Running shoes under $100", tilt: "rotate-[1.4deg] translate-y-[2px]" },
+  { emoji: "🎮", text: "A gift for a gamer", tilt: "-rotate-[1.8deg] -translate-y-[2.5px]" },
+  { emoji: "🧥", text: "Cozy hoodie weather", tilt: "rotate-[1.1deg] translate-y-[1.5px]" },
+];
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
@@ -30,23 +34,25 @@ export default function Home() {
             inputRef={inputRef}
             onSubmit={() => setPrompt("")}
           />
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-2.5">
+          <div className="flex flex-wrap items-center justify-center gap-2.5 pt-3 pb-1">
             {STARTERS.map((starter) => (
               <button
-                key={starter}
+                key={starter.text}
                 type="button"
                 onClick={() => {
-                  setPrompt(starter);
+                  setPrompt(starter.text);
                   inputRef.current?.focus();
                 }}
                 className={
-                  "rounded-full border border-white/60 bg-white/55 px-3 py-1.5 text-xs font-medium text-foreground shadow-card backdrop-blur-xl " +
-                  "transition-colors duration-150 ease-expo hover:bg-white/75 sm:px-3.5 sm:text-[13px] " +
+                  "inline-flex items-center gap-1.5 rounded-full border border-white/60 bg-white/55 px-3 py-1.5 text-xs font-medium text-foreground shadow-card backdrop-blur-xl " +
+                  `${starter.tilt} ` +
+                  "transition-all duration-200 ease-expo hover:rotate-0 hover:translate-y-0 hover:scale-105 hover:bg-white/80 hover:shadow-pop active:scale-95 sm:px-3.5 sm:text-[13px] " +
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue " +
-                  "dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+                  "dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/20"
                 }
               >
-                {starter}
+                <span className="text-sm leading-none">{starter.emoji}</span>
+                <span>{starter.text}</span>
               </button>
             ))}
           </div>

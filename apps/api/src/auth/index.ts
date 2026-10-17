@@ -1,9 +1,33 @@
 import { Database as SqliteDatabase } from "bun:sqlite";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import type { Database } from "@avelor/database";
 import * as schema from "@avelor/database";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer } from "better-auth/plugins";
+
+function ensureEnvLoaded(): void {
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) return;
+
+  for (const envPath of [
+    resolve(process.cwd(), ".env.local"),
+    resolve(process.cwd(), ".env"),
+    resolve(process.cwd(), "../../.env.local"),
+    resolve(process.cwd(), "../../.env"),
+    resolve(import.meta.dir, "../../../.env.local"),
+    resolve(import.meta.dir, "../../../.env"),
+  ]) {
+    if (existsSync(envPath)) {
+      try {
+        process.loadEnvFile?.(envPath);
+        break;
+      } catch {
+        // ignore
+      }
+    }
+  }
+}
 
 export type UserRole = "admin" | "customer";
 
@@ -31,6 +55,8 @@ export interface CreateAuthOptions {
   database?: Database | undefined;
   secret?: string | undefined;
   baseURL?: string | undefined;
+  googleClientId?: string | undefined;
+  googleClientSecret?: string | undefined;
 }
 
 function initializeInMemorySqlite(): SqliteDatabase {
@@ -85,11 +111,17 @@ function initializeInMemorySqlite(): SqliteDatabase {
 }
 
 export function createAuth(options: CreateAuthOptions = {}) {
+  ensureEnvLoaded();
+
   const secret =
     options.secret ??
     process.env.BETTER_AUTH_SECRET ??
     "avelor_dev_secret_auth_32_chars_random_string_xyz";
   const baseURL = options.baseURL ?? process.env.BETTER_AUTH_URL ?? "http://localhost:5000";
+
+  const googleClientId = options.googleClientId ?? process.env.GOOGLE_CLIENT_ID;
+  const googleClientSecret = options.googleClientSecret ?? process.env.GOOGLE_CLIENT_SECRET;
+  const hasGoogle = Boolean(googleClientId && googleClientSecret);
 
   let dbConfig: unknown;
   if (options.database) {
@@ -123,6 +155,22 @@ export function createAuth(options: CreateAuthOptions = {}) {
       enabled: true,
       requireEmailVerification: false,
     },
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ["google"],
+        requireLocalEmailVerified: false,
+        updateUserInfoOnLink: true,
+      },
+    },
+    socialProviders: hasGoogle
+      ? {
+          google: {
+            clientId: googleClientId as string,
+            clientSecret: googleClientSecret as string,
+          },
+        }
+      : undefined,
     user: {
       additionalFields: {
         role: {

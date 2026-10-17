@@ -93,9 +93,24 @@ export function createApp(options: AppOptions = {}) {
     await next();
   });
 
-  // Better Auth handler for /api/auth/*
-  app.on(["POST", "GET"], "/api/auth/**", (c) => {
-    return auth.handler(c.req.raw);
+  // Better Auth handler for /api/auth and all sub-routes
+  app.all("/api/auth", (c) => auth.handler(c.req.raw));
+  app.all("/api/auth/*", (c) => auth.handler(c.req.raw));
+  app.all("/api/auth/**", (c) => auth.handler(c.req.raw));
+
+  // Root endpoint: redirect browsers to storefront; provide JSON info to API clients
+  app.get("/", (c) => {
+    const accept = c.req.header("accept") ?? "";
+    const storefrontUrl = allowedOrigins[0] ?? "http://localhost:3000";
+    if (accept.includes("text/html")) {
+      return c.redirect(storefrontUrl);
+    }
+    return c.json({
+      name: "Avelor API",
+      status: "ok",
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+    });
   });
 
   // Health check endpoint
