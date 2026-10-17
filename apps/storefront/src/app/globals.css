@@ -83,6 +83,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Document scrollbar (routes outside a custom ScrollArea): thin, ink-tinted. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--foreground) 22%, transparent) transparent;
+}
+
 /* Night theme — flips every token; components never change, only values here */
 .dark {
   --background: #0a0c18;

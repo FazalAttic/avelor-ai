@@ -3,6 +3,7 @@
 import { Edit01Icon, FavouriteIcon, PackageIcon, UserIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
+import { ScrollArea } from "@/components/scroll-area";
 import { SideNavItem } from "@/components/side-nav-item";
 import { UserAvatar } from "@/components/user-avatar";
 import { useSession } from "@/lib/auth-client";
@@ -66,18 +67,20 @@ export function Sidebar({ open, recentChats = DEFAULT_RECENT_CHATS, onSignIn }: 
       {recentChats.length > 0 && (
         <div className="mt-4 flex min-h-0 flex-1 flex-col">
           <p className="px-2.5 pb-1 text-xs font-medium text-subtle">Recents</p>
-          <div className="flex flex-col gap-0.5 overflow-y-auto">
-            {recentChats.map((chat) => (
-              <Link
-                key={chat.id}
-                href="/"
-                title={chat.title}
-                className="block truncate rounded-lg px-2.5 py-2 text-sm text-muted transition-colors duration-150 ease-expo hover:bg-surface-hover hover:text-foreground"
-              >
-                {chat.title}
-              </Link>
-            ))}
-          </div>
+          <ScrollArea className="min-h-0 flex-1">
+            <div className="flex flex-col gap-0.5">
+              {recentChats.map((chat) => (
+                <Link
+                  key={chat.id}
+                  href="/"
+                  title={chat.title}
+                  className="block truncate rounded-lg px-2.5 py-2 text-sm text-muted transition-colors duration-150 ease-expo hover:bg-surface-hover hover:text-foreground"
+                >
+                  {chat.title}
+                </Link>
+              ))}
+            </div>
+          </ScrollArea>
         </div>
       )}
 

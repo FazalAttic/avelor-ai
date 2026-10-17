@@ -6,6 +6,7 @@ import { ChatMessageItem, type UiChatMessage } from "@/components/chat-message";
 import { ChatShell } from "@/components/chat-shell";
 import { Composer } from "@/components/composer";
 import { ProductMarquee } from "@/components/product-marquee";
+import { ScrollArea } from "@/components/scroll-area";
 import { sendChatMessage } from "@/lib/chat-api";
 
 const STARTERS = [
@@ -166,14 +167,14 @@ export default function Home() {
             transition={{ duration: 0.35, ease: EASE }}
             className="relative z-10 flex h-full min-h-0 w-full flex-col"
           >
-            <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden">
+            <ScrollArea className="min-h-0 flex-1" viewportRef={scrollRef}>
               <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-6 pt-24 pb-56 sm:px-8">
                 {messages.map((message) => (
                   <ChatMessageItem key={message.id} message={message} />
                 ))}
                 {sending ? <ThinkingIndicator /> : null}
               </div>
-            </div>
+            </ScrollArea>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-6 pb-5 sm:px-8 sm:pb-6">
               <motion.div
                 layoutId="chat-dock"
