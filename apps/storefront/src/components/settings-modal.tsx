@@ -199,7 +199,7 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
-          "relative flex max-h-full w-full max-w-lg flex-col rounded-[32px] border border-white/50",
+          "relative flex h-[min(86dvh,640px)] w-full max-w-3xl flex-col rounded-[32px] border border-white/50",
           "bg-white/40 p-3 shadow-pop backdrop-blur-2xl sm:p-4",
           "dark:border-white/10 dark:bg-[#15182b]/70"
         )}
@@ -233,167 +233,178 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
         </header>
 
         {user ? (
-          <ScrollArea edgeFade className="min-h-0 flex-1">
-            <div className="flex flex-col gap-3 px-1 pb-1">
-              <SettingGroup
-                icon={UserAccountIcon}
-                title="Profile"
-                desc="How stores and couriers see you."
-              >
-                <form
-                  onSubmit={saveProfile}
-                  className="flex flex-col gap-3 border-t border-border pt-3.5 sm:flex-row sm:items-end"
-                >
-                  <TextField
-                    id="profile-name"
-                    label="Name"
-                    value={name}
-                    onChange={(next) => {
-                      setName(next);
-                      setProfileNote(null);
-                    }}
-                    placeholder="Your name"
-                    autoComplete="name"
-                  />
-                  <button
-                    type="submit"
-                    disabled={savingProfile}
-                    className={cn(SAVE_CLASS, "self-start sm:self-auto")}
+          <>
+            <ScrollArea edgeFade className="@container min-h-0 flex-1">
+              <div className="grid items-start gap-3 px-1 pb-1 @2xl:grid-cols-2">
+                <div className="flex min-w-0 flex-col gap-3">
+                  <SettingGroup
+                    icon={UserAccountIcon}
+                    title="Profile"
+                    desc="How stores and couriers see you."
                   >
-                    {savingProfile ? "Saving…" : "Save"}
-                  </button>
-                </form>
-                {profileNote ? <FormNote note={profileNote} /> : null}
-              </SettingGroup>
+                    <form
+                      onSubmit={saveProfile}
+                      className="flex flex-col gap-3 border-t border-border pt-3.5 @xs:flex-row @xs:items-end"
+                    >
+                      <TextField
+                        id="profile-name"
+                        label="Name"
+                        value={name}
+                        onChange={(next) => {
+                          setName(next);
+                          setProfileNote(null);
+                        }}
+                        placeholder="Your name"
+                        autoComplete="name"
+                      />
+                      <button
+                        type="submit"
+                        disabled={savingProfile}
+                        className={cn(SAVE_CLASS, "self-start @xs:self-auto")}
+                      >
+                        {savingProfile ? "Saving…" : "Save"}
+                      </button>
+                    </form>
+                    {profileNote ? <FormNote note={profileNote} /> : null}
+                  </SettingGroup>
 
-              <SettingGroup
-                icon={AccountSettingIcon}
-                title="Preferences"
-                desc="Applies on this device."
-              >
-                <OptionRow
-                  title="Appearance"
-                  desc="Day sky or night sky."
-                  control={
-                    <Segmented
-                      name="appearance"
-                      value={night ? "night" : "day"}
-                      onChange={(next) => chooseTheme(next === "night")}
-                      options={[
-                        { value: "day", label: "Day", icon: Sun03Icon },
-                        { value: "night", label: "Night", icon: Moon02Icon },
-                      ]}
+                  <SettingGroup
+                    icon={AccountSettingIcon}
+                    title="Preferences"
+                    desc="Applies on this device."
+                  >
+                    <OptionRow
+                      title="Appearance"
+                      desc="Day sky or night sky."
+                      control={
+                        <Segmented
+                          name="appearance"
+                          value={night ? "night" : "day"}
+                          onChange={(next) => chooseTheme(next === "night")}
+                          options={[
+                            { value: "day", label: "Day", icon: Sun03Icon },
+                            { value: "night", label: "Night", icon: Moon02Icon },
+                          ]}
+                        />
+                      }
                     />
-                  }
-                />
-                <OptionRow
-                  title="Currency"
-                  desc="Prices shown across the store."
-                  control={
-                    <Segmented
-                      name="currency"
-                      value={prefs.currency}
-                      onChange={(currency) => patch({ currency })}
-                      options={CURRENCIES}
+                    <OptionRow
+                      title="Currency"
+                      desc="Prices shown across the store."
+                      control={
+                        <Segmented
+                          name="currency"
+                          value={prefs.currency}
+                          onChange={(currency) => patch({ currency })}
+                          options={CURRENCIES}
+                        />
+                      }
                     />
-                  }
-                />
-              </SettingGroup>
+                  </SettingGroup>
+                </div>
 
-              <SettingGroup
-                icon={Notification01Icon}
-                title="Notifications"
-                desc="We only email what you ask for."
-              >
-                <OptionRow
-                  title="Order updates"
-                  desc="Dispatch, delivery and returns."
-                  control={
-                    <Toggle
-                      label="Order updates"
-                      checked={prefs.orderUpdates}
-                      onChange={(orderUpdates) => patch({ orderUpdates })}
+                <div className="flex min-w-0 flex-col gap-3">
+                  <SettingGroup
+                    icon={Notification01Icon}
+                    title="Notifications"
+                    desc="We only email what you ask for."
+                  >
+                    <OptionRow
+                      title="Order updates"
+                      desc="Dispatch, delivery and returns."
+                      control={
+                        <Toggle
+                          label="Order updates"
+                          checked={prefs.orderUpdates}
+                          onChange={(orderUpdates) => patch({ orderUpdates })}
+                        />
+                      }
                     />
-                  }
-                />
-                <OptionRow
-                  title="Price drops"
-                  desc="When something you liked gets cheaper."
-                  control={
-                    <Toggle
-                      label="Price drops"
-                      checked={prefs.priceDrops}
-                      onChange={(priceDrops) => patch({ priceDrops })}
+                    <OptionRow
+                      title="Price drops"
+                      desc="When something you liked gets cheaper."
+                      control={
+                        <Toggle
+                          label="Price drops"
+                          checked={prefs.priceDrops}
+                          onChange={(priceDrops) => patch({ priceDrops })}
+                        />
+                      }
                     />
-                  }
-                />
-                <OptionRow
-                  title="Product picks"
-                  desc="Occasional suggestions from the AI."
-                  control={
-                    <Toggle
-                      label="Product picks"
-                      checked={prefs.productPicks}
-                      onChange={(productPicks) => patch({ productPicks })}
+                    <OptionRow
+                      title="Product picks"
+                      desc="Occasional suggestions from the AI."
+                      control={
+                        <Toggle
+                          label="Product picks"
+                          checked={prefs.productPicks}
+                          onChange={(productPicks) => patch({ productPicks })}
+                        />
+                      }
                     />
-                  }
-                />
-              </SettingGroup>
+                  </SettingGroup>
+                </div>
 
-              <SettingGroup
-                icon={KeyIcon}
-                title="Password"
-                desc="Other devices are signed out when it changes."
-              >
-                <form onSubmit={savePassword} className="flex flex-col gap-3 sm:flex-row">
-                  <TextField
-                    id="current-password"
-                    label="Current"
-                    type="password"
-                    value={currentPassword}
-                    onChange={(next) => {
-                      setCurrentPassword(next);
-                      setPasswordNote(null);
-                    }}
-                    placeholder="Your password"
-                    autoComplete="current-password"
-                  />
-                  <TextField
-                    id="new-password"
-                    label="New"
-                    type="password"
-                    value={newPassword}
-                    onChange={(next) => {
-                      setNewPassword(next);
-                      setPasswordNote(null);
-                    }}
-                    placeholder="At least 8 characters"
-                    autoComplete="new-password"
-                  />
-                  <div className="flex items-end">
-                    <button type="submit" disabled={savingPassword} className={SAVE_CLASS}>
-                      {savingPassword ? "Saving…" : "Update"}
-                    </button>
-                  </div>
-                </form>
-                {passwordNote ? <FormNote note={passwordNote} /> : null}
-              </SettingGroup>
+                <SettingGroup
+                  className="@2xl:col-span-2"
+                  icon={KeyIcon}
+                  title="Password"
+                  desc="Other devices are signed out when it changes."
+                >
+                  <form
+                    onSubmit={savePassword}
+                    className="flex flex-col gap-3 @xl:flex-row @xl:items-end"
+                  >
+                    <TextField
+                      id="current-password"
+                      label="Current"
+                      type="password"
+                      value={currentPassword}
+                      onChange={(next) => {
+                        setCurrentPassword(next);
+                        setPasswordNote(null);
+                      }}
+                      placeholder="Your password"
+                      autoComplete="current-password"
+                    />
+                    <TextField
+                      id="new-password"
+                      label="New"
+                      type="password"
+                      value={newPassword}
+                      onChange={(next) => {
+                        setNewPassword(next);
+                        setPasswordNote(null);
+                      }}
+                      placeholder="At least 8 characters"
+                      autoComplete="new-password"
+                    />
+                    <div className="flex items-end">
+                      <button type="submit" disabled={savingPassword} className={SAVE_CLASS}>
+                        {savingPassword ? "Saving…" : "Update"}
+                      </button>
+                    </div>
+                  </form>
+                  {passwordNote ? <FormNote note={passwordNote} /> : null}
+                </SettingGroup>
+              </div>
+            </ScrollArea>
 
+            <footer className="flex shrink-0 justify-end border-t border-border px-2 pt-2.5">
               <button
                 type="button"
                 onClick={signOut}
                 className={cn(
-                  "flex h-11 items-center justify-center gap-2 rounded-3xl border border-border bg-surface",
-                  "text-sm font-semibold text-foreground shadow-card",
-                  "transition-colors duration-150 ease-expo hover:border-border-strong hover:bg-surface-hover",
+                  "flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold text-muted",
+                  "transition-colors duration-150 ease-expo hover:bg-surface-hover hover:text-foreground",
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
                 )}
               >
-                <HugeiconsIcon icon={Logout03Icon} size={18} strokeWidth={1.8} />
+                <HugeiconsIcon icon={Logout03Icon} size={16} strokeWidth={1.8} />
                 Sign out
               </button>
-            </div>
-          </ScrollArea>
+            </footer>
+          </>
         ) : (
           <div className="flex flex-col items-center gap-4 px-6 pb-8 text-center">
             <p className="text-sm text-muted">
@@ -410,18 +421,25 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
 }
 
 function SettingGroup({
+  className,
   icon,
   title,
   desc,
   children,
 }: {
+  className?: string;
   icon: IconSvgElement;
   title: string;
   desc: string;
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-3xl border border-border bg-surface p-4 shadow-card sm:p-5">
+    <section
+      className={cn(
+        "@container rounded-3xl border border-border bg-surface p-4 shadow-card",
+        className
+      )}
+    >
       <header className="flex items-start gap-3 pb-3">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-wash text-foreground">
           <HugeiconsIcon icon={icon} size={18} strokeWidth={1.8} />
@@ -438,7 +456,7 @@ function SettingGroup({
 
 function OptionRow({ title, desc, control }: { title: string; desc: string; control: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-t border-border py-3.5 first:border-t-0 first:pt-1">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border py-3.5 first:border-t-0 first:pt-1">
       <div className="min-w-0">
         <p className="text-sm font-medium text-foreground">{title}</p>
         <p className="pt-0.5 text-xs text-subtle">{desc}</p>

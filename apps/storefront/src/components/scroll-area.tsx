@@ -144,7 +144,7 @@ export function ScrollArea({
       <div
         ref={setViewport}
         style={{ WebkitMaskImage: fade, maskImage: fade }}
-        className="h-full w-full overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="absolute inset-0 overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {children}
       </div>
