@@ -68,12 +68,12 @@ export function ProductMarquee({ products = DEFAULT_PRODUCTS, className }: Produ
   return (
     <div
       className={cn(
-        "marquee pointer-events-none absolute inset-x-0 top-16 z-10 overflow-hidden",
+        "marquee pointer-events-none absolute inset-x-0 top-20 z-10 overflow-hidden md:top-16",
         "[mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]",
         className
       )}
     >
-      <div className="marquee-track flex w-max items-center gap-8 py-5 pr-8 md:gap-12 md:py-7 md:pr-12">
+      <div className="marquee-track flex w-max items-center gap-5 py-4 pr-5 md:gap-12 md:py-7 md:pr-12">
         {loop.map((product, index) => {
           const duplicate = index >= products.length;
           const rhythm = FLOAT_RHYTHM[index % FLOAT_RHYTHM.length];
@@ -93,7 +93,7 @@ export function ProductMarquee({ products = DEFAULT_PRODUCTS, className }: Produ
                   animationDelay: `${rhythm.delay}s`,
                 }}
               >
-                <div className="size-28 overflow-hidden rounded-full bg-surface shadow-card ring-1 ring-border/70 transition-all duration-300 ease-expo group-hover:scale-105 group-hover:shadow-pop group-hover:ring-border-strong md:size-36">
+                <div className="size-20 overflow-hidden rounded-full bg-surface shadow-card ring-1 ring-border/70 transition-all duration-300 ease-expo group-hover:scale-105 group-hover:shadow-pop group-hover:ring-border-strong md:size-36">
                   <Image
                     src={product.image}
                     alt={duplicate ? "" : product.name}

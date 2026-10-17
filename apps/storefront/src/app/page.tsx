@@ -137,7 +137,7 @@ export default function Home() {
             key="hero"
             exit={{ opacity: 0, y: -40, filter: "blur(6px)" }}
             transition={{ duration: 0.35, ease: EASE }}
-            className="flex w-full max-w-3xl translate-y-10 flex-col items-center gap-10 px-6 sm:px-8 md:translate-y-14"
+            className="flex w-full max-w-3xl translate-y-16 flex-col items-center gap-10 px-6 sm:px-8 md:translate-y-14"
           >
             <h1 className="text-center text-3xl font-medium tracking-tight text-foreground sm:text-4xl md:text-5xl">
               Find your{" "}
