@@ -1,16 +1,11 @@
 "use client";
 
-import {
-  ArrowRight01Icon,
-  ChartIncreaseIcon,
-  CheckmarkCircle02Icon,
-} from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon, ChartIncreaseIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { AreaChart, type ChartPoint } from "@/components/ui/area-chart";
-import { Badge } from "@/components/ui/badge";
 import { type Metric, MetricGroup } from "@/components/ui/metric-group";
 import { Segmented } from "@/components/ui/segmented";
 import {
@@ -215,18 +210,6 @@ export default function AdminDashboardPage() {
     return { live, draft, soldOut, low };
   }, [products]);
 
-  const lowStock = useMemo(() => {
-    const rows: { name: string; sku: string; quantity: number }[] = [];
-    for (const product of products) {
-      for (const variant of product.variants) {
-        if (variant.inventoryQuantity < LOW_STOCK) {
-          rows.push({ name: product.name, sku: variant.sku, quantity: variant.inventoryQuantity });
-        }
-      }
-    }
-    return rows.sort((a, b) => a.quantity - b.quantity).slice(0, 4);
-  }, [products]);
-
   const recentOrders = useMemo(
     () =>
       [...orders]
@@ -355,48 +338,6 @@ export default function AdminDashboardPage() {
                   ))}
                 </ul>
               )}
-            </Panel>
-          </Group>
-
-          <Group title="Store health">
-            <Panel>
-              <div className="flex flex-col gap-4">
-                <div>
-                  <div className="flex items-baseline justify-between text-[13px]">
-                    <span className="text-muted">Paid orders</span>
-                    <span className="font-numbers text-[15px] font-medium text-admin-ink tabular-nums">
-                      {paidRate}%
-                    </span>
-                  </div>
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-admin-line">
-                    <div
-                      className="h-full rounded-full bg-admin-ink transition-[width] duration-500 ease-expo"
-                      style={{ width: `${paidRate}%` }}
-                    />
-                  </div>
-                </div>
-
-                {lowStock.length === 0 ? (
-                  <p className="flex items-center gap-2 text-[12px] text-muted">
-                    <HugeiconsIcon icon={CheckmarkCircle02Icon} size={14} strokeWidth={1.8} />
-                    Inventory is healthy — nothing under {LOW_STOCK} units.
-                  </p>
-                ) : (
-                  <ul className="flex flex-col gap-2">
-                    {lowStock.map((row) => (
-                      <li key={row.sku} className="flex items-center justify-between gap-3">
-                        <span className="min-w-0">
-                          <span className="block truncate text-[12px] font-medium">{row.name}</span>
-                          <span className="block truncate text-[11px] text-subtle">{row.sku}</span>
-                        </span>
-                        <Badge tone={row.quantity === 0 ? "danger" : "warning"}>
-                          {row.quantity} left
-                        </Badge>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
             </Panel>
           </Group>
 
