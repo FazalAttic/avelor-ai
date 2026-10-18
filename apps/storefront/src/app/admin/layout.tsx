@@ -132,8 +132,8 @@ function NavLink({
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue",
         RAIL_ICON_ROW,
         active
-          ? "bg-admin-card text-admin-ink font-semibold"
-          : "font-medium text-admin-ink hover:bg-admin-card/70"
+          ? "border border-admin-edge bg-admin-card text-admin-ink font-semibold"
+          : "border border-transparent font-medium text-admin-ink hover:bg-admin-card/70"
       )}
     >
       <HugeiconsIcon icon={icon} size={20} strokeWidth={active ? 2.1 : 1.8} className="shrink-0" />

@@ -83,7 +83,7 @@ export function DataTable<T>({
             : rows.map((row) => (
                 <tr
                   key={rowKey(row)}
-                  className="transition-colors duration-150 ease-expo hover:bg-admin-rail/70"
+                  className="transition-colors duration-150 ease-expo hover:bg-admin-line/50"
                 >
                   {columns.map((column) => (
                     <td

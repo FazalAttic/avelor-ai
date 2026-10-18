@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 const LINE_BUTTON = buttonClass({
   variant: "secondary",
   size: "md",
-  className: "border-admin-edge bg-admin-card hover:border-admin-ink/25 hover:bg-admin-rail",
+  className: "border-admin-edge bg-admin-card hover:border-admin-ink/25 hover:bg-admin-line/60",
 });
 
 /** Only what an authenticator asks for when you choose "enter a setup key". */
@@ -165,7 +165,7 @@ export default function AdminSecurityPage() {
                 "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold",
                 enabled
                   ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-400"
-                  : "bg-admin-rail text-muted"
+                  : "bg-admin-line/60 text-muted"
               )}
             >
               <HugeiconsIcon icon={ShieldIcon} size={13} strokeWidth={2} />

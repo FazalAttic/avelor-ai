@@ -17,7 +17,7 @@ export function EmptyState({
   return (
     <div className={cn("flex flex-col items-center gap-2 text-center", className)}>
       {icon ? (
-        <span className="mb-1 flex size-10 items-center justify-center rounded-xl bg-admin-rail text-muted">
+        <span className="mb-1 flex size-10 items-center justify-center rounded-xl bg-admin-line/60 text-muted">
           {icon}
         </span>
       ) : null}

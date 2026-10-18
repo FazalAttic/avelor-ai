@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 const LINE_BUTTON = buttonClass({
   variant: "secondary",
   size: "sm",
-  className: "border-admin-edge bg-admin-card hover:border-admin-ink/25 hover:bg-admin-rail",
+  className: "border-admin-edge bg-admin-card hover:border-admin-ink/25 hover:bg-admin-line/60",
 });
 
 const ICON_BUTTON = cn(LINE_BUTTON, "size-8 justify-center px-0");
@@ -143,10 +143,10 @@ export default function AdminProductsPage() {
                 alt=""
                 width={40}
                 height={40}
-                className="size-10 shrink-0 rounded-lg bg-admin-rail object-cover ring-1 ring-admin-edge"
+                className="size-10 shrink-0 rounded-lg bg-admin-line/60 object-cover ring-1 ring-admin-edge"
               />
             ) : (
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-admin-rail ring-1 ring-admin-edge">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-admin-line/60 ring-1 ring-admin-edge">
                 <HugeiconsIcon
                   icon={PackageIcon}
                   size={16}

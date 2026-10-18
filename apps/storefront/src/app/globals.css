@@ -46,17 +46,20 @@
   --elev-card: 0 1px 2px rgba(23, 23, 30, 0.04), 0 4px 16px rgba(23, 23, 30, 0.06);
   --elev-pop: 0 4px 12px rgba(23, 23, 30, 0.08), 0 16px 48px rgba(23, 23, 30, 0.12);
 
-  /* Admin console — its own surface family: grey rail, white cards, ink accents.
-     The storefront sells with light; the console works with contrast. */
-  --admin-rail: #f0f2ef;
-  --admin-canvas: #f7f8f6;
+  /* Admin console — one surface, named three times. The reference keeps the
+     canvas and the modules the same white and lets the borders do the
+     separating: a card is a card because of its rule, not because it is lighter
+     than what it sits on. The rail is the only surface with a tone of its own. */
+  --admin-rail: #f7f8f6;
+  --admin-canvas: #ffffff;
   --admin-card: #ffffff;
   --admin-line: #e3e6e1;
   /* Soft edge — ink thinned to a whisper instead of an opaque grey. A flat grey
      band reads as a drawn stroke because it fights the tone behind it; a
-     translucent edge only deepens whatever surface it lands on. The rail is
-     already 6 levels darker than the canvas, so 5% is enough to register as a
-     fold. Night needs more: light-on-dark hairlines lose punch faster. */
+     translucent edge only deepens whatever surface it lands on. Now that the
+     canvas and the modules match, this is the only thing telling them apart, so
+     it has to be confident without turning into a frame. Night needs more:
+     light-on-dark hairlines lose punch faster. */
   --admin-edge: color-mix(in oklab, var(--admin-ink) 5%, transparent);
   --admin-ink: #15171a;
   --admin-ink-contrast: #ffffff;
@@ -220,9 +223,11 @@ html {
   --elev-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 4px 16px rgba(0, 0, 0, 0.4);
   --elev-pop: 0 4px 12px rgba(0, 0, 0, 0.45), 0 16px 48px rgba(0, 0, 0, 0.55);
 
-  --admin-rail: #0e1122;
-  --admin-canvas: #0a0c18;
-  --admin-card: #14172a;
+  /* The same relationship inverted: the rail is the deepest surface and the
+     modules no longer lift out of the page — the edge line does it instead. */
+  --admin-rail: #0a0c18;
+  --admin-canvas: #0e1122;
+  --admin-card: #0e1122;
   --admin-line: #232840;
   --admin-edge: color-mix(in oklab, var(--admin-ink) 7%, transparent);
   --admin-ink: #eef0fb;

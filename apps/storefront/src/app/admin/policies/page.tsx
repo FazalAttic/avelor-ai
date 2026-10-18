@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 const LINE_BUTTON = buttonClass({
   variant: "secondary",
   size: "md",
-  className: "border-admin-edge bg-admin-card hover:border-admin-ink/25 hover:bg-admin-rail",
+  className: "border-admin-edge bg-admin-card hover:border-admin-ink/25 hover:bg-admin-line/60",
 });
 
 const TOPICS: readonly { value: PolicyTopic; label: string; blurb: string }[] = [

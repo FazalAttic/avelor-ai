@@ -77,7 +77,7 @@ export function Dialog({
             aria-label="Close"
             className={cn(
               "-mr-1 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted",
-              "transition-colors duration-150 ease-expo hover:bg-admin-rail hover:text-admin-ink",
+              "transition-colors duration-150 ease-expo hover:bg-admin-line/60 hover:text-admin-ink",
               "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
             )}
           >
@@ -88,7 +88,7 @@ export function Dialog({
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{children}</div>
 
         {footer ? (
-          <div className="flex items-center justify-end gap-2 border-t border-admin-edge bg-admin-rail/60 px-4 py-3">
+          <div className="flex items-center justify-end gap-2 border-t border-admin-edge bg-admin-line/50 px-4 py-3">
             {footer}
           </div>
         ) : null}
