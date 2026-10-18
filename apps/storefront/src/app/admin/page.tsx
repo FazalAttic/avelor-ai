@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  ArrowRight01Icon,
-  ChartIncreaseIcon,
-  Clock01Icon,
-  ShoppingBag01Icon,
-} from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon, ChartIncreaseIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
@@ -13,8 +8,10 @@ import { Alert } from "@/components/ui/alert";
 import { AreaChart, type ChartPoint } from "@/components/ui/area-chart";
 import { type Metric, MetricGroup } from "@/components/ui/metric-group";
 import { Segmented } from "@/components/ui/segmented";
+import { type RankedProduct, TopProducts } from "@/components/ui/top-products";
 import {
   type AdminMetrics,
+  type AdminMoney,
   type AdminOrder,
   type AdminProduct,
   fetchMetrics,
@@ -37,19 +34,6 @@ const DAY_MS = 86_400_000;
 
 /** Orders that count toward revenue — the same rule the metrics endpoint uses. */
 const REVENUE_STATUSES: readonly OrderStatus[] = ["paid", "processing"];
-
-/* Status is a word on the same line as its order, not a coloured pill. Five
-   chips stacked down the right edge of a box is what made it shout, and the
-   state is only interesting when it is not the normal one — so paid and
-   processing carry colour and everything settled carries none. */
-const STATUS_TEXT: Record<OrderStatus, string> = {
-  paid: "text-delta-up",
-  processing: "text-brand-blue",
-  pending: "text-muted",
-  failed: "text-delta-down",
-  canceled: "text-subtle",
-  refunded: "text-subtle",
-};
 
 const LOW_STOCK = 5;
 
@@ -106,46 +90,67 @@ function pctDelta(current: number, previous: number): number | null {
   return ((current - previous) / previous) * 100;
 }
 
-function plural(n: number, word: string) {
-  return `${n} ${word}${n === 1 ? "" : "s"}`;
+const RANK_BUCKETS = 5;
+
+/** What the card quotes: a listing can be several prices, so lead with the entry one. */
+function lowestPrice(product: AdminProduct): AdminMoney {
+  const prices = product.variants.map((variant) => variant.price);
+  return prices.reduce<AdminMoney>(
+    (low, price) => (price.amount < low.amount ? price : low),
+    prices[0] ?? { amount: 0, currency: "USD" }
+  );
 }
 
 /**
- * How long ago, in the words a person scanning a list actually wants — "Today"
- * or "3 days ago" rather than a printed date they have to diff against today.
+ * Units sold per product over the open window, best first, each row carrying
+ * the same count split into buckets so the card shows *when* they went as well
+ * as how many. Products that never sold are left out rather than ranked last —
+ * a zero at the bottom of a "top selling" list is not a rank.
  */
-function agoLabel(iso: string) {
-  const at = new Date(iso);
-  const mins = Math.floor((Date.now() - at.getTime()) / 60_000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const midnight = new Date(at);
-  midnight.setHours(0, 0, 0, 0);
-  const days = Math.round((startOfToday().getTime() - midnight.getTime()) / DAY_MS);
-  if (days < 1) return "Today";
-  if (days === 1) return "Yesterday";
-  if (days < 7) return `${plural(days, "day")} ago`;
-  if (days < 31) return `${plural(Math.round(days / 7), "week")} ago`;
-  if (days < 365) return `${plural(Math.round(days / 30), "month")} ago`;
-  return `${plural(Math.round(days / 365), "year")} ago`;
-}
+function rankProducts(
+  products: readonly AdminProduct[],
+  orders: readonly AdminOrder[],
+  range: number
+): RankedProduct[] {
+  const from = startOfToday().getTime() - range * DAY_MS;
+  const width = (range * DAY_MS) / RANK_BUCKETS;
+  const zeros = () => Array.from({ length: RANK_BUCKETS }, () => 0);
+  const tally = new Map<string, { units: number; buckets: number[] }>();
 
-/**
- * The order payload carries an email and nothing else — no profile, no picture
- * — so the customer's mark is built from what is there. Two letters read as a
- * deliberate avatar; a grey disc with a person glyph in it reads as a missing
- * image, which is the one thing this list should not look like.
- */
-function initials(email: string) {
-  const parts = email
-    .split("@")[0]
-    .split(/[^a-z0-9]+/i)
-    .filter(Boolean);
-  const first = parts[0] ?? "";
-  const second = parts[1] ?? first.slice(1);
-  return (first[0] + second[0]).toUpperCase();
+  for (const order of orders) {
+    if (!REVENUE_STATUSES.includes(order.status)) continue;
+    const at = new Date(order.createdAt).getTime();
+    if (at < from) continue;
+    const bucket = Math.min(RANK_BUCKETS - 1, Math.floor((at - from) / width));
+    for (const item of order.items) {
+      const row = tally.get(item.productId) ?? { units: 0, buckets: zeros() };
+      row.units += item.quantity;
+      row.buckets[bucket] += item.quantity;
+      tally.set(item.productId, row);
+    }
+  }
+
+  const label = new Intl.DateTimeFormat(
+    "en-US",
+    range <= 14 ? { weekday: "short" } : { month: "short", day: "numeric" }
+  );
+
+  return products
+    .map((product) => {
+      const row = tally.get(product.id);
+      return {
+        product,
+        units: row?.units ?? 0,
+        price: lowestPrice(product),
+        points: (row?.buckets ?? zeros()).map((value, i) => ({
+          label: label.format(new Date(from + (i + 1) * width)),
+          value,
+        })),
+      };
+    })
+    .filter((row) => row.units > 0)
+    .sort((a, b) => b.units - a.units)
+    .slice(0, RANK_BUCKETS);
 }
 
 /**
@@ -196,6 +201,7 @@ function SeeAll({ href }: { href: string }) {
 export default function AdminDashboardPage() {
   const { data: session } = useSession();
   const [range, setRange] = useState<number>(14);
+  const [rankIndex, setRankIndex] = useState(0);
   const [metrics, setMetrics] = useState<AdminMetrics | null>(null);
   const [orders, setOrders] = useState<readonly AdminOrder[]>([]);
   const [products, setProducts] = useState<readonly AdminProduct[]>([]);
@@ -253,13 +259,7 @@ export default function AdminDashboardPage() {
     return { live, draft, soldOut, low };
   }, [products]);
 
-  const recentOrders = useMemo(
-    () =>
-      [...orders]
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 5),
-    [orders]
-  );
+  const ranked = useMemo(() => rankProducts(products, orders, range), [products, orders, range]);
 
   const firstName = (session?.user?.name ?? "there").split(" ")[0];
   const todayLabel = new Date().toLocaleDateString("en-US", {
@@ -354,49 +354,17 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="flex min-w-0 flex-col gap-5">
-          <Group title="Recent orders" action={<SeeAll href="/admin/orders" />}>
-            <Panel>
-              {recentOrders.length === 0 ? (
-                <p className="text-[13px] text-subtle">No orders yet.</p>
-              ) : (
-                <ul className="flex flex-col divide-y-[1.5px] divide-admin-edge">
-                  {recentOrders.map((order) => (
-                    <li
-                      key={order.id}
-                      className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-                    >
-                      <span
-                        aria-hidden
-                        className="grid size-9 shrink-0 place-items-center rounded-full bg-admin-line/70 text-[11px] font-semibold text-muted"
-                      >
-                        {initials(order.customerEmail)}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[13px] font-medium text-admin-ink">
-                          {order.customerEmail}
-                        </span>
-                        <span className="flex items-center gap-1 pt-1 text-[11px] text-subtle">
-                          <HugeiconsIcon icon={ShoppingBag01Icon} size={12} strokeWidth={1.8} />
-                          {plural(
-                            order.items.reduce((n, item) => n + item.quantity, 0),
-                            "item"
-                          )}{" "}
-                          · <span className={STATUS_TEXT[order.status]}>{order.status}</span>
-                        </span>
-                      </span>
-                      <span className="shrink-0 text-right">
-                        <span className="font-numbers block text-[13px] font-medium text-admin-ink tabular-nums">
-                          {formatMoney(order.total)}
-                        </span>
-                        <span className="flex items-center justify-end gap-1 pt-1 text-[11px] text-subtle">
-                          <HugeiconsIcon icon={Clock01Icon} size={12} strokeWidth={1.8} />
-                          {agoLabel(order.createdAt)}
-                        </span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+          <Group
+            title="Top selling products"
+            className="min-h-0 xl:flex-1"
+            action={
+              <span className="font-numbers text-[12px] text-subtle tabular-nums">
+                {range} days
+              </span>
+            }
+          >
+            <Panel className="flex h-full flex-col">
+              <TopProducts items={ranked} index={rankIndex} onIndexChange={setRankIndex} />
             </Panel>
           </Group>
 
