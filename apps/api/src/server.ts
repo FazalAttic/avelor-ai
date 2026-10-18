@@ -12,6 +12,7 @@ import {
   InMemoryOrderRepository,
   InMemoryPolicyRepository,
   parseTenantId,
+  ResendEmailService,
 } from "@avelor/core";
 import {
   checkRedisHealth,
@@ -31,7 +32,8 @@ const tenantId = parseTenantId(process.env.AVELOR_TENANT_ID ?? "store_alpha");
 const database: Database = createDatabaseClient(
   process.env.DATABASE_URL ?? "postgres://avelor:avelor@localhost:5433/avelor_dev"
 );
-const auth = createAuth({ database });
+const emailService = new ResendEmailService();
+const auth = createAuth({ database, emailService });
 
 // Cart storage & Token Bucket rate limiting: use Redis when available
 let cartRepo: CartRepository = new InMemoryCartRepository();
@@ -79,6 +81,7 @@ await reindexCatalog({ tenantId, catalogRepo, embeddingModel, vectorStore });
 
 const app = createApp({
   auth,
+  emailService,
   cartRepo,
   orderRepo,
   chatModel,

@@ -1,6 +1,7 @@
 import type {
   CartRepository,
   CatalogRepository,
+  EmailService,
   OrderItem,
   OrderRepository,
   PaymentProvider,
@@ -19,7 +20,8 @@ export function createOrderRoutes(
   orderRepo: OrderRepository,
   cartRepo: CartRepository,
   catalogRepo: CatalogRepository,
-  paymentProvider?: PaymentProvider
+  paymentProvider?: PaymentProvider,
+  emailService?: EmailService
 ) {
   const router = new Hono<AppEnv>();
 
@@ -142,6 +144,24 @@ export function createOrderRoutes(
 
     // 4. Clear cart after successful order creation
     await cartRepo.clearCart(tenantId, cart.id);
+
+    // 5. Send order confirmation email asynchronously (fire-and-forget, never breaks checkout)
+    if (emailService && finalOrder.customerEmail) {
+      emailService
+        .sendOrderConfirmationEmail({
+          to: finalOrder.customerEmail,
+          orderNumber: finalOrder.id.slice(-8).toUpperCase(),
+          totalAmountFormatted: `${(finalOrder.total.amount / 100).toFixed(2)} ${finalOrder.total.currency}`,
+          items: finalOrder.items.map((i) => ({
+            title: i.title,
+            quantity: i.quantity,
+            priceFormatted: `${(i.totalPrice.amount / 100).toFixed(2)} ${i.totalPrice.currency}`,
+          })),
+        })
+        .catch((err) => {
+          console.error(`[Order Email] Failed to send receipt for order ${finalOrder.id}:`, err);
+        });
+    }
 
     return c.json(finalOrder, 201);
   });

@@ -9,6 +9,7 @@ import {
 import {
   type CartRepository,
   type CatalogRepository,
+  type EmailService,
   InMemoryCartRepository,
   InMemoryCatalogRepository,
   InMemoryOrderRepository,
@@ -17,6 +18,7 @@ import {
   type OrderRepository,
   type PaymentProvider,
   type PolicyRepository,
+  ResendEmailService,
   type TenantId,
 } from "@avelor/core";
 import type { RedisTokenBucket } from "@avelor/database";
@@ -54,6 +56,7 @@ export interface AppOptions {
   readonly vectorStore?: VectorStore | undefined;
   readonly guardrail?: GuardrailEngine | undefined;
   readonly auth?: AuthInstance | undefined;
+  readonly emailService?: EmailService | undefined;
   readonly enforceAdminAuth?: boolean | undefined;
   readonly chatRateLimiter?: RedisTokenBucket | undefined;
   readonly apiRateLimiter?: RedisTokenBucket | undefined;
@@ -68,8 +71,9 @@ export function createApp(options: AppOptions = {}) {
   const paymentProvider = options.paymentProvider ?? new MockPaymentProvider();
   const chatModel = options.chatModel ?? new MockChatModel();
   const guardrail = options.guardrail ?? new CompositeGuardrail();
+  const emailService = options.emailService ?? new ResendEmailService();
 
-  const auth = options.auth ?? createAuth();
+  const auth = options.auth ?? createAuth({ emailService });
   const authMiddleware = createAuthMiddleware(auth);
 
   // CORS: only browser origins on the allowlist may call the API with credentials.
@@ -160,7 +164,10 @@ export function createApp(options: AppOptions = {}) {
   app.route("/api/v1/policies", createPolicyRoutes(policyRepo));
 
   // Mount order & checkout routes
-  app.route("/api/v1/orders", createOrderRoutes(orderRepo, cartRepo, catalogRepo, paymentProvider));
+  app.route(
+    "/api/v1/orders",
+    createOrderRoutes(orderRepo, cartRepo, catalogRepo, paymentProvider, emailService)
+  );
 
   // Mount payment & webhook routes
   app.route(

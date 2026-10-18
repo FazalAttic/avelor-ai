@@ -1,6 +1,7 @@
 import { Database as SqliteDatabase } from "bun:sqlite";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { type EmailService, ResendEmailService } from "@avelor/core";
 import type { Database } from "@avelor/database";
 import * as schema from "@avelor/database";
 import { betterAuth } from "better-auth";
@@ -58,6 +59,8 @@ export interface CreateAuthOptions {
   baseURL?: string | undefined;
   googleClientId?: string | undefined;
   googleClientSecret?: string | undefined;
+  emailService?: EmailService | undefined;
+  requireEmailVerification?: boolean | undefined;
 }
 
 export interface AuthInstance {
@@ -180,6 +183,10 @@ export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
     .map((origin) => origin.trim())
     .filter(Boolean);
 
+  const emailService = options.emailService ?? new ResendEmailService();
+  const requireEmailVerification =
+    options.requireEmailVerification ?? process.env.REQUIRE_EMAIL_VERIFICATION === "true";
+
   return betterAuth({
     secret,
     baseURL,
@@ -187,7 +194,24 @@ export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
     database: dbConfig as never,
     emailAndPassword: {
       enabled: true,
-      requireEmailVerification: false,
+      requireEmailVerification,
+      sendResetPassword: async ({ user, url }) => {
+        await emailService.sendPasswordResetEmail({
+          to: user.email,
+          name: user.name,
+          resetUrl: url,
+        });
+      },
+    },
+    emailVerification: {
+      sendOnSignUp: true,
+      sendVerificationEmail: async ({ user, url }) => {
+        await emailService.sendVerificationEmail({
+          to: user.email,
+          name: user.name,
+          verifyUrl: url,
+        });
+      },
     },
     account: {
       accountLinking: {
