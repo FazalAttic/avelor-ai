@@ -155,7 +155,7 @@ body:has(#admin-login-shell) {
 }
 
 /* Long seams (the admin rail) want more than a colour: a 1px rule that runs the
-   whole viewport reads as a frame even at 5% ink. So the seam is 2px wide and
+   whole viewport reads as a frame even at 5% ink. So the seam is 1.5px wide and
    fades out at both ends. It stays flat across its width and entirely inside the
    rail: a falloff that spills onto the canvas is literally how a drop shadow is
    painted, and the rail then reads as floating over the page instead of being
@@ -172,7 +172,7 @@ body:has(#admin-login-shell) {
     top: 0;
     right: 0;
     bottom: 0;
-    width: 2px;
+    width: 1.5px;
     pointer-events: none;
     background-image: linear-gradient(
       to bottom,
