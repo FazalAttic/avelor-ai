@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 const LINE_BUTTON = buttonClass({
   variant: "secondary",
   size: "md",
-  className: "border-admin-line bg-admin-card hover:border-admin-ink/25 hover:bg-admin-rail",
+  className: "border-admin-edge bg-admin-card hover:border-admin-ink/25 hover:bg-admin-rail",
 });
 
 const TOPICS: readonly { value: PolicyTopic; label: string; blurb: string }[] = [
@@ -155,9 +155,9 @@ export default function AdminPoliciesPage() {
         </Alert>
       ) : null}
 
-      <Panel className="border-admin-line bg-admin-card">
+      <Panel className="border-admin-edge bg-admin-card">
         <PanelHeader
-          className="border-admin-line"
+          className="border-admin-edge"
           title={`${active?.label ?? "Policy"} policy`}
           desc={active?.blurb}
           actions={
@@ -208,7 +208,7 @@ export default function AdminPoliciesPage() {
                   onChange={(event) => edit({ content: event.target.value })}
                   placeholder="Write it the way you would say it to a customer."
                   className={cn(
-                    "w-full resize-y rounded-xl border border-admin-line bg-admin-canvas px-3 py-2.5",
+                    "w-full resize-y rounded-xl border border-admin-edge bg-admin-canvas px-3 py-2.5",
                     "text-[13px] leading-relaxed text-admin-ink",
                     "transition-colors duration-150 ease-expo placeholder:text-subtle",
                     "focus:border-admin-ink/35 focus:outline-none"

@@ -32,7 +32,7 @@ export function SearchField({
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
         className={cn(
-          "h-9 w-full rounded-lg border border-admin-line bg-admin-card pl-8.5 text-[13px] text-admin-ink",
+          "h-9 w-full rounded-lg border border-admin-edge bg-admin-card pl-8.5 text-[13px] text-admin-ink",
           "transition-colors duration-150 ease-expo placeholder:text-subtle",
           "focus:border-admin-ink/35 focus:outline-none",
           "[&::-webkit-search-cancel-button]:appearance-none"

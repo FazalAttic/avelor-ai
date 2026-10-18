@@ -206,7 +206,7 @@ export default function AdminOrdersPage() {
         />
       </FilterBar>
 
-      <Panel className="border-admin-line bg-admin-card">
+      <Panel className="border-admin-edge bg-admin-card">
         <DataTable
           columns={columns}
           rows={rows}

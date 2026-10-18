@@ -59,12 +59,12 @@ export function Dialog({
         aria-labelledby={headingId}
         className={cn(
           "admin-sheet relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl",
-          "border border-admin-line bg-admin-card shadow-pop outline-none",
+          "border border-admin-edge bg-admin-card shadow-pop outline-none",
           "sm:max-h-[86dvh] sm:max-w-[560px] sm:rounded-2xl",
           className
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-admin-line px-4 py-3.5">
+        <div className="flex items-start justify-between gap-4 border-b border-admin-edge px-4 py-3.5">
           <div className="min-w-0">
             <h2 id={headingId} className="text-[15px] font-semibold tracking-tight text-admin-ink">
               {title}
@@ -88,7 +88,7 @@ export function Dialog({
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{children}</div>
 
         {footer ? (
-          <div className="flex items-center justify-end gap-2 border-t border-admin-line bg-admin-rail/60 px-4 py-3">
+          <div className="flex items-center justify-end gap-2 border-t border-admin-edge bg-admin-rail/60 px-4 py-3">
             {footer}
           </div>
         ) : null}

@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 const LINE_BUTTON = buttonClass({
   variant: "secondary",
   size: "sm",
-  className: "border-admin-line bg-admin-card hover:border-admin-ink/25 hover:bg-admin-rail",
+  className: "border-admin-edge bg-admin-card hover:border-admin-ink/25 hover:bg-admin-rail",
 });
 
 const ICON_BUTTON = cn(LINE_BUTTON, "size-8 justify-center px-0");
@@ -143,10 +143,10 @@ export default function AdminProductsPage() {
                 alt=""
                 width={40}
                 height={40}
-                className="size-10 shrink-0 rounded-lg bg-admin-rail object-cover ring-1 ring-admin-line"
+                className="size-10 shrink-0 rounded-lg bg-admin-rail object-cover ring-1 ring-admin-edge"
               />
             ) : (
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-admin-rail ring-1 ring-admin-line">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-admin-rail ring-1 ring-admin-edge">
                 <HugeiconsIcon
                   icon={PackageIcon}
                   size={16}
@@ -175,7 +175,7 @@ export default function AdminProductsPage() {
         ) : (
           <div className="flex flex-wrap items-center gap-1">
             {product.categories.slice(0, 2).map((tag) => (
-              <Badge key={tag} className="border-admin-line">
+              <Badge key={tag} className="border-admin-edge">
                 {tag}
               </Badge>
             ))}
@@ -267,7 +267,7 @@ export default function AdminProductsPage() {
         />
       </FilterBar>
 
-      <Panel className="border-admin-line bg-admin-card">
+      <Panel className="border-admin-edge bg-admin-card">
         <DataTable
           columns={columns}
           rows={rows}
@@ -526,7 +526,7 @@ function ProductDialog({
             onChange={(event) => set({ description: event.target.value })}
             placeholder="What makes it worth buying?"
             className={cn(
-              "w-full resize-y rounded-xl border border-admin-line bg-admin-canvas px-3 py-2 text-[13px] leading-relaxed text-admin-ink",
+              "w-full resize-y rounded-xl border border-admin-edge bg-admin-canvas px-3 py-2 text-[13px] leading-relaxed text-admin-ink",
               "transition-colors duration-150 ease-expo placeholder:text-subtle",
               "focus:border-admin-ink/35 focus:outline-none"
             )}

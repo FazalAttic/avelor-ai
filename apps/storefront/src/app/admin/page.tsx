@@ -118,7 +118,7 @@ function DashboardCard({
   className?: string;
 }) {
   return (
-    <section className={cn("rounded-2xl border border-admin-line bg-admin-card", className)}>
+    <section className={cn("rounded-2xl border border-admin-edge bg-admin-card", className)}>
       <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 pt-4">
         <h2 className="text-[13px] font-semibold tracking-tight">{title}</h2>
         {actions}
@@ -306,7 +306,7 @@ export default function AdminDashboardPage() {
             {topProducts.length === 0 ? (
               <p className="text-[13px] text-subtle">No paid orders yet — products rank here.</p>
             ) : (
-              <ul className="flex flex-col divide-y divide-admin-line">
+              <ul className="flex flex-col divide-y divide-admin-edge">
                 {topProducts.map((product) => (
                   <li
                     key={product.name}
@@ -383,7 +383,7 @@ export default function AdminDashboardPage() {
             {recentOrders.length === 0 ? (
               <p className="text-[13px] text-subtle">No orders yet.</p>
             ) : (
-              <ul className="flex flex-col divide-y divide-admin-line">
+              <ul className="flex flex-col divide-y divide-admin-edge">
                 {recentOrders.map((order) => (
                   <li
                     key={order.id}

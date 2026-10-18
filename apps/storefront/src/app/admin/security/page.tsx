@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 const LINE_BUTTON = buttonClass({
   variant: "secondary",
   size: "md",
-  className: "border-admin-line bg-admin-card hover:border-admin-ink/25 hover:bg-admin-rail",
+  className: "border-admin-edge bg-admin-card hover:border-admin-ink/25 hover:bg-admin-rail",
 });
 
 /** Only what an authenticator asks for when you choose "enter a setup key". */
@@ -36,7 +36,7 @@ function CopyRow({ value, label }: { value: string; label: string }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="flex items-center gap-2">
-      <code className="min-w-0 flex-1 truncate rounded-lg border border-admin-line bg-admin-canvas px-3 py-2 font-mono text-[12px] text-admin-ink">
+      <code className="min-w-0 flex-1 truncate rounded-lg border border-admin-edge bg-admin-canvas px-3 py-2 font-mono text-[12px] text-admin-ink">
         {value}
       </code>
       <button
@@ -154,9 +154,9 @@ export default function AdminSecurityPage() {
       {failure ? <Alert>{failure}</Alert> : null}
       {notice && !failure ? <Alert tone="success">{notice}</Alert> : null}
 
-      <Panel className="border-admin-line bg-admin-card">
+      <Panel className="border-admin-edge bg-admin-card">
         <PanelHeader
-          className="border-admin-line"
+          className="border-admin-edge"
           title="Two-factor authentication"
           desc="A code from your authenticator, on top of the password, for every admin sign-in."
           actions={
@@ -221,7 +221,7 @@ export default function AdminSecurityPage() {
                     {enrollment.backupCodes.map((backup) => (
                       <li
                         key={backup}
-                        className="rounded-lg border border-admin-line bg-admin-canvas px-2 py-1.5 text-center font-mono text-[12px] text-admin-ink"
+                        className="rounded-lg border border-admin-edge bg-admin-canvas px-2 py-1.5 text-center font-mono text-[12px] text-admin-ink"
                       >
                         {backup}
                       </li>
@@ -230,7 +230,7 @@ export default function AdminSecurityPage() {
                 </div>
               ) : null}
 
-              <div className="flex flex-col gap-2 border-t border-admin-line pt-4">
+              <div className="flex flex-col gap-2 border-t border-admin-edge pt-4">
                 <label
                   htmlFor="totp-code"
                   className="text-[11px] font-semibold tracking-[0.08em] text-muted uppercase"
@@ -241,7 +241,7 @@ export default function AdminSecurityPage() {
                   <input
                     id="totp-code"
                     className={cn(
-                      "h-9 w-[132px] rounded-lg border border-admin-line bg-admin-canvas px-3",
+                      "h-9 w-[132px] rounded-lg border border-admin-edge bg-admin-canvas px-3",
                       "font-mono text-[15px] tracking-[0.3em] text-admin-ink tabular-nums",
                       "transition-colors duration-150 ease-expo focus:border-admin-ink/35 focus:outline-none"
                     )}
@@ -274,7 +274,7 @@ export default function AdminSecurityPage() {
                 disabled={busy}
                 onChange={(event) => setPassword(event.target.value)}
                 placeholder="Your admin password"
-                className="border-admin-line bg-admin-canvas"
+                className="border-admin-edge bg-admin-canvas"
                 wrapperClassName="max-w-[320px]"
               />
               <Button
@@ -315,7 +315,7 @@ export default function AdminSecurityPage() {
           autoComplete="current-password"
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Your admin password"
-          className="border-admin-line bg-admin-canvas"
+          className="border-admin-edge bg-admin-canvas"
         />
       </Dialog>
     </section>

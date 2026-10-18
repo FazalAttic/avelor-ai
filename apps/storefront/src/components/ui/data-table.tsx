@@ -18,7 +18,7 @@ const HIDE = {
   lg: "max-lg:hidden",
 } as const;
 
-const CELL = "border-b border-admin-line px-3 py-3 align-middle first:pl-4 last:pr-4";
+const CELL = "border-b border-admin-edge px-3 py-3 align-middle first:pl-4 last:pr-4";
 
 export type DataTableProps<T> = {
   columns: readonly Column<T>[];
@@ -57,7 +57,7 @@ export function DataTable<T>({
                 key={column.key}
                 scope="col"
                 className={cn(
-                  "h-9 border-b border-admin-line px-3 text-[11px] font-semibold tracking-[0.08em] text-muted uppercase first:pl-4 last:pr-4",
+                  "h-9 border-b border-admin-edge px-3 text-[11px] font-semibold tracking-[0.08em] text-muted uppercase first:pl-4 last:pr-4",
                   column.align === "end" && "text-right",
                   column.hide && HIDE[column.hide],
                   column.width

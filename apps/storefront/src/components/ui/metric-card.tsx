@@ -20,7 +20,7 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        "flex flex-col justify-between gap-3 rounded-2xl border border-admin-line bg-admin-card p-4",
+        "flex flex-col justify-between gap-3 rounded-2xl border border-admin-edge bg-admin-card p-4",
         className
       )}
     >

@@ -45,7 +45,7 @@ export function AreaChart({
       <div
         className={cn(
           "flex h-full min-h-40 items-center justify-center rounded-xl border border-dashed",
-          "border-admin-line text-[13px] text-subtle",
+          "border-admin-edge text-[13px] text-subtle",
           className
         )}
       >

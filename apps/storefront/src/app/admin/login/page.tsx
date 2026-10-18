@@ -104,7 +104,7 @@ function AdminLoginForm() {
       >
         <BrandMark caption="Admin console" className="px-1.5 pb-4" />
 
-        <Panel className="border-admin-line bg-admin-card p-5 shadow-card">
+        <Panel className="border-admin-edge bg-admin-card p-5 shadow-card">
           <AnimatePresence mode="wait" initial={false}>
             {requires2FA ? (
               <motion.form
@@ -137,7 +137,7 @@ function AdminLoginForm() {
                   }}
                   disabled={loading}
                   autoFocus
-                  className="border-admin-line bg-admin-canvas"
+                  className="border-admin-edge bg-admin-canvas"
                   onComplete={() => formRef.current?.requestSubmit()}
                 />
 
@@ -198,7 +198,7 @@ function AdminLoginForm() {
                     disabled={loading}
                     autoComplete="username"
                     placeholder="you@avelor.dev"
-                    className="border-admin-line bg-admin-canvas"
+                    className="border-admin-edge bg-admin-canvas"
                   />
                   <TextField
                     id="admin-password"
@@ -213,7 +213,7 @@ function AdminLoginForm() {
                     disabled={loading}
                     autoComplete="current-password"
                     placeholder="Your password"
-                    className="border-admin-line bg-admin-canvas"
+                    className="border-admin-edge bg-admin-canvas"
                   />
                 </div>
 

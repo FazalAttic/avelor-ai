@@ -129,6 +129,16 @@ body:has(#admin-login-shell) {
   background-image: none;
 }
 
+/* One border in the console. Components shared with the storefront reach for
+   --border, so retargeting it here makes the soft edge the only outline the
+   panel can draw — buttons, fields, badges and the OTP boxes included — without
+   editing those shared files or touching the storefront. */
+body:has(#admin-shell),
+body:has(#admin-login-shell) {
+  --border: var(--admin-edge);
+  --border-strong: color-mix(in oklab, var(--admin-ink) 22%, transparent);
+}
+
 /* Console dialogs enter softly and leave instantly — no animation callback
    stands between closing a dialog and the node being gone. */
 @keyframes admin-fade {

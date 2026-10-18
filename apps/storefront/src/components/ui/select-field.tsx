@@ -38,7 +38,7 @@ export function SelectField({
           id={selectId}
           {...props}
           className={cn(
-            "h-9 appearance-none rounded-lg border border-admin-line bg-admin-card py-0 pr-8 pl-2.5 text-[13px] font-medium text-admin-ink",
+            "h-9 appearance-none rounded-lg border border-admin-edge bg-admin-card py-0 pr-8 pl-2.5 text-[13px] font-medium text-admin-ink",
             "transition-colors duration-150 ease-expo focus:border-admin-ink/35 focus:outline-none",
             "disabled:pointer-events-none disabled:opacity-45"
           )}
