@@ -1,6 +1,11 @@
 "use client";
 
-import { ArrowRight01Icon, ChartIncreaseIcon } from "@hugeicons/core-free-icons";
+import {
+  ArrowRight01Icon,
+  ChartIncreaseIcon,
+  Clock01Icon,
+  ShoppingBag01Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
@@ -101,8 +106,46 @@ function pctDelta(current: number, previous: number): number | null {
   return ((current - previous) / previous) * 100;
 }
 
-function dayLabel(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+function plural(n: number, word: string) {
+  return `${n} ${word}${n === 1 ? "" : "s"}`;
+}
+
+/**
+ * How long ago, in the words a person scanning a list actually wants — "Today"
+ * or "3 days ago" rather than a printed date they have to diff against today.
+ */
+function agoLabel(iso: string) {
+  const at = new Date(iso);
+  const mins = Math.floor((Date.now() - at.getTime()) / 60_000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const midnight = new Date(at);
+  midnight.setHours(0, 0, 0, 0);
+  const days = Math.round((startOfToday().getTime() - midnight.getTime()) / DAY_MS);
+  if (days < 1) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${plural(days, "day")} ago`;
+  if (days < 31) return `${plural(Math.round(days / 7), "week")} ago`;
+  if (days < 365) return `${plural(Math.round(days / 30), "month")} ago`;
+  return `${plural(Math.round(days / 365), "year")} ago`;
+}
+
+/**
+ * The order payload carries an email and nothing else — no profile, no picture
+ * — so the customer's mark is built from what is there. Two letters read as a
+ * deliberate avatar; a grey disc with a person glyph in it reads as a missing
+ * image, which is the one thing this list should not look like.
+ */
+function initials(email: string) {
+  const parts = email
+    .split("@")[0]
+    .split(/[^a-z0-9]+/i)
+    .filter(Boolean);
+  const first = parts[0] ?? "";
+  const second = parts[1] ?? first.slice(1);
+  return (first[0] + second[0]).toUpperCase();
 }
 
 /**
@@ -320,19 +363,35 @@ export default function AdminDashboardPage() {
                   {recentOrders.map((order) => (
                     <li
                       key={order.id}
-                      className="flex items-baseline justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+                      className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
                     >
-                      <span className="min-w-0">
+                      <span
+                        aria-hidden
+                        className="grid size-9 shrink-0 place-items-center rounded-full bg-admin-line/70 text-[11px] font-semibold text-muted"
+                      >
+                        {initials(order.customerEmail)}
+                      </span>
+                      <span className="min-w-0 flex-1">
                         <span className="block truncate text-[13px] font-medium text-admin-ink">
                           {order.customerEmail}
                         </span>
-                        <span className="font-numbers block pt-1 text-[11px] text-subtle tabular-nums">
-                          {dayLabel(order.createdAt)} ·{" "}
-                          <span className={STATUS_TEXT[order.status]}>{order.status}</span>
+                        <span className="flex items-center gap-1 pt-1 text-[11px] text-subtle">
+                          <HugeiconsIcon icon={ShoppingBag01Icon} size={12} strokeWidth={1.8} />
+                          {plural(
+                            order.items.reduce((n, item) => n + item.quantity, 0),
+                            "item"
+                          )}{" "}
+                          · <span className={STATUS_TEXT[order.status]}>{order.status}</span>
                         </span>
                       </span>
-                      <span className="font-numbers shrink-0 text-[13px] font-medium text-admin-ink tabular-nums">
-                        {formatMoney(order.total)}
+                      <span className="shrink-0 text-right">
+                        <span className="font-numbers block text-[13px] font-medium text-admin-ink tabular-nums">
+                          {formatMoney(order.total)}
+                        </span>
+                        <span className="flex items-center justify-end gap-1 pt-1 text-[11px] text-subtle">
+                          <HugeiconsIcon icon={Clock01Icon} size={12} strokeWidth={1.8} />
+                          {agoLabel(order.createdAt)}
+                        </span>
                       </span>
                     </li>
                   ))}
