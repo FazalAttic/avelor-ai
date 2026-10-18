@@ -69,11 +69,13 @@ const RAIL_ICON_ROW =
   "max-lg:justify-center max-lg:px-0 group-data-[collapsed=true]/rail:justify-center group-data-[collapsed=true]/rail:px-0";
 
 /* Rides the rail edge at the top, level with the logo, so it stays put whether
-   the rail is 248px or 84px. Ink rather than the card colour because a white
-   circle disappears into the canvas on the half that overhangs it. */
+   the rail is 248px or 84px. Built like the metric cards it sits beside: card
+   surface + soft edge, so it separates by tone and never by contrast. The glyph
+   stays half-inked until hover, when the ring and the mark both come up to full. */
 const RAIL_TOGGLE = cn(
   "absolute right-0 top-5 z-10 flex size-8 translate-x-1/2 items-center justify-center rounded-full",
-  "bg-admin-ink text-admin-ink-contrast transition-colors duration-200 ease-expo hover:bg-admin-ink/85",
+  "border border-admin-edge bg-admin-card text-admin-ink/50",
+  "transition-colors duration-200 ease-expo hover:border-admin-ink/25 hover:text-admin-ink",
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
 );
 
@@ -162,7 +164,7 @@ function AdminShell({ user, children }: { user: AdminUser; children: ReactNode }
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={RAIL_TOGGLE}
         >
-          <HugeiconsIcon icon={SidebarLeft01Icon} size={17} strokeWidth={1.9} />
+          <HugeiconsIcon icon={SidebarLeft01Icon} size={16} strokeWidth={1.7} />
         </button>
 
         <Link
