@@ -175,6 +175,8 @@ function AdminShell({ user, children }: { user: AdminUser; children: ReactNode }
           <BrandMark caption="Admin" wordmarkClassName={RAIL_TEXT} />
         </Link>
 
+        <p className={cn("px-3 pb-1 text-[11px] font-medium text-muted", RAIL_TEXT)}>Menu</p>
+
         {NAV.map((item) => (
           <NavLink
             key={item.href}
