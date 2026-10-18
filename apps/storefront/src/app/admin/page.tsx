@@ -139,9 +139,7 @@ function Group({
 
 function Panel({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-2xl border border-admin-edge bg-admin-card p-5", className)}>
-      {children}
-    </div>
+    <div className={cn("module-edge rounded-2xl bg-admin-card p-5", className)}>{children}</div>
   );
 }
 
@@ -335,7 +333,7 @@ export default function AdminDashboardPage() {
               {recentOrders.length === 0 ? (
                 <p className="text-[13px] text-subtle">No orders yet.</p>
               ) : (
-                <ul className="flex flex-col divide-y divide-admin-edge">
+                <ul className="flex flex-col divide-y-[1.5px] divide-admin-edge">
                   {recentOrders.map((order) => (
                     <li
                       key={order.id}
@@ -406,7 +404,7 @@ export default function AdminDashboardPage() {
 
           <Group title="Products" action={<SeeAll href="/admin/products" />}>
             <Panel>
-              <ul className="flex flex-col divide-y divide-admin-edge">
+              <ul className="flex flex-col divide-y-[1.5px] divide-admin-edge">
                 {[
                   { label: "Live listings", value: catalogue.live },
                   { label: "Drafts", value: catalogue.draft },

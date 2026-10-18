@@ -170,9 +170,36 @@ body:has(#admin-login-shell) {
   }
 }
 
+/* The console's module outline: the soft edge at the weight the rail's seam
+   already carries. Width belongs here rather than at each call site for the
+   same reason the colour does — a box drawn at 1px next to a rail at 1.5px is
+   two borders wearing one token, and the eye notices the disagreement even
+   when it cannot name it. Side variants exist because the divisions inside a
+   module (the metric cross, a list's rows) must answer to the outline around
+   them. */
+@utility module-edge {
+  border: 1.5px solid var(--admin-edge);
+}
+
+@utility module-edge-t {
+  border-top: 1.5px solid var(--admin-edge);
+}
+
+@utility module-edge-r {
+  border-right: 1.5px solid var(--admin-edge);
+}
+
+@utility module-edge-b {
+  border-bottom: 1.5px solid var(--admin-edge);
+}
+
+@utility module-edge-l {
+  border-left: 1.5px solid var(--admin-edge);
+}
+
 /* The rail's right edge, drawn as a pseudo-element so it costs no layout and
    cannot be nudged by the width transition. Same colour, same flat, full-length
-   behaviour as every other border in the console — an end-fade here made the
+   behaviour as every module outline in the console — an end-fade here made the
    bottom of the rail disagree with the cards beside it. It stays inside the rail
    and never spills onto the canvas: a falloff across that boundary is literally
    how a drop shadow is painted. Layered under utilities so it never overrides a

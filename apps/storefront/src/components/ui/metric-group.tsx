@@ -12,12 +12,14 @@ export interface Metric {
 /**
  * Four readings, one surface. Separate cards make the eye scan four widgets;
  * the numbers here are one block of store performance, so the divisions are
- * internal hairlines drawn with the same edge every other border uses.
+ * internal rules drawn with the same edge, at the same 1.5px weight, as the
+ * outline around them.
  *
- * The divider classes are per index rather than `divide-x` because a 2-column
- * grid puts `border-left` on the first cell of the second row too. Mobile
- * stacks, so every cell after the first needs a top rule and the side rules
- * only arrive at `sm`.
+ * Which side each cell rules depends on where it lands once the grid folds:
+ * every cell after the first needs a top line while stacked, and from `sm` only
+ * the second row keeps that line while the right-hand column grows a left one
+ * instead. `divide-x` cannot express that — it would rule the first cell of the
+ * second row too.
  */
 export function MetricGroup({
   metrics,
@@ -31,24 +33,20 @@ export function MetricGroup({
   return (
     <div
       className={cn(
-        "grid overflow-hidden rounded-2xl border border-admin-edge bg-admin-card sm:grid-cols-2",
+        "module-edge grid overflow-hidden rounded-2xl bg-admin-card sm:grid-cols-2",
         className
       )}
     >
       {metrics.map((metric, i) => (
-        <MetricCell
-          key={metric.label}
-          metric={metric}
-          loading={loading}
-          className={cn(
-            i > 0 && "border-t border-admin-edge",
-            i % 2 === 1 && "sm:border-l",
-            i === 1 && "sm:border-t-0"
-          )}
-        />
+        <MetricCell key={metric.label} metric={metric} loading={loading} className={dividers(i)} />
       ))}
     </div>
   );
+}
+
+function dividers(i: number) {
+  if (i === 0) return "";
+  return cn(i > 1 ? "module-edge-t" : "max-sm:module-edge-t", i % 2 === 1 && "sm:module-edge-l");
 }
 
 function MetricCell({
