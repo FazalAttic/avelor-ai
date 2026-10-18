@@ -6,6 +6,7 @@ import Link from "next/link";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { type Metric, MetricGroup } from "@/components/ui/metric-group";
+import { RecentOrders } from "@/components/ui/recent-orders";
 import { type ChartPoint, RevenueChart } from "@/components/ui/revenue-chart";
 import { Segmented } from "@/components/ui/segmented";
 import { type RankedProduct, TopProducts } from "@/components/ui/top-products";
@@ -36,6 +37,9 @@ const DAY_MS = 86_400_000;
 const REVENUE_STATUSES: readonly OrderStatus[] = ["paid", "processing"];
 
 const LOW_STOCK = 5;
+
+/** Newest slice only — the orders route is the full ledger. */
+const ORDER_ROWS = 8;
 
 function startOfToday() {
   const d = new Date();
@@ -154,6 +158,17 @@ function rankProducts(
 }
 
 /**
+ * Every order in the open window, newest first. Unlike the revenue maths this
+ * keeps the failed and refunded ones — the table is where you see them.
+ */
+function recentOrders(orders: readonly AdminOrder[], range: number): readonly AdminOrder[] {
+  const from = startOfToday().getTime() - (range - 1) * DAY_MS;
+  return orders
+    .filter((order) => new Date(order.createdAt).getTime() >= from)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+/**
  * A group is a name and then a surface. The title sits outside the box, the way
  * it does in the reference, so the box itself never has to announce itself and
  * the page reads as a list of questions rather than a grid of panels.
@@ -260,6 +275,7 @@ export default function AdminDashboardPage() {
   }, [products]);
 
   const ranked = useMemo(() => rankProducts(products, orders, range), [products, orders, range]);
+  const inPeriod = useMemo(() => recentOrders(orders, range), [orders, range]);
 
   const firstName = (session?.user?.name ?? "there").split(" ")[0];
   const todayLabel = new Date().toLocaleDateString("en-US", {
@@ -360,12 +376,22 @@ export default function AdminDashboardPage() {
               />
             </Panel>
           </Group>
+
+          <Group title="Recent orders" action={<SeeAll href="/admin/orders" />}>
+            <RecentOrders
+              rows={inPeriod.slice(0, ORDER_ROWS)}
+              total={inPeriod.length}
+              periodDays={range}
+              periodCents={current.revenueCents}
+              periodCount={current.count}
+              loading={loading}
+            />
+          </Group>
         </div>
 
         <div className="flex min-w-0 flex-col gap-5">
           <Group
             title="Top selling products"
-            className="min-h-0 xl:flex-1"
             action={
               <span className="font-numbers text-[12px] text-subtle tabular-nums">
                 {range} days

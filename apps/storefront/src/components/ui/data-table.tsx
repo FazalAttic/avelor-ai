@@ -29,6 +29,12 @@ export type DataTableProps<T> = {
   skeletonRows?: number;
   empty?: ReactNode;
   className?: string;
+  /**
+   * Give each column its `width` share of the box and ellipsis the rest. Auto
+   * sizing is what the roomy list routes want, but a table squeezed into a
+   * dashboard column otherwise grows past its panel on a long email.
+   */
+  fixed?: boolean;
 };
 
 /**
@@ -45,10 +51,16 @@ export function DataTable<T>({
   skeletonRows = 6,
   empty,
   className,
+  fixed = false,
 }: DataTableProps<T>) {
   return (
     <div className={cn("relative min-w-0 overflow-x-auto", className)}>
-      <table className="w-full border-collapse text-left text-[13px] text-admin-ink">
+      <table
+        className={cn(
+          "w-full border-collapse text-left text-[13px] text-admin-ink",
+          fixed && "table-fixed"
+        )}
+      >
         <caption className="sr-only">{caption}</caption>
         <thead>
           <tr>
