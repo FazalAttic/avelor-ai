@@ -164,12 +164,12 @@ body:has(#admin-login-shell) {
   }
 }
 
-/* Long seams (the admin rail) want more than a colour: a 1px rule that runs the
-   whole viewport reads as a frame even at 5% ink. So the seam is 1.5px wide and
-   fades out at both ends. It stays flat across its width and entirely inside the
-   rail: a falloff that spills onto the canvas is literally how a drop shadow is
-   painted, and the rail then reads as floating over the page instead of being
-   part of it. Costs no layout. Layered under utilities so it never overrides a
+/* The rail's right edge, drawn as a pseudo-element so it costs no layout and
+   cannot be nudged by the width transition. Same colour, same flat, full-length
+   behaviour as every other border in the console — an end-fade here made the
+   bottom of the rail disagree with the cards beside it. It stays inside the rail
+   and never spills onto the canvas: a falloff across that boundary is literally
+   how a drop shadow is painted. Layered under utilities so it never overrides a
    host's own position value. */
 @layer components {
   .admin-edge {
@@ -184,13 +184,7 @@ body:has(#admin-login-shell) {
     bottom: 0;
     width: 1.5px;
     pointer-events: none;
-    background-image: linear-gradient(
-      to bottom,
-      transparent 0%,
-      var(--admin-edge) 12%,
-      var(--admin-edge) 88%,
-      transparent 100%
-    );
+    background-color: var(--admin-edge);
   }
 }
 
