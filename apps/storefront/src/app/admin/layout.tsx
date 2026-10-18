@@ -1,8 +1,7 @@
 "use client";
 
 import {
-  ArrowLeftDoubleIcon,
-  ArrowRightDoubleIcon,
+  ArrowLeft01Icon,
   ArrowUpRight01Icon,
   Book03Icon,
   DashboardSquare01Icon,
@@ -68,11 +67,14 @@ const RAIL_BUTTON =
 const RAIL_TEXT = "max-lg:hidden group-data-[collapsed=true]/rail:hidden";
 const RAIL_ICON_ROW =
   "max-lg:justify-center max-lg:px-0 group-data-[collapsed=true]/rail:justify-center group-data-[collapsed=true]/rail:px-0";
-const RAIL_STACK =
-  "max-lg:flex-col max-lg:justify-center max-lg:gap-2 max-lg:px-0 group-data-[collapsed=true]/rail:flex-col group-data-[collapsed=true]/rail:justify-center group-data-[collapsed=true]/rail:gap-2 group-data-[collapsed=true]/rail:px-0";
 
-const TOGGLE_BUTTON =
-  "flex size-8 shrink-0 items-center justify-center rounded-lg text-muted transition-colors duration-150 ease-expo hover:bg-admin-card hover:text-admin-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue";
+/* Straddles the rail edge so it stays in exactly the same spot whether the rail
+   is 248px or 84px. Flat ink because a white circle disappears into the canvas. */
+const RAIL_TOGGLE = cn(
+  "absolute right-0 top-1/2 z-10 flex size-8 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full",
+  "bg-admin-ink text-admin-ink-contrast transition-colors duration-200 ease-expo hover:bg-admin-ink/85",
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+);
 
 const RAIL_KEY = "avelor:admin-rail";
 
@@ -146,30 +148,34 @@ function AdminShell({ user, children }: { user: AdminUser; children: ReactNode }
       <aside
         data-collapsed={collapsed}
         className={cn(
-          "group/rail sticky top-0 flex h-dvh shrink-0 flex-col gap-1 bg-admin-rail px-3 py-5",
+          "group/rail sticky top-0 flex h-dvh shrink-0 flex-col gap-1 bg-admin-rail px-4 py-5",
           "transition-[width] duration-300 ease-expo max-lg:w-[74px]",
           collapsed ? "w-[84px]" : "w-[248px]"
         )}
       >
-        <div className={cn("flex items-center justify-between gap-2 px-1.5 pb-6", RAIL_STACK)}>
-          <Link href="/admin" title="Avelor Admin" className="min-w-0">
-            <BrandMark caption="Admin" wordmarkClassName={RAIL_TEXT} />
-          </Link>
-          <button
-            type="button"
-            onClick={toggleRail}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            aria-expanded={!collapsed}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={TOGGLE_BUTTON}
-          >
-            <HugeiconsIcon
-              icon={collapsed ? ArrowRightDoubleIcon : ArrowLeftDoubleIcon}
-              size={18}
-              strokeWidth={1.9}
-            />
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={toggleRail}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-expanded={!collapsed}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={RAIL_TOGGLE}
+        >
+          <HugeiconsIcon
+            icon={ArrowLeft01Icon}
+            size={16}
+            strokeWidth={2.3}
+            className={cn("transition-[rotate] duration-300 ease-expo", collapsed && "rotate-180")}
+          />
+        </button>
+
+        <Link
+          href="/admin"
+          title="Avelor Admin"
+          className={cn("flex min-w-0 px-3 pb-6", RAIL_ICON_ROW)}
+        >
+          <BrandMark caption="Admin" wordmarkClassName={RAIL_TEXT} />
+        </Link>
 
         <p
           className={cn(
