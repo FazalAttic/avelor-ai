@@ -6,6 +6,7 @@ import {
   DashboardSquare01Icon,
   Logout03Icon,
   PackageIcon,
+  Search01Icon,
   Shield01Icon,
   ShoppingBag01Icon,
   SidebarLeft01Icon,
@@ -13,7 +14,7 @@ import {
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { BrandMark } from "@/components/ui/brand-mark";
 import { buttonClass } from "@/components/ui/button";
@@ -81,11 +82,31 @@ const RAIL_TOGGLE = cn(
 
 const RAIL_KEY = "avelor:admin-rail";
 
+/* Same shape as the list controls in the pages below, but sized for the rail:
+   card surface, soft edge, and the shortcut chip parked inside the right pad. */
+const RAIL_SEARCH = cn(
+  "h-9 w-full rounded-lg border border-admin-edge bg-admin-card pl-8.5 pr-10 text-[13px] text-admin-ink",
+  "transition-colors duration-150 ease-expo placeholder:text-subtle",
+  "focus:border-admin-ink/30 focus:outline-none",
+  "[&::-webkit-search-cancel-button]:appearance-none"
+);
+
+const RAIL_KBD =
+  "pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 rounded border border-admin-edge px-1.5 py-0.5 text-[10px] leading-none font-medium text-muted";
+
 function readCollapsed() {
   try {
     return localStorage.getItem(RAIL_KEY) === "collapsed";
   } catch {
     return false;
+  }
+}
+
+function writeCollapsed(next: boolean) {
+  try {
+    localStorage.setItem(RAIL_KEY, next ? "collapsed" : "expanded");
+  } catch {
+    // Private mode — the rail just resets to expanded next load
   }
 }
 
@@ -126,18 +147,60 @@ function AdminShell({ user, children }: { user: AdminUser; children: ReactNode }
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);
+  const [query, setQuery] = useState("");
+  const [shortcut, setShortcut] = useState("Ctrl K");
+  const searchRef = useRef<HTMLInputElement>(null);
+  const focusWhenOpen = useRef(false);
+
+  const needle = query.trim().toLowerCase();
+  const items = needle ? NAV.filter((item) => item.label.toLowerCase().includes(needle)) : NAV;
+
+  function setRailCollapsed(next: boolean) {
+    setCollapsed(next);
+    writeCollapsed(next);
+  }
 
   function toggleRail() {
-    setCollapsed((previous) => {
-      const next = !previous;
-      try {
-        localStorage.setItem(RAIL_KEY, next ? "collapsed" : "expanded");
-      } catch {
-        // Private mode — the rail just resets to expanded next load
-      }
-      return next;
-    });
+    setRailCollapsed(!collapsed);
   }
+
+  /* The field only exists while the rail is open, so a shortcut fired from the
+     collapsed state has to ask for focus on the render that opens it. */
+  const openSearch = useCallback(() => {
+    focusWhenOpen.current = true;
+    setCollapsed(false);
+    writeCollapsed(false);
+  }, []);
+
+  useEffect(() => {
+    if (/Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent)) {
+      setShortcut("⌘ K");
+    }
+  }, []);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        openSearch();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [openSearch]);
+
+  useEffect(() => {
+    if (collapsed || !focusWhenOpen.current) return;
+    focusWhenOpen.current = false;
+    searchRef.current?.focus();
+  }, [collapsed]);
+
+  /* A stale filter left over from the previous screen makes the rail look broken
+     the moment you land somewhere by other means. */
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the route change is the trigger
+  useEffect(() => {
+    setQuery("");
+  }, [pathname]);
 
   async function signOut() {
     if (signingOut) return;
@@ -175,9 +238,50 @@ function AdminShell({ user, children }: { user: AdminUser; children: ReactNode }
           <BrandMark caption="Admin" wordmarkClassName={RAIL_TEXT} />
         </Link>
 
+        <div className={cn("relative mb-2", collapsed ? "hidden" : "max-lg:hidden")}>
+          <HugeiconsIcon
+            icon={Search01Icon}
+            size={15}
+            strokeWidth={1.9}
+            aria-hidden
+            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted"
+          />
+          <input
+            ref={searchRef}
+            type="search"
+            value={query}
+            placeholder="Search"
+            aria-label="Search the console"
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && items[0]) router.push(items[0].href);
+              if (event.key === "Escape") {
+                setQuery("");
+                event.currentTarget.blur();
+              }
+            }}
+            className={RAIL_SEARCH}
+          />
+          <kbd className={RAIL_KBD}>{shortcut}</kbd>
+        </div>
+
+        <button
+          type="button"
+          onClick={openSearch}
+          aria-label="Search the console"
+          title="Search the console"
+          className={cn(
+            "mb-2 hidden h-9 shrink-0 items-center justify-center rounded-lg border border-admin-edge bg-admin-card",
+            "transition-colors duration-150 ease-expo hover:border-admin-ink/25",
+            collapsed ? "flex" : "max-lg:flex"
+          )}
+        >
+          <HugeiconsIcon icon={Search01Icon} size={15} strokeWidth={1.9} className="text-muted" />
+        </button>
+
         <p className={cn("px-3 pb-1 text-[11px] font-medium text-muted", RAIL_TEXT)}>Menu</p>
 
-        {NAV.map((item) => (
+        {items.map((item) => (
           <NavLink
             key={item.href}
             href={item.href}
@@ -190,6 +294,10 @@ function AdminShell({ user, children }: { user: AdminUser; children: ReactNode }
             }
           />
         ))}
+
+        {items.length === 0 ? (
+          <p className={cn("px-3 py-2 text-[13px] text-muted", RAIL_TEXT)}>No match</p>
+        ) : null}
 
         <div className="mt-auto flex flex-col gap-2 pt-4">
           <div
