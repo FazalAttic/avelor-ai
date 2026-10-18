@@ -3,7 +3,7 @@
 import { PackageIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
-import type { ChartPoint } from "@/components/ui/area-chart";
+import type { ChartPoint } from "@/components/ui/revenue-chart";
 import type { AdminMoney, AdminProduct } from "@/lib/admin-api";
 import { formatMoney } from "@/lib/admin-api";
 import { cn } from "@/lib/utils";

@@ -1,12 +1,12 @@
 "use client";
 
-import { ArrowRight01Icon, ChartIncreaseIcon } from "@hugeicons/core-free-icons";
+import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Link from "next/link";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Alert } from "@/components/ui/alert";
-import { AreaChart, type ChartPoint } from "@/components/ui/area-chart";
 import { type Metric, MetricGroup } from "@/components/ui/metric-group";
+import { type ChartPoint, RevenueChart } from "@/components/ui/revenue-chart";
 import { Segmented } from "@/components/ui/segmented";
 import { type RankedProduct, TopProducts } from "@/components/ui/top-products";
 import {
@@ -272,6 +272,7 @@ export default function AdminDashboardPage() {
       ? Math.round((metrics.orders.paidOrders / metrics.orders.totalOrders) * 100)
       : 0;
   const revenue = formatMoney({ amount: current.revenueCents, currency: "USD" });
+  const growthCents = current.revenueCents - previous.revenueCents;
 
   const overview: Metric[] = [
     {
@@ -334,20 +335,27 @@ export default function AdminDashboardPage() {
           <Group
             title="Revenue"
             action={
-              <span className="flex items-center gap-2 text-[12px] text-muted">
-                <HugeiconsIcon icon={ChartIncreaseIcon} size={15} strokeWidth={1.8} />
-                <span className="font-numbers font-medium text-admin-ink tabular-nums">
-                  {revenue}
-                </span>
-                <span className="text-subtle">/ {range}d</span>
+              <span className="font-numbers text-[12px] text-subtle tabular-nums">
+                {range} days
               </span>
             }
           >
             <Panel>
-              <AreaChart
+              <p className="text-[13px] font-medium text-muted">Total revenue</p>
+              <p className="font-numbers pt-1.5 text-[32px] leading-[1.1] font-medium tracking-[-0.025em] text-admin-ink tabular-nums">
+                {revenue}
+              </p>
+              <p className="pt-1 text-[12px] text-muted">
+                <span className={growthCents >= 0 ? "text-delta-up" : "text-delta-down"}>
+                  {growthCents >= 0 ? "+" : "−"}
+                  {formatMoney({ amount: Math.abs(growthCents), currency: "USD" })}
+                </span>{" "}
+                vs previous {range} days
+              </p>
+              <RevenueChart
                 points={chartPoints}
                 formatValue={(cents) => formatMoneyCompact(cents)}
-                className="h-[290px]"
+                className="mt-5 h-[230px]"
               />
             </Panel>
           </Group>
