@@ -149,7 +149,7 @@ function AdminShell({ user, children }: { user: AdminUser; children: ReactNode }
       <aside
         data-collapsed={collapsed}
         className={cn(
-          "group/rail sticky top-0 flex h-dvh shrink-0 flex-col gap-1 bg-admin-rail px-4 py-5",
+          "group/rail admin-edge sticky top-0 flex h-dvh shrink-0 flex-col gap-1 bg-admin-rail px-4 py-5",
           "transition-[width] duration-300 ease-expo max-lg:w-[74px]",
           collapsed ? "w-[84px]" : "w-[248px]"
         )}
