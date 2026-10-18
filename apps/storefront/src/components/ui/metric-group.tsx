@@ -72,7 +72,7 @@ function MetricCell({
       {loading ? (
         <div className="my-1 h-8 w-28 animate-pulse rounded-md bg-admin-line" />
       ) : (
-        <p className="font-numbers text-[32px] leading-[1.1] font-semibold tracking-[-0.025em] text-admin-ink tabular-nums">
+        <p className="font-numbers text-[32px] leading-[1.1] font-medium tracking-[-0.025em] text-admin-ink tabular-nums">
           {metric.value}
         </p>
       )}

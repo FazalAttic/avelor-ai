@@ -312,7 +312,7 @@ export default function AdminDashboardPage() {
             action={
               <span className="flex items-center gap-2 text-[12px] text-muted">
                 <HugeiconsIcon icon={ChartIncreaseIcon} size={15} strokeWidth={1.8} />
-                <span className="font-numbers font-semibold text-admin-ink tabular-nums">
+                <span className="font-numbers font-medium text-admin-ink tabular-nums">
                   {revenue}
                 </span>
                 <span className="text-subtle">/ {range}d</span>
@@ -350,7 +350,7 @@ export default function AdminDashboardPage() {
                         </span>
                       </span>
                       <span className="flex shrink-0 flex-col items-end gap-1">
-                        <span className="font-numbers text-[13px] font-semibold text-admin-ink tabular-nums">
+                        <span className="font-numbers text-[13px] font-medium text-admin-ink tabular-nums">
                           {formatMoney(order.total)}
                         </span>
                         <Badge tone={STATUS_TONES[order.status]}>{order.status}</Badge>
@@ -368,7 +368,7 @@ export default function AdminDashboardPage() {
                 <div>
                   <div className="flex items-baseline justify-between text-[13px]">
                     <span className="text-muted">Paid orders</span>
-                    <span className="font-numbers text-[15px] font-semibold text-admin-ink tabular-nums">
+                    <span className="font-numbers text-[15px] font-medium text-admin-ink tabular-nums">
                       {paidRate}%
                     </span>
                   </div>
@@ -418,7 +418,7 @@ export default function AdminDashboardPage() {
                     className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
                   >
                     <span className="text-[13px] text-muted">{row.label}</span>
-                    <span className="font-numbers text-[15px] font-semibold text-admin-ink tabular-nums">
+                    <span className="font-numbers text-[15px] font-medium text-admin-ink tabular-nums">
                       {row.value}
                     </span>
                   </li>
