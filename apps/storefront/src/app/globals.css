@@ -154,11 +154,12 @@ body:has(#admin-login-shell) {
   }
 }
 
-/* Long seams (the admin rail) want more than a colour: a rule that runs the
-   whole viewport reads as a frame even at 8% ink. This fades out at both ends
-   so the edge separates the rail from the canvas without closing it in. The
-   seam costs no layout. Layered under utilities so it never overrides a host's
-   own position value. */
+/* Long seams (the admin rail) want more than a colour: a 1px rule that runs the
+   whole viewport reads as a frame even at 5% ink. So the seam is a 4px band
+   straddling the boundary, ramped to nothing on both sides and faded out at both
+   ends — the tone turns over gradually between the two surfaces instead of a line
+   being drawn on one of them. Costs no layout. Layered under utilities so it
+   never overrides a host's own position value. */
 @layer components {
   .admin-edge {
     position: relative;
@@ -168,17 +169,24 @@ body:has(#admin-login-shell) {
     content: "";
     position: absolute;
     top: 0;
-    right: 0;
+    right: -2px;
     bottom: 0;
-    width: 1px;
+    width: 4px;
     pointer-events: none;
     background-image: linear-gradient(
-      to bottom,
+      to right,
       transparent 0%,
-      var(--admin-edge) 12%,
-      var(--admin-edge) 88%,
+      var(--admin-edge) 50%,
       transparent 100%
     );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 12%,
+      #000 88%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
   }
 }
 
