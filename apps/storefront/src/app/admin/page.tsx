@@ -1,17 +1,17 @@
 "use client";
 
 import {
+  ArrowRight01Icon,
   ChartIncreaseIcon,
   CheckmarkCircle02Icon,
-  PackageIcon,
-  ShoppingBag01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import Link from "next/link";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Alert } from "@/components/ui/alert";
-import { AreaChart, type ChartPoint, Sparkline } from "@/components/ui/area-chart";
+import { AreaChart, type ChartPoint } from "@/components/ui/area-chart";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
-import { MetricCard } from "@/components/ui/metric-card";
+import { type Metric, MetricGroup } from "@/components/ui/metric-group";
 import { Segmented } from "@/components/ui/segmented";
 import {
   type AdminMetrics,
@@ -96,7 +96,7 @@ function sumWindow(orders: readonly AdminOrder[], fromDaysAgo: number, toDaysAgo
   return { revenueCents, count };
 }
 
-/** Null when there is no comparable baseline — the card then hides the chip. */
+/** Null when there is no comparable baseline — the chip then stays hidden. */
 function pctDelta(current: number, previous: number): number | null {
   if (previous <= 0) return null;
   return ((current - previous) / previous) * 100;
@@ -106,30 +106,55 @@ function shortId(id: string) {
   return id.length > 8 ? `#${id.slice(-8)}` : `#${id}`;
 }
 
-function DashboardCard({
+function dayLabel(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+/**
+ * A group is a name and then a surface. The title sits outside the box, the way
+ * it does in the reference, so the box itself never has to announce itself and
+ * the page reads as a list of questions rather than a grid of panels.
+ */
+function Group({
   title,
-  actions,
+  action,
   children,
   className,
 }: {
-  title: ReactNode;
-  actions?: ReactNode;
+  title: string;
+  action?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <section className={cn("rounded-2xl border border-admin-edge bg-admin-card", className)}>
-      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 pt-4">
-        <h2 className="text-[13px] font-semibold tracking-tight">{title}</h2>
-        {actions}
+    <section className={cn("flex min-w-0 flex-col gap-2.5", className)}>
+      <header className="flex min-h-9 flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-admin-ink">{title}</h2>
+        {action}
       </header>
-      <div className="p-4">{children}</div>
+      {children}
     </section>
   );
 }
 
-function SkeletonCard({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-2xl bg-admin-line", className)} />;
+function Panel({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={cn("rounded-2xl border border-admin-edge bg-admin-card p-5", className)}>
+      {children}
+    </div>
+  );
+}
+
+function SeeAll({ href }: { href: string }) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-1 text-[12px] font-semibold text-muted transition-colors duration-150 ease-expo hover:text-admin-ink"
+    >
+      See all
+      <HugeiconsIcon icon={ArrowRight01Icon} size={13} strokeWidth={2} />
+    </Link>
+  );
 }
 
 export default function AdminDashboardPage() {
@@ -176,25 +201,21 @@ export default function AdminDashboardPage() {
     [series]
   );
 
-  const topProducts = useMemo(() => {
-    const byProduct = new Map<string, { name: string; units: number; revenueCents: number }>();
+  const catalogue = useMemo(() => {
+    let live = 0;
+    let draft = 0;
+    let soldOut = 0;
+    let low = 0;
     for (const product of products) {
-      byProduct.set(product.id, { name: product.name, units: 0, revenueCents: 0 });
-    }
-    for (const order of orders) {
-      if (!REVENUE_STATUSES.includes(order.status)) continue;
-      for (const item of order.items) {
-        const entry = byProduct.get(item.productId);
-        if (!entry) continue;
-        entry.units += item.quantity;
-        entry.revenueCents += item.totalPrice.amount;
+      if (product.status === "active") live += 1;
+      if (product.status === "draft") draft += 1;
+      for (const variant of product.variants) {
+        if (variant.inventoryQuantity === 0) soldOut += 1;
+        else if (variant.inventoryQuantity < LOW_STOCK) low += 1;
       }
     }
-    return [...byProduct.values()]
-      .filter((entry) => entry.units > 0)
-      .sort((a, b) => b.revenueCents - a.revenueCents)
-      .slice(0, 5);
-  }, [orders, products]);
+    return { live, draft, soldOut, low };
+  }, [products]);
 
   const lowStock = useMemo(() => {
     const rows: { name: string; sku: string; quantity: number }[] = [];
@@ -226,19 +247,42 @@ export default function AdminDashboardPage() {
     metrics && metrics.orders.totalOrders > 0
       ? Math.round((metrics.orders.paidOrders / metrics.orders.totalOrders) * 100)
       : 0;
+  const revenue = formatMoney({ amount: current.revenueCents, currency: "USD" });
+
+  const overview: Metric[] = [
+    {
+      label: "Revenue",
+      value: revenue,
+      delta: pctDelta(current.revenueCents, previous.revenueCents),
+      caption: `Previous ${range} days: ${formatMoneyCompact(previous.revenueCents)}`,
+    },
+    {
+      label: "Orders",
+      value: current.count,
+      delta: pctDelta(current.count, previous.count),
+      caption: `Previous ${range} days: ${previous.count}`,
+    },
+    {
+      label: "Paid rate",
+      value: `${paidRate}%`,
+      caption: `${metrics?.orders.paidOrders ?? 0} of ${metrics?.orders.totalOrders ?? 0} orders paid`,
+    },
+    {
+      label: "Low stock",
+      value: metrics?.catalog.lowStockVariants ?? 0,
+      caption: `Variants under ${LOW_STOCK} units`,
+    },
+  ];
 
   return (
-    <section id="admin-dashboard-page" className="flex flex-col gap-4">
-      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
-        <div className="min-w-0">
-          <h1 className="text-[28px] leading-none font-bold tracking-[-0.03em]">
-            Hello, {firstName}!
-          </h1>
-          <p className="pt-2 text-[13px] text-muted">
-            {todayLabel} · here is how {metrics?.tenantId ?? "the store"} is doing.
-          </p>
-        </div>
-        <Segmented options={RANGES} value={range} onChange={setRange} ariaLabel="Revenue period" />
+    <section id="admin-dashboard-page" className="flex flex-col gap-6">
+      <header>
+        <h1 className="text-[30px] leading-none font-bold tracking-[-0.03em] text-admin-ink">
+          Hello, {firstName}!
+        </h1>
+        <p className="pt-2.5 text-[13px] text-muted">
+          {todayLabel} · here is how {metrics?.tenantId ?? "the store"} is doing.
+        </p>
       </header>
 
       {error ? (
@@ -247,169 +291,141 @@ export default function AdminDashboardPage() {
         </Alert>
       ) : null}
 
-      {loading ? (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <SkeletonCard className="h-[132px]" />
-          <SkeletonCard className="h-[132px]" />
-          <SkeletonCard className="h-[132px]" />
-          <SkeletonCard className="h-[132px]" />
-        </div>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricCard
-            label="Revenue"
-            value={formatMoney({ amount: current.revenueCents, currency: "USD" })}
-            delta={pctDelta(current.revenueCents, previous.revenueCents)}
-            caption={`Last ${range} days`}
-            plot={<Sparkline points={series.map((b) => b.revenueCents)} />}
-          />
-          <MetricCard
-            label="Orders"
-            value={current.count}
-            delta={pctDelta(current.count, previous.count)}
-            caption={`${metrics?.orders.totalOrders ?? 0} lifetime`}
-            plot={<Sparkline points={series.map((b) => b.orders)} />}
-          />
-          <MetricCard
-            label="Paid rate"
-            value={`${paidRate}%`}
-            caption={`${metrics?.orders.paidOrders ?? 0} of ${metrics?.orders.totalOrders ?? 0} orders paid`}
-          />
-          <MetricCard
-            label="Low stock"
-            value={metrics?.catalog.lowStockVariants ?? 0}
-            caption={`Variants under ${LOW_STOCK} units`}
-          />
-        </div>
-      )}
+      <div className="grid min-w-0 gap-x-6 gap-y-5 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="flex min-w-0 flex-col gap-5">
+          <Group
+            title="Overview performance"
+            action={
+              <Segmented
+                options={RANGES}
+                value={range}
+                onChange={setRange}
+                ariaLabel="Revenue period"
+              />
+            }
+          >
+            <MetricGroup metrics={overview} loading={loading} />
+          </Group>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="flex min-w-0 flex-col gap-4">
-          <DashboardCard
+          <Group
             title="Revenue"
-            actions={
+            action={
               <span className="flex items-center gap-2 text-[12px] text-muted">
                 <HugeiconsIcon icon={ChartIncreaseIcon} size={15} strokeWidth={1.8} />
-                {formatMoney({ amount: current.revenueCents, currency: "USD" })}
+                <span className="font-numbers font-semibold text-admin-ink tabular-nums">
+                  {revenue}
+                </span>
                 <span className="text-subtle">/ {range}d</span>
               </span>
             }
           >
-            <AreaChart
-              points={chartPoints}
-              formatValue={(cents) => formatMoneyCompact(cents)}
-              className="h-64"
-            />
-          </DashboardCard>
-
-          <DashboardCard title="Top products">
-            {topProducts.length === 0 ? (
-              <p className="text-[13px] text-subtle">No paid orders yet — products rank here.</p>
-            ) : (
-              <ul className="flex flex-col divide-y divide-admin-edge">
-                {topProducts.map((product) => (
-                  <li
-                    key={product.name}
-                    className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0"
-                  >
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-admin-rail text-muted">
-                      <HugeiconsIcon icon={PackageIcon} size={16} strokeWidth={1.8} />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[13px] font-semibold">
-                        {product.name}
-                      </span>
-                      <span className="block text-[11px] text-subtle tabular-nums">
-                        {product.units} units
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-[13px] font-semibold tabular-nums">
-                      {formatMoney({ amount: product.revenueCents, currency: "USD" })}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </DashboardCard>
+            <Panel>
+              <AreaChart
+                points={chartPoints}
+                formatValue={(cents) => formatMoneyCompact(cents)}
+                className="h-[290px]"
+              />
+            </Panel>
+          </Group>
         </div>
 
-        <div className="flex min-w-0 flex-col gap-4">
-          <DashboardCard title="Store health">
-            <div className="flex flex-col gap-3">
-              <div>
-                <div className="flex items-baseline justify-between text-[12px]">
-                  <span className="text-muted">Paid orders</span>
-                  <span className="font-semibold tabular-nums">{paidRate}%</span>
-                </div>
-                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-admin-rail">
-                  <div
-                    className="h-full rounded-full bg-admin-ink transition-[width] duration-500 ease-expo"
-                    style={{ width: `${paidRate}%` }}
-                  />
-                </div>
-              </div>
-
-              {lowStock.length === 0 ? (
-                <p className="flex items-center gap-2 text-[12px] text-muted">
-                  <HugeiconsIcon icon={CheckmarkCircle02Icon} size={14} strokeWidth={1.8} />
-                  Inventory is healthy — nothing under {LOW_STOCK} units.
-                </p>
+        <div className="flex min-w-0 flex-col gap-5">
+          <Group title="Recent orders" action={<SeeAll href="/admin/orders" />}>
+            <Panel>
+              {recentOrders.length === 0 ? (
+                <p className="text-[13px] text-subtle">No orders yet.</p>
               ) : (
-                <ul className="flex flex-col gap-2">
-                  {lowStock.map((row) => (
-                    <li key={row.sku} className="flex items-center justify-between gap-3">
-                      <span className="min-w-0">
-                        <span className="block truncate text-[12px] font-medium">{row.name}</span>
-                        <span className="block truncate text-[11px] text-subtle">{row.sku}</span>
+                <ul className="flex flex-col divide-y divide-admin-edge">
+                  {recentOrders.map((order) => (
+                    <li
+                      key={order.id}
+                      className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[13px] font-medium text-admin-ink">
+                          {order.customerEmail}
+                        </span>
+                        <span className="font-numbers block pt-0.5 text-[11px] text-subtle tabular-nums">
+                          {shortId(order.id)} · {dayLabel(order.createdAt)}
+                        </span>
                       </span>
-                      <Badge tone={row.quantity === 0 ? "danger" : "warning"}>
-                        {row.quantity} left
-                      </Badge>
+                      <span className="flex shrink-0 flex-col items-end gap-1">
+                        <span className="font-numbers text-[13px] font-semibold text-admin-ink tabular-nums">
+                          {formatMoney(order.total)}
+                        </span>
+                        <Badge tone={STATUS_TONES[order.status]}>{order.status}</Badge>
+                      </span>
                     </li>
                   ))}
                 </ul>
               )}
-            </div>
-          </DashboardCard>
+            </Panel>
+          </Group>
 
-          <DashboardCard
-            title="Recent orders"
-            actions={
-              <span className="text-[11px] font-medium text-subtle">
-                <HugeiconsIcon icon={ShoppingBag01Icon} size={14} strokeWidth={1.8} />
-              </span>
-            }
-          >
-            {recentOrders.length === 0 ? (
-              <p className="text-[13px] text-subtle">No orders yet.</p>
-            ) : (
+          <Group title="Store health">
+            <Panel>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <div className="flex items-baseline justify-between text-[13px]">
+                    <span className="text-muted">Paid orders</span>
+                    <span className="font-numbers text-[15px] font-semibold text-admin-ink tabular-nums">
+                      {paidRate}%
+                    </span>
+                  </div>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-admin-rail">
+                    <div
+                      className="h-full rounded-full bg-admin-ink transition-[width] duration-500 ease-expo"
+                      style={{ width: `${paidRate}%` }}
+                    />
+                  </div>
+                </div>
+
+                {lowStock.length === 0 ? (
+                  <p className="flex items-center gap-2 text-[12px] text-muted">
+                    <HugeiconsIcon icon={CheckmarkCircle02Icon} size={14} strokeWidth={1.8} />
+                    Inventory is healthy — nothing under {LOW_STOCK} units.
+                  </p>
+                ) : (
+                  <ul className="flex flex-col gap-2">
+                    {lowStock.map((row) => (
+                      <li key={row.sku} className="flex items-center justify-between gap-3">
+                        <span className="min-w-0">
+                          <span className="block truncate text-[12px] font-medium">{row.name}</span>
+                          <span className="block truncate text-[11px] text-subtle">{row.sku}</span>
+                        </span>
+                        <Badge tone={row.quantity === 0 ? "danger" : "warning"}>
+                          {row.quantity} left
+                        </Badge>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </Panel>
+          </Group>
+
+          <Group title="Products" action={<SeeAll href="/admin/products" />}>
+            <Panel>
               <ul className="flex flex-col divide-y divide-admin-edge">
-                {recentOrders.map((order) => (
+                {[
+                  { label: "Live listings", value: catalogue.live },
+                  { label: "Drafts", value: catalogue.draft },
+                  { label: "Sold-out variants", value: catalogue.soldOut },
+                  { label: `Under ${LOW_STOCK} units`, value: catalogue.low },
+                ].map((row) => (
                   <li
-                    key={order.id}
-                    className="flex items-center gap-2.5 py-2.5 first:pt-0 last:pb-0"
+                    key={row.label}
+                    className="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
                   >
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[12px] font-medium">
-                        {order.customerEmail}
-                      </span>
-                      <span className="block text-[11px] text-subtle tabular-nums">
-                        {shortId(order.id)} ·{" "}
-                        {new Date(order.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </span>
+                    <span className="text-[13px] text-muted">{row.label}</span>
+                    <span className="font-numbers text-[15px] font-semibold text-admin-ink tabular-nums">
+                      {row.value}
                     </span>
-                    <span className="shrink-0 text-[12px] font-semibold tabular-nums">
-                      {formatMoney(order.total)}
-                    </span>
-                    <Badge tone={STATUS_TONES[order.status]}>{order.status}</Badge>
                   </li>
                 ))}
               </ul>
-            )}
-          </DashboardCard>
+            </Panel>
+          </Group>
         </div>
       </div>
     </section>

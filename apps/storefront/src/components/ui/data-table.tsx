@@ -91,7 +91,7 @@ export function DataTable<T>({
                       className={cn(
                         CELL,
                         column.hide && HIDE[column.hide],
-                        column.align === "end" && "text-right tabular-nums",
+                        column.align === "end" && "text-right font-numbers tabular-nums",
                         column.className
                       )}
                     >

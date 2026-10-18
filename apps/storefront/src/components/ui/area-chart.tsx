@@ -82,7 +82,7 @@ export function AreaChart({
           <span
             key={`tick-${tick.y}`}
             style={{ top: `${(tick.y / H) * 100}%` }}
-            className="absolute right-0 -translate-y-1/2 text-[10px] font-medium tabular-nums text-subtle"
+            className="font-numbers absolute right-0 -translate-y-1/2 text-[10px] font-medium text-subtle tabular-nums"
           >
             {tick.text}
           </span>
@@ -124,7 +124,7 @@ export function AreaChart({
 
       <span />
 
-      <div className="flex justify-between text-[10px] font-medium text-subtle">
+      <div className="font-numbers flex justify-between text-[10px] font-medium text-subtle">
         {points.map((p, i) =>
           i % every === 0 || i === points.length - 1 ? (
             <span key={`${p.label}-${i}`} className="tabular-nums">

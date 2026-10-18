@@ -16,7 +16,7 @@ export function TrendBadge({
     <span
       className={cn(
         "inline-flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5",
-        "text-[11px] font-bold tabular-nums whitespace-nowrap",
+        "font-numbers text-[11px] font-bold whitespace-nowrap tabular-nums",
         up ? "bg-delta-up-wash text-delta-up" : "bg-delta-down-wash text-delta-down",
         className
       )}
