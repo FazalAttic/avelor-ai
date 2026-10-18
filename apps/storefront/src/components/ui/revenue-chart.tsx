@@ -29,10 +29,12 @@ const clampY = (y: number) => Math.min(H - BOTTOM, Math.max(TOP, y));
 export function RevenueChart({
   points,
   formatValue,
+  formatPoint,
   className,
 }: {
   points: readonly ChartPoint[];
   formatValue: (value: number) => string;
+  formatPoint: (value: number) => string;
   className?: string;
 }) {
   const [cursor, setCursor] = useState<number | null>(null);
@@ -114,21 +116,25 @@ export function RevenueChart({
             />
           ))}
           {teeth.map((tooth) => (
-            <rect
+            <line
               key={`tooth-${tooth.x}`}
-              x={tooth.x - 1.5}
-              y={tooth.y}
-              width={3}
-              height={H - tooth.y}
-              className="fill-chart-area"
+              x1={tooth.x}
+              x2={tooth.x}
+              y1={tooth.y}
+              y2={H}
+              strokeWidth={1}
+              vectorEffect="non-scaling-stroke"
+              className="stroke-chart-comb"
             />
           ))}
-          <rect
-            x={head.x - 1.5}
-            y={head.y}
-            width={3}
-            height={H - head.y}
-            className="fill-chart-line"
+          <line
+            x1={head.x}
+            x2={head.x}
+            y1={head.y}
+            y2={H}
+            strokeWidth={1.5}
+            vectorEffect="non-scaling-stroke"
+            className="stroke-chart-line"
           />
           <path
             d={line}
@@ -145,18 +151,24 @@ export function RevenueChart({
           className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-admin-card bg-chart-line"
         />
 
-        <div className="module-edge pointer-events-none absolute right-0 top-0 rounded-xl bg-admin-card px-3 py-2">
+        {/* The read-out rides along with the cursor rather than sitting in a
+            corner — parked at the right it read as frozen even while the
+            column moved. clamp() keeps it inside the plot at both ends. */}
+        <div
+          style={{ left: `clamp(70px, ${(head.x / W) * 100}%, calc(100% - 70px))` }}
+          className="module-edge pointer-events-none absolute top-0 w-[140px] -translate-x-1/2 rounded-xl bg-admin-card px-3 py-2"
+        >
           <p className="text-[11px] whitespace-nowrap text-subtle">{points[at].label}</p>
           <p className="flex items-center gap-2 pt-0.5">
             <span className="font-numbers text-[14px] font-medium text-admin-ink tabular-nums">
-              {formatValue(points[at].value)}
+              {formatPoint(points[at].value)}
             </span>
             {delta === null ? null : <TrendBadge value={delta} />}
           </p>
         </div>
 
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 cursor-crosshair"
           onPointerMove={(event) => {
             const box = event.currentTarget.getBoundingClientRect();
             const along = ((event.clientX - box.left) / box.width) * (points.length - 1);

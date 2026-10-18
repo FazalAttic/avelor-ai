@@ -355,6 +355,7 @@ export default function AdminDashboardPage() {
               <RevenueChart
                 points={chartPoints}
                 formatValue={(cents) => formatMoneyCompact(cents)}
+                formatPoint={(cents) => formatMoney({ amount: cents, currency: "USD" })}
                 className="mt-5 h-[230px]"
               />
             </Panel>

@@ -69,7 +69,7 @@
   --delta-down-wash: #fbebe7;
   --chart-grid: #e9ebe6;
   --chart-line: #15171a;
-  --chart-area: rgba(21, 23, 26, 0.08);
+  --chart-comb: rgba(21, 23, 26, 0.45);
 
   /* Motion */
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -112,7 +112,7 @@
   --color-delta-down-wash: var(--delta-down-wash);
   --color-chart-grid: var(--chart-grid);
   --color-chart-line: var(--chart-line);
-  --color-chart-area: var(--chart-area);
+  --color-chart-comb: var(--chart-comb);
 
   --ease-expo: var(--ease-out-expo);
   --ease-spring: var(--ease-spring);
@@ -265,7 +265,7 @@ html {
   --delta-down-wash: #2b1620;
   --chart-grid: #1b1f34;
   --chart-line: #eef0fb;
-  --chart-area: rgba(238, 240, 251, 0.1);
+  --chart-comb: rgba(238, 240, 251, 0.4);
 }
 
 /* Chrome paints its own autofill background over bg-*, so an autofilled input
