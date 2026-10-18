@@ -10,7 +10,7 @@ import Link from "next/link";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { AreaChart, type ChartPoint } from "@/components/ui/area-chart";
-import { Badge, type BadgeTone } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { type Metric, MetricGroup } from "@/components/ui/metric-group";
 import { Segmented } from "@/components/ui/segmented";
 import {
@@ -38,13 +38,17 @@ const DAY_MS = 86_400_000;
 /** Orders that count toward revenue — the same rule the metrics endpoint uses. */
 const REVENUE_STATUSES: readonly OrderStatus[] = ["paid", "processing"];
 
-const STATUS_TONES: Record<OrderStatus, BadgeTone> = {
-  paid: "success",
-  processing: "brand",
-  pending: "warning",
-  failed: "danger",
-  canceled: "neutral",
-  refunded: "neutral",
+/* Status is a word on the same line as its order, not a coloured pill. Five
+   chips stacked down the right edge of a box is what made it shout, and the
+   state is only interesting when it is not the normal one — so paid and
+   processing carry colour and everything settled carries none. */
+const STATUS_TEXT: Record<OrderStatus, string> = {
+  paid: "text-delta-up",
+  processing: "text-brand-blue",
+  pending: "text-muted",
+  failed: "text-delta-down",
+  canceled: "text-subtle",
+  refunded: "text-subtle",
 };
 
 const LOW_STOCK = 5;
@@ -100,10 +104,6 @@ function sumWindow(orders: readonly AdminOrder[], fromDaysAgo: number, toDaysAgo
 function pctDelta(current: number, previous: number): number | null {
   if (previous <= 0) return null;
   return ((current - previous) / previous) * 100;
-}
-
-function shortId(id: string) {
-  return id.length > 8 ? `#${id.slice(-8)}` : `#${id}`;
 }
 
 function dayLabel(iso: string) {
@@ -337,21 +337,19 @@ export default function AdminDashboardPage() {
                   {recentOrders.map((order) => (
                     <li
                       key={order.id}
-                      className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                      className="flex items-baseline justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
                     >
-                      <span className="min-w-0 flex-1">
+                      <span className="min-w-0">
                         <span className="block truncate text-[13px] font-medium text-admin-ink">
                           {order.customerEmail}
                         </span>
-                        <span className="font-numbers block pt-0.5 text-[11px] text-subtle tabular-nums">
-                          {shortId(order.id)} · {dayLabel(order.createdAt)}
+                        <span className="font-numbers block pt-1 text-[11px] text-subtle tabular-nums">
+                          {dayLabel(order.createdAt)} ·{" "}
+                          <span className={STATUS_TEXT[order.status]}>{order.status}</span>
                         </span>
                       </span>
-                      <span className="flex shrink-0 flex-col items-end gap-1">
-                        <span className="font-numbers text-[13px] font-medium text-admin-ink tabular-nums">
-                          {formatMoney(order.total)}
-                        </span>
-                        <Badge tone={STATUS_TONES[order.status]}>{order.status}</Badge>
+                      <span className="font-numbers shrink-0 text-[13px] font-medium text-admin-ink tabular-nums">
+                        {formatMoney(order.total)}
                       </span>
                     </li>
                   ))}
