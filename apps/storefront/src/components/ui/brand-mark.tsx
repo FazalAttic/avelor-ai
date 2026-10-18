@@ -15,17 +15,17 @@ export function BrandMark({
       <Image
         src="/avelor-logo.png"
         alt=""
-        width={48}
-        height={48}
-        className="size-7 shrink-0"
+        width={1366}
+        height={1151}
+        className="h-8 w-auto shrink-0"
         priority
       />
       <div className={cn("min-w-0", wordmarkClassName)}>
-        <p className="truncate text-[13px] leading-tight font-bold tracking-tight text-foreground">
+        <p className="truncate text-[15px] leading-tight font-semibold tracking-tight text-admin-ink">
           Avelor
         </p>
         {caption ? (
-          <p className="truncate text-[10px] leading-tight font-semibold tracking-[0.12em] text-subtle uppercase">
+          <p className="truncate text-[11px] leading-tight font-semibold tracking-[0.1em] text-muted uppercase">
             {caption}
           </p>
         ) : null}
