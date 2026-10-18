@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  ArrowLeft01Icon,
   ArrowUpRight01Icon,
   Book03Icon,
   DashboardSquare01Icon,
@@ -9,6 +8,7 @@ import {
   PackageIcon,
   Shield01Icon,
   ShoppingBag01Icon,
+  SidebarLeft01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import Link from "next/link";
@@ -68,10 +68,11 @@ const RAIL_TEXT = "max-lg:hidden group-data-[collapsed=true]/rail:hidden";
 const RAIL_ICON_ROW =
   "max-lg:justify-center max-lg:px-0 group-data-[collapsed=true]/rail:justify-center group-data-[collapsed=true]/rail:px-0";
 
-/* Straddles the rail edge so it stays in exactly the same spot whether the rail
-   is 248px or 84px. Flat ink because a white circle disappears into the canvas. */
+/* Rides the rail edge at the top, level with the logo, so it stays put whether
+   the rail is 248px or 84px. Ink rather than the card colour because a white
+   circle disappears into the canvas on the half that overhangs it. */
 const RAIL_TOGGLE = cn(
-  "absolute right-0 top-1/2 z-10 flex size-8 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full",
+  "absolute right-0 top-5 z-10 flex size-8 translate-x-1/2 items-center justify-center rounded-full",
   "bg-admin-ink text-admin-ink-contrast transition-colors duration-200 ease-expo hover:bg-admin-ink/85",
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
 );
@@ -161,12 +162,7 @@ function AdminShell({ user, children }: { user: AdminUser; children: ReactNode }
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={RAIL_TOGGLE}
         >
-          <HugeiconsIcon
-            icon={ArrowLeft01Icon}
-            size={16}
-            strokeWidth={2.3}
-            className={cn("transition-[rotate] duration-300 ease-expo", collapsed && "rotate-180")}
-          />
+          <HugeiconsIcon icon={SidebarLeft01Icon} size={17} strokeWidth={1.9} />
         </button>
 
         <Link
