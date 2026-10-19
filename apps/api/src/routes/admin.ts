@@ -130,6 +130,7 @@ export function createAdminRoutes(deps: AdminRoutesDependencies) {
       description?: string;
       categories?: string[];
       attributes?: Record<string, string>;
+      media?: string[];
       variants?: {
         sku: string;
         title?: string;
@@ -158,6 +159,7 @@ export function createAdminRoutes(deps: AdminRoutesDependencies) {
       description: body.description ?? "",
       categories: body.categories ?? [],
       attributes: body.attributes ?? {},
+      media: body.media ?? [],
       status: "active",
     });
 
@@ -200,7 +202,16 @@ export function createAdminRoutes(deps: AdminRoutesDependencies) {
       description?: string;
       categories?: string[];
       attributes?: Record<string, string>;
+      media?: string[];
       status?: "draft" | "active" | "archived";
+      variants?: {
+        id?: string;
+        sku?: string;
+        title?: string;
+        priceAmount?: number;
+        currency?: string;
+        inventoryQuantity?: number;
+      }[];
     };
 
     try {
@@ -210,8 +221,48 @@ export function createAdminRoutes(deps: AdminRoutesDependencies) {
     }
 
     try {
-      const updated = await deps.catalogRepo.updateProduct(tenantId, id, body);
-      return c.json(updated);
+      const updated = await deps.catalogRepo.updateProduct(tenantId, id, {
+        name: body.name,
+        description: body.description,
+        categories: body.categories,
+        attributes: body.attributes,
+        media: body.media,
+        status: body.status,
+      });
+
+      if (body.variants && body.variants.length > 0) {
+        for (const v of body.variants) {
+          if (v.id && !v.id.startsWith("v-")) {
+            const existing = await deps.catalogRepo.getVariant(tenantId, v.id);
+            if (existing) {
+              await deps.catalogRepo.updateVariant(tenantId, v.id, {
+                sku: v.sku,
+                title: v.title,
+                price:
+                  v.priceAmount !== undefined
+                    ? createMoney(v.priceAmount, v.currency ?? existing.price.currency ?? "USD")
+                    : undefined,
+                inventoryQuantity: v.inventoryQuantity,
+              });
+              continue;
+            }
+          }
+
+          if (v.sku && v.priceAmount !== undefined) {
+            await deps.catalogRepo.createVariant({
+              tenantId,
+              productId: id,
+              sku: v.sku,
+              title: v.title ?? v.sku,
+              price: createMoney(v.priceAmount, v.currency ?? "USD"),
+              inventoryQuantity: v.inventoryQuantity ?? 0,
+            });
+          }
+        }
+      }
+
+      const variants = await deps.catalogRepo.listVariants(tenantId, id);
+      return c.json({ ...updated, variants });
     } catch {
       return c.json({ error: { code: "NOT_FOUND", message: `Product '${id}' not found` } }, 404);
     }

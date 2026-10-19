@@ -64,6 +64,14 @@ export interface CreateVariantInput {
   readonly attributes?: Record<string, AttributeValue> | undefined;
 }
 
+export interface UpdateVariantInput {
+  readonly sku?: string | undefined;
+  readonly title?: string | undefined;
+  readonly price?: Money | undefined;
+  readonly inventoryQuantity?: number | undefined;
+  readonly attributes?: Record<string, AttributeValue> | undefined;
+}
+
 export interface ProductFilter {
   readonly query?: string | undefined;
   readonly status?: ProductStatus | undefined;

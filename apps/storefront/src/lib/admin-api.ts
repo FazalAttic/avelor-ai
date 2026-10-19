@@ -41,6 +41,7 @@ export interface AdminProduct {
   readonly status: ProductStatus;
   readonly categories: readonly string[];
   readonly media: readonly string[];
+  readonly attributes?: Readonly<Record<string, unknown>>;
   readonly variants: readonly AdminVariant[];
   readonly createdAt: string;
 }
@@ -79,6 +80,8 @@ export interface NewProduct {
   readonly name: string;
   readonly description: string;
   readonly categories: readonly string[];
+  readonly media?: readonly string[];
+  readonly attributes?: Record<string, string>;
   readonly variants: readonly {
     sku: string;
     title: string;
@@ -146,6 +149,15 @@ export interface ProductPatch {
   description?: string;
   categories?: readonly string[];
   status?: ProductStatus;
+  media?: readonly string[];
+  attributes?: Record<string, string>;
+  variants?: readonly {
+    id?: string;
+    sku: string;
+    title: string;
+    priceAmount: number;
+    inventoryQuantity: number;
+  }[];
 }
 
 export const updateProduct = (id: string, patch: ProductPatch) =>

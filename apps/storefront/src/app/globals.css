@@ -160,6 +160,15 @@ body:has(#admin-login-shell) {
   }
 }
 
+@keyframes admin-slide-left {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .admin-fade {
     animation: admin-fade 160ms var(--ease-out-expo) both;
@@ -167,6 +176,10 @@ body:has(#admin-login-shell) {
 
   .admin-sheet {
     animation: admin-sheet 260ms var(--ease-out-expo) both;
+  }
+
+  .admin-slide-left {
+    animation: admin-slide-left 260ms var(--ease-out-expo) both;
   }
 }
 

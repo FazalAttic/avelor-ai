@@ -8,6 +8,7 @@ import type {
   ProductVariant,
   ProductWithVariants,
   UpdateProductInput,
+  UpdateVariantInput,
 } from "./types";
 
 export interface CatalogRepository {
@@ -21,5 +22,7 @@ export interface CatalogRepository {
   createVariant(input: CreateVariantInput): Promise<ProductVariant>;
   getVariant(tenantId: TenantId, id: string): Promise<ProductVariant | null>;
   listVariants(tenantId: TenantId, productId: string): Promise<readonly ProductVariant[]>;
+  updateVariant(tenantId: TenantId, id: string, input: UpdateVariantInput): Promise<ProductVariant>;
+  deleteVariant(tenantId: TenantId, id: string): Promise<boolean>;
   updateInventory(tenantId: TenantId, variantId: string, delta: number): Promise<ProductVariant>;
 }

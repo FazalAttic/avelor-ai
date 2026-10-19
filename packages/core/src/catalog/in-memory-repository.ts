@@ -9,6 +9,7 @@ import type {
   ProductVariant,
   ProductWithVariants,
   UpdateProductInput,
+  UpdateVariantInput,
 } from "./types";
 import { validateProductInput, validateVariantInput } from "./validation";
 
@@ -193,6 +194,51 @@ export class InMemoryCatalogRepository implements CatalogRepository {
       }
     }
     return Object.freeze(results);
+  }
+
+  async updateVariant(
+    tenantId: TenantId,
+    id: string,
+    input: UpdateVariantInput
+  ): Promise<ProductVariant> {
+    const existing = await this.getVariant(tenantId, id);
+    if (!existing) {
+      throw new Error(`Variant not found: ${id}`);
+    }
+
+    if (input.sku && input.sku.toLowerCase() !== existing.sku.toLowerCase()) {
+      for (const v of this.variants.values()) {
+        if (
+          v.id !== id &&
+          v.tenantId === tenantId &&
+          v.sku.toLowerCase() === input.sku.toLowerCase()
+        ) {
+          throw new Error(`SKU already exists: ${input.sku}`);
+        }
+      }
+    }
+
+    const updated: ProductVariant = {
+      ...existing,
+      sku: input.sku !== undefined ? input.sku.trim() : existing.sku,
+      title: input.title !== undefined ? input.title.trim() : existing.title,
+      price: input.price ?? existing.price,
+      inventoryQuantity:
+        input.inventoryQuantity !== undefined
+          ? input.inventoryQuantity
+          : existing.inventoryQuantity,
+      attributes: input.attributes ? Object.freeze({ ...input.attributes }) : existing.attributes,
+      updatedAt: new Date(),
+    };
+
+    this.variants.set(id, updated);
+    return updated;
+  }
+
+  async deleteVariant(tenantId: TenantId, id: string): Promise<boolean> {
+    const existing = await this.getVariant(tenantId, id);
+    if (!existing) return false;
+    return this.variants.delete(id);
   }
 
   async updateInventory(

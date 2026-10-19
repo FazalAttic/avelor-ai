@@ -142,4 +142,41 @@ describe("Catalog Repository & Domain Rules", () => {
     });
     expect(activeCoffee.items.length).toBe(2);
   });
+
+  it("updates and deletes variants with strict tenant isolation", async () => {
+    const product = await repo.createProduct({
+      tenantId: tenantA,
+      name: "Ergonomic Chair",
+    });
+
+    const v1 = await repo.createVariant({
+      productId: product.id,
+      tenantId: tenantA,
+      sku: "CHAIR-BLK",
+      title: "Black",
+      price: createMoney(29900, "USD"),
+      inventoryQuantity: 20,
+    });
+
+    // Update variant
+    const updated = await repo.updateVariant(tenantA, v1.id, {
+      title: "Matte Black",
+      price: createMoney(31900, "USD"),
+      inventoryQuantity: 25,
+    });
+
+    expect(updated.title).toBe("Matte Black");
+    expect(updated.price.amount).toBe(31900);
+    expect(updated.inventoryQuantity).toBe(25);
+
+    // Tenant B cannot update Tenant A's variant
+    await expect(repo.updateVariant(tenantB, v1.id, { title: "Hacked" })).rejects.toThrow();
+
+    // Delete variant
+    const deleted = await repo.deleteVariant(tenantA, v1.id);
+    expect(deleted).toBe(true);
+
+    const check = await repo.getVariant(tenantA, v1.id);
+    expect(check).toBeNull();
+  });
 });
