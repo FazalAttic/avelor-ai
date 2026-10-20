@@ -18,7 +18,10 @@ export interface PaymentRoutesDependencies {
 export function createPaymentRoutes(deps: PaymentRoutesDependencies) {
   const router = new Hono<AppEnv>();
   const defaultSecret =
-    deps.webhookSecret ?? process.env.WEBHOOK_SECRET ?? "whsec_test_secret_32chars_minimum";
+    deps.webhookSecret ??
+    process.env.PAYMENT_WEBHOOK_SECRET ??
+    process.env.WEBHOOK_SECRET ??
+    "whsec_test_secret_32chars_minimum";
 
   // Webhook endpoint
   // Note: tenant is verified from x-tenant-id header to guarantee multi-tenant scoping

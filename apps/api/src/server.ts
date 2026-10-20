@@ -40,7 +40,7 @@ let cartRepo: CartRepository = new InMemoryCartRepository();
 let chatRateLimiter: RedisTokenBucket | undefined;
 let apiRateLimiter: RedisTokenBucket | undefined;
 
-const redisUrl = process.env.REDIS_URL;
+const redisUrl = process.env.CACHE_URL ?? process.env.REDIS_URL;
 if (redisUrl) {
   const redisClient = createRedisClient(redisUrl);
   const isHealthy = await checkRedisHealth(redisClient);

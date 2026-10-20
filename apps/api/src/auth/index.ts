@@ -9,7 +9,10 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer, twoFactor } from "better-auth/plugins";
 
 function ensureEnvLoaded(): void {
-  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) return;
+  const hasGoogle =
+    (process.env.AUTH_GOOGLE_CLIENT_ID && process.env.AUTH_GOOGLE_CLIENT_SECRET) ||
+    (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  if (hasGoogle) return;
 
   for (const envPath of [
     resolve(process.cwd(), ".env.local"),
@@ -151,12 +154,21 @@ export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
 
   const secret =
     options.secret ??
+    process.env.AUTH_SECRET ??
     process.env.BETTER_AUTH_SECRET ??
     "avelor_dev_secret_auth_32_chars_random_string_xyz";
-  const baseURL = options.baseURL ?? process.env.BETTER_AUTH_URL ?? "http://localhost:5000";
+  const baseURL =
+    options.baseURL ??
+    process.env.AUTH_URL ??
+    process.env.BETTER_AUTH_URL ??
+    "http://localhost:5000";
 
-  const googleClientId = options.googleClientId ?? process.env.GOOGLE_CLIENT_ID;
-  const googleClientSecret = options.googleClientSecret ?? process.env.GOOGLE_CLIENT_SECRET;
+  const googleClientId =
+    options.googleClientId ?? process.env.AUTH_GOOGLE_CLIENT_ID ?? process.env.GOOGLE_CLIENT_ID;
+  const googleClientSecret =
+    options.googleClientSecret ??
+    process.env.AUTH_GOOGLE_CLIENT_SECRET ??
+    process.env.GOOGLE_CLIENT_SECRET;
   const hasGoogle = Boolean(googleClientId && googleClientSecret);
 
   let dbConfig: unknown;

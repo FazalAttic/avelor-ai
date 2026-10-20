@@ -5,7 +5,7 @@ export interface CreateRedisOptions extends RedisOptions {
 }
 
 export function createRedisClient(optionsOrUrl?: string | CreateRedisOptions): Redis {
-  let url = process.env.REDIS_URL ?? "redis://localhost:6379";
+  let url = process.env.CACHE_URL ?? process.env.REDIS_URL ?? "redis://localhost:6379";
   let userOptions: RedisOptions = {};
 
   if (typeof optionsOrUrl === "string") {

@@ -132,40 +132,53 @@ Run commands from the repository root:
 
 ## Environment Configuration Guide
 
-Key environment variables in `.env.local`:
+Avelor organizes credentials cleanly by architectural layer rather than company-specific names in `.env.local`:
 
 ```env
-# Server
-PORT=5000
-NODE_ENV=development
-
-# Database & Cache
+# 1. Database & Cache Layer
 DATABASE_URL=postgres://avelor:avelor@localhost:5433/avelor_dev
-REDIS_URL=redis://localhost:6379
+CACHE_URL=redis://localhost:6379
 
-# Authentication (Better Auth)
-BETTER_AUTH_SECRET=your_32_char_secret_key_here
-BETTER_AUTH_URL=http://localhost:5000
-CORS_ALLOWED_ORIGINS=http://localhost:3000
+# 2. LLM Layer (Shopping Assistant & Chat Reasoning)
+LLM_PROVIDER=google
+LLM_API_KEY=your_gemini_or_openai_api_key
+LLM_MODEL=gemini-3.5-flash-lite
 
-# Storefront URLs
-NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
-NEXT_PUBLIC_AUTH_URL=http://localhost:5000
-NEXT_PUBLIC_AVELOR_TENANT_ID=store_alpha
+# 3. Embedding Model Layer (Catalog Vector Embeddings & Discovery)
+EMBEDDING_PROVIDER=openai
+EMBEDDING_API_KEY=your_embedding_api_key
+EMBEDDING_MODEL=text-embedding-3-small
+EMBEDDING_DIMENSIONS=1536
 
-# AI Providers (Optional: defaults to built-in Mock models)
-OPENAI_API_KEY=
-GOOGLE_GENERATIVE_AI_API_KEY=
-TYPESAFE_API_KEY=
+# 4. Guardrail & Safety Layer (System-One Intent & Injection Protection)
+GUARDRAIL_API_KEY=your_guardrail_api_key
 
-# Email (Resend)
-RESEND_API_KEY=
+# 5. Payment Gateway Layer
+PAYMENT_PROVIDER=mock
+PAYMENT_APP_ID=
+PAYMENT_SECRET_KEY=
+PAYMENT_ENV=sandbox
+PAYMENT_WEBHOOK_SECRET=avelor_dev_secret_key_32chars_long
+
+# 6. Transactional Email Layer
+EMAIL_PROVIDER=resend
+EMAIL_API_KEY=your_email_api_key
 EMAIL_FROM=Avelor <onboarding@resend.dev>
 REQUIRE_EMAIL_VERIFICATION=false
 
-# Payments (Cashfree / Mock)
-PAYMENT_PROVIDER=mock
-WEBHOOK_SECRET=avelor_dev_secret_key_32chars_long
+# 7. Identity & Authentication Layer
+AUTH_SECRET=your_32_char_secret_key_here
+AUTH_URL=http://localhost:5000
+AUTH_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+AUTH_GOOGLE_CLIENT_SECRET=your-google-client-secret
+CORS_ALLOWED_ORIGINS=http://localhost:3000
+
+# 8. Server & Storefront Runtime
+PORT=5000
+NODE_ENV=development
+NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+NEXT_PUBLIC_AUTH_URL=http://localhost:5000
+NEXT_PUBLIC_AVELOR_TENANT_ID=store_alpha
 ```
 
 ---

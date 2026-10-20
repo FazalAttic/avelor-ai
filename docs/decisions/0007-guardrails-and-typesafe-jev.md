@@ -29,13 +29,13 @@ We implement a vendor-neutral, server-authoritative **`GuardrailEngine`** port i
    - Evaluates user intent (`shopping` vs `malicious` vs `out_of_scope`) and injection probability.
 
 3. **Production Model Factory (`createProductionChatModel`, `createProductionEmbeddingModel`, `createProductionGuardrail`)**
-   - Wires real OpenAI (`text-embedding-3-small`, `gpt-4o-mini`) or Google Gemini (`text-embedding-004`, `gemini-1.5-flash`) and TypeSafe Jev directly from environment variables (`OPENAI_API_KEY`, `GOOGLE_GENERATIVE_AI_API_KEY`, `TYPESAFE_API_KEY`).
+   - Wires real OpenAI (`text-embedding-3-small`, `gpt-4o-mini`) or Google Gemini (`text-embedding-004`, `gemini-3.5-flash-lite`) and TypeSafe Jev directly from layer-named environment variables (`LLM_API_KEY`, `EMBEDDING_API_KEY`, `GUARDRAIL_API_KEY`, with backwards-compatible vendor key fallbacks).
    - Mock models remain strictly scoped to automated test suites and offline CI benchmarks.
 
 ## Consequences
 - **Positive:**
   - Multi-tier defense stops 90%+ of automated adversarial traffic at $0 cost and sub-millisecond latency.
   - Semantic jailbreaks and off-topic queries are classified deterministically without generative hallucination.
-  - Store operators simply provide their API keys in `.env` to activate real embeddings and guardrails.
+  - Store operators simply provide their API keys in `.env` under their respective layer to activate real embeddings and guardrails.
 - **Negative:**
-  - Requires maintaining `TYPESAFE_API_KEY` for advanced semantic classification when running in production.
+  - Requires maintaining `GUARDRAIL_API_KEY` for advanced semantic classification when running in production.

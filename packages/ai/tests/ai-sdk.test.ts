@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 import { createMoney, InMemoryCatalogRepository, parseTenantId } from "@avelor/core";
 import { createAiSdkTools } from "../src/adapters/ai-sdk-model";
+import {
+  createProductionChatModel,
+  createProductionEmbeddingModel,
+  createProductionGuardrail,
+} from "../src/factory";
 
 describe("Unified AI SDK Tool Integration", () => {
   let repo: InMemoryCatalogRepository;
@@ -62,5 +67,37 @@ describe("Unified AI SDK Tool Integration", () => {
     expect(result.product.name).toBe("Smart Coffee Grinder");
     expect(result.product.variants[0]?.sku).toBe("GRIND-SS-01");
     expect(result.product.variants[0]?.price.formatted).toBe("$199.00");
+  });
+
+  it("configures AI layer models via layer-named environment variables", () => {
+    // 1. Defaults safely to mock models when no layer keys are provided
+    const defaultChat = createProductionChatModel({ llmApiKey: "" });
+    expect(defaultChat).toBeDefined();
+
+    const defaultEmbedding = createProductionEmbeddingModel({ embeddingApiKey: "" });
+    expect(defaultEmbedding.dimensions).toBe(1536);
+
+    // 2. Wires layer-named config for LLM layer
+    const chatWithLayer = createProductionChatModel({
+      llmProvider: "openai",
+      llmApiKey: "sk-test-layer-key-12345",
+      llmModel: "gpt-4o-mini",
+    });
+    expect(chatWithLayer).toBeDefined();
+
+    // 3. Wires layer-named config for Embedding layer
+    const embeddingWithLayer = createProductionEmbeddingModel({
+      embeddingProvider: "openai",
+      embeddingApiKey: "sk-test-embedding-key-12345",
+      embeddingModel: "text-embedding-3-small",
+      embeddingDimensions: 1536,
+    });
+    expect(embeddingWithLayer.dimensions).toBe(1536);
+
+    // 4. Wires layer-named config for Guardrail layer
+    const guardrail = createProductionGuardrail({
+      guardrailApiKey: "test-guardrail-key",
+    });
+    expect(guardrail).toBeDefined();
   });
 });
