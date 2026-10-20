@@ -163,6 +163,9 @@ export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
     process.env.BETTER_AUTH_URL ??
     "http://localhost:5000";
 
+  process.env.BETTER_AUTH_SECRET ??= secret;
+  process.env.BETTER_AUTH_URL ??= baseURL;
+
   const googleClientId =
     options.googleClientId ?? process.env.AUTH_GOOGLE_CLIENT_ID ?? process.env.GOOGLE_CLIENT_ID;
   const googleClientSecret =
