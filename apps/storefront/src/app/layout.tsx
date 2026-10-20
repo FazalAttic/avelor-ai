@@ -28,7 +28,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://avelor-ai.cyou"),
   title: "Avelor AI - Conversational Commerce",
   description:
     "Discover products through natural conversation. Next-generation AI-powered shopping platform.",
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     title: "Avelor AI - Conversational Commerce",
     description:
       "Discover products through natural conversation. Next-generation AI-powered shopping platform.",
-    url: "https://avelor.ai",
+    url: "https://avelor-ai.cyou",
     siteName: "Avelor AI",
     images: [
       {
