@@ -1,10 +1,13 @@
 "use client";
 
 import {
+  BubbleChatSparkIcon,
+  Chat01Icon,
   Delete02Icon,
   Edit01Icon,
   FavouriteIcon,
   PackageIcon,
+  SparklesIcon,
   UserIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -87,9 +90,9 @@ export function Sidebar({
                   <div
                     key={chat.id}
                     className={cn(
-                      "group flex items-center justify-between gap-1 rounded-xl px-2.5 py-1.5 transition-colors duration-150 ease-expo",
+                      "group flex items-center justify-between gap-1.5 rounded-xl px-2.5 py-2 transition-all duration-150 ease-expo",
                       isActive
-                        ? "bg-surface-hover font-medium text-foreground"
+                        ? "bg-brand-blue/10 text-brand-blue font-medium shadow-sm"
                         : "text-muted hover:bg-surface-hover hover:text-foreground"
                     )}
                   >
@@ -97,9 +100,18 @@ export function Sidebar({
                       type="button"
                       onClick={() => onSelectChat?.(chat.id)}
                       title={chat.title}
-                      className="min-w-0 flex-1 truncate text-left text-sm"
+                      className="flex min-w-0 flex-1 items-center gap-2 truncate text-left text-sm"
                     >
-                      {chat.title}
+                      <HugeiconsIcon
+                        icon={Chat01Icon}
+                        size={15}
+                        strokeWidth={1.8}
+                        className={cn(
+                          "shrink-0 transition-colors",
+                          isActive ? "text-brand-blue" : "text-subtle group-hover:text-muted"
+                        )}
+                      />
+                      <span className="truncate">{chat.title}</span>
                     </button>
                     {onDeleteChat && (
                       <button
@@ -111,11 +123,11 @@ export function Sidebar({
                           onDeleteChat(chat.id);
                         }}
                         className={cn(
-                          "flex size-6 shrink-0 items-center justify-center rounded-md text-subtle opacity-0 transition-all",
+                          "flex size-6 shrink-0 items-center justify-center rounded-lg text-subtle opacity-0 transition-all duration-150",
                           "hover:bg-red-500/10 hover:text-red-500 focus-visible:opacity-100 group-hover:opacity-100"
                         )}
                       >
-                        <HugeiconsIcon icon={Delete02Icon} size={14} strokeWidth={2} />
+                        <HugeiconsIcon icon={Delete02Icon} size={13} strokeWidth={2} />
                       </button>
                     )}
                   </div>
@@ -123,7 +135,34 @@ export function Sidebar({
               })}
             </div>
           ) : (
-            <p className="px-2.5 py-3 text-xs text-subtle italic">No recent conversations</p>
+            <div className="mx-1 my-2 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 bg-surface-hover/30 px-3 py-5 text-center backdrop-blur-sm">
+              <div className="relative mb-2.5 flex size-10 items-center justify-center rounded-2xl border border-brand-blue/20 bg-gradient-to-b from-brand-blue/15 to-brand-blue/5 text-brand-blue shadow-[0_2px_12px_rgba(32,56,248,0.12)]">
+                <HugeiconsIcon icon={BubbleChatSparkIcon} size={20} strokeWidth={1.8} />
+              </div>
+              <p className="text-xs font-semibold text-foreground">No chats yet</p>
+              <p className="mt-1 max-w-[20ch] text-[11px] leading-relaxed text-muted">
+                Your recent shopping threads will appear here.
+              </p>
+              {onNewChat && (
+                <button
+                  type="button"
+                  onClick={onNewChat}
+                  className={cn(
+                    "mt-3 inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-surface px-3 py-1 text-xs font-medium text-foreground",
+                    "shadow-sm transition-all duration-150 ease-expo hover:scale-105 hover:bg-surface-hover active:scale-95",
+                    "focus-visible:outline-2 focus-visible:outline-brand-blue"
+                  )}
+                >
+                  <HugeiconsIcon
+                    icon={SparklesIcon}
+                    size={12}
+                    strokeWidth={2}
+                    className="text-brand-blue"
+                  />
+                  <span>Start exploring</span>
+                </button>
+              )}
+            </div>
           )}
         </ScrollArea>
       </div>
