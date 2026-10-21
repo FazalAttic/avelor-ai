@@ -1,13 +1,12 @@
 "use client";
 
 import {
-  BubbleChatSparkIcon,
   Chat01Icon,
+  Clock01Icon,
   Delete02Icon,
   Edit01Icon,
   FavouriteIcon,
   PackageIcon,
-  SparklesIcon,
   UserIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -135,33 +134,14 @@ export function Sidebar({
               })}
             </div>
           ) : (
-            <div className="mx-1 my-2 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/80 bg-surface-hover/30 px-3 py-5 text-center backdrop-blur-sm">
-              <div className="relative mb-2.5 flex size-10 items-center justify-center rounded-2xl border border-brand-blue/20 bg-gradient-to-b from-brand-blue/15 to-brand-blue/5 text-brand-blue shadow-[0_2px_12px_rgba(32,56,248,0.12)]">
-                <HugeiconsIcon icon={BubbleChatSparkIcon} size={20} strokeWidth={1.8} />
-              </div>
-              <p className="text-xs font-semibold text-foreground">No chats yet</p>
-              <p className="mt-1 max-w-[20ch] text-[11px] leading-relaxed text-muted">
-                Your recent shopping threads will appear here.
-              </p>
-              {onNewChat && (
-                <button
-                  type="button"
-                  onClick={onNewChat}
-                  className={cn(
-                    "mt-3 inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-surface px-3 py-1 text-xs font-medium text-foreground",
-                    "shadow-sm transition-all duration-150 ease-expo hover:scale-105 hover:bg-surface-hover active:scale-95",
-                    "focus-visible:outline-2 focus-visible:outline-brand-blue"
-                  )}
-                >
-                  <HugeiconsIcon
-                    icon={SparklesIcon}
-                    size={12}
-                    strokeWidth={2}
-                    className="text-brand-blue"
-                  />
-                  <span>Start exploring</span>
-                </button>
-              )}
+            <div className="flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-xs text-subtle">
+              <HugeiconsIcon
+                icon={Clock01Icon}
+                size={14}
+                strokeWidth={1.8}
+                className="shrink-0 text-subtle/70"
+              />
+              <span>No recent conversations</span>
             </div>
           )}
         </ScrollArea>
