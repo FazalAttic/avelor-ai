@@ -31,7 +31,10 @@ export class ResendEmailService implements EmailService {
   private readonly sentEmails: SentEmailRecord[] = [];
 
   constructor(options: ResendEmailServiceOptions = {}) {
-    this.apiKey = options.apiKey ?? process.env.EMAIL_API_KEY ?? process.env.RESEND_API_KEY;
+    this.apiKey =
+      "apiKey" in options
+        ? options.apiKey
+        : (process.env.EMAIL_API_KEY ?? process.env.RESEND_API_KEY);
     this.defaultFrom =
       options.defaultFrom ?? process.env.EMAIL_FROM ?? "Avelor <onboarding@resend.dev>";
     this.timeoutMs = options.timeoutMs ?? 10_000;

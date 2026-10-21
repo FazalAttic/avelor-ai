@@ -10,7 +10,13 @@ import { ChatShell } from "@/components/chat-shell";
 import { Composer } from "@/components/composer";
 import { ProductMarquee } from "@/components/product-marquee";
 import { ScrollArea } from "@/components/scroll-area";
-import { sendChatMessage } from "@/lib/chat-api";
+import type { RecentChat } from "@/components/sidebar";
+import {
+  deleteConversation,
+  fetchConversation,
+  fetchRecentConversations,
+  sendChatMessage,
+} from "@/lib/chat-api";
 import { cn } from "@/lib/utils";
 
 const STARTERS = [
@@ -55,12 +61,67 @@ export default function Home() {
   const [messages, setMessages] = useState<UiChatMessage[]>([]);
   const [sending, setSending] = useState(false);
   const [liveId, setLiveId] = useState<string | null>(null);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [recentChats, setRecentChats] = useState<RecentChat[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
   const [showJump, setShowJump] = useState(false);
   const isChatting = sending || messages.length > 0;
+
+  async function loadRecents() {
+    try {
+      const recents = await fetchRecentConversations();
+      setRecentChats(recents.map((r) => ({ id: r.id, title: r.title })));
+    } catch {
+      // Ignore network errors when fetching recents
+    }
+  }
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: load recents once on mount
+  useEffect(() => {
+    loadRecents();
+  }, []);
+
+  async function handleSelectChat(id: string) {
+    if (id === activeConversationId) return;
+    setActiveConversationId(id);
+    try {
+      const details = await fetchConversation(id);
+      if (details) {
+        setMessages(
+          details.messages.map((m) => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            products: m.products ?? [],
+          }))
+        );
+      }
+    } catch {
+      // Ignore retrieval errors
+    }
+  }
+
+  function handleNewChat() {
+    setActiveConversationId(null);
+    setMessages([]);
+    setPrompt("");
+    inputRef.current?.focus();
+  }
+
+  async function handleDeleteChat(id: string) {
+    try {
+      await deleteConversation(id);
+      setRecentChats((prev) => prev.filter((c) => c.id !== id));
+      if (activeConversationId === id) {
+        handleNewChat();
+      }
+    } catch {
+      // Ignore deletion errors
+    }
+  }
 
   // Follow the thread only while the reader is already at the bottom, so a new
   // reply never yanks them out of something they were re-reading.
@@ -115,7 +176,10 @@ export default function Home() {
     setSending(true);
     try {
       const history = messages.map(({ role, content }) => ({ role, content }));
-      const result = await sendChatMessage(text, history);
+      const result = await sendChatMessage(text, history, activeConversationId);
+      if (result.conversationId) {
+        setActiveConversationId(result.conversationId);
+      }
       const replyId = crypto.randomUUID();
       setLiveId(replyId);
       setMessages((prev) => [
@@ -127,6 +191,7 @@ export default function Home() {
           products: result.products,
         },
       ]);
+      await loadRecents();
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -144,7 +209,13 @@ export default function Home() {
   }
 
   return (
-    <ChatShell>
+    <ChatShell
+      recentChats={recentChats}
+      activeChatId={activeConversationId}
+      onSelectChat={handleSelectChat}
+      onNewChat={handleNewChat}
+      onDeleteChat={handleDeleteChat}
+    >
       <AnimatePresence initial={false}>
         {!isChatting ? (
           <motion.div

@@ -9,6 +9,7 @@ import {
   type CartRepository,
   InMemoryCartRepository,
   InMemoryCatalogRepository,
+  InMemoryConversationRepository,
   InMemoryOrderRepository,
   InMemoryPolicyRepository,
   parseTenantId,
@@ -74,6 +75,7 @@ const vectorStore = new InMemoryVectorStore();
 const catalogRepo = new InMemoryCatalogRepository();
 const policyRepo = new InMemoryPolicyRepository();
 const orderRepo = new InMemoryOrderRepository();
+const conversationRepo = new InMemoryConversationRepository();
 
 await seedDemoStore(catalogRepo, policyRepo, tenantId);
 await seedDemoOrders(orderRepo, catalogRepo, tenantId);
@@ -90,6 +92,7 @@ const app = createApp({
   vectorStore,
   catalogRepo,
   policyRepo,
+  conversationRepo,
   enforceAdminAuth: true,
   chatRateLimiter,
   apiRateLimiter,

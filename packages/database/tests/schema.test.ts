@@ -1,6 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import {
   accounts,
+  conversationMessages,
+  conversations,
   orderItems,
   orders,
   productEmbeddings,
@@ -80,5 +82,19 @@ describe("Database schema definitions", () => {
     expect(storePolicies.topic.name).toBe("topic");
     expect(storePolicies.title.name).toBe("title");
     expect(storePolicies.content.name).toBe("content");
+  });
+
+  it("defines conversations and conversationMessages tables with tenant isolation", () => {
+    expect(conversations.id.name).toBe("id");
+    expect(conversations.tenantId.name).toBe("tenant_id");
+    expect(conversations.userId.name).toBe("user_id");
+    expect(conversations.title.name).toBe("title");
+
+    expect(conversationMessages.id.name).toBe("id");
+    expect(conversationMessages.conversationId.name).toBe("conversation_id");
+    expect(conversationMessages.tenantId.name).toBe("tenant_id");
+    expect(conversationMessages.role.name).toBe("role");
+    expect(conversationMessages.content.name).toBe("content");
+    expect(conversationMessages.products.name).toBe("products");
   });
 });

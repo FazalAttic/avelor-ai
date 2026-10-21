@@ -17,13 +17,30 @@ import { AuthModal } from "@/components/auth-modal";
 import { IconButton } from "@/components/icon-button";
 import { IconLink } from "@/components/icon-link";
 import { SettingsModal } from "@/components/settings-modal";
+import type { RecentChat } from "@/components/sidebar";
 import { Sidebar } from "@/components/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserAvatar } from "@/components/user-avatar";
 import { authClient, useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
-export function ChatShell({ children }: { children: ReactNode }) {
+export interface ChatShellProps {
+  children: ReactNode;
+  recentChats?: RecentChat[];
+  activeChatId?: string | null;
+  onSelectChat?: (id: string) => void;
+  onNewChat?: () => void;
+  onDeleteChat?: (id: string) => void;
+}
+
+export function ChatShell({
+  children,
+  recentChats,
+  activeChatId,
+  onSelectChat,
+  onNewChat,
+  onDeleteChat,
+}: ChatShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -64,6 +81,17 @@ export function ChatShell({ children }: { children: ReactNode }) {
       )}
       <Sidebar
         open={sidebarOpen}
+        recentChats={recentChats}
+        activeChatId={activeChatId}
+        onSelectChat={(id) => {
+          setSidebarOpen(false);
+          onSelectChat?.(id);
+        }}
+        onNewChat={() => {
+          setSidebarOpen(false);
+          onNewChat?.();
+        }}
+        onDeleteChat={onDeleteChat}
         onSignIn={() => setAuthOpen(true)}
         onSettings={() => setSettingsOpen(true)}
       />

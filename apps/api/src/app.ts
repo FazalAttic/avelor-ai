@@ -9,9 +9,11 @@ import {
 import {
   type CartRepository,
   type CatalogRepository,
+  type ConversationRepository,
   type EmailService,
   InMemoryCartRepository,
   InMemoryCatalogRepository,
+  InMemoryConversationRepository,
   InMemoryOrderRepository,
   InMemoryPolicyRepository,
   MockPaymentProvider,
@@ -49,6 +51,7 @@ export interface AppOptions {
   readonly cartRepo?: CartRepository | undefined;
   readonly orderRepo?: OrderRepository | undefined;
   readonly policyRepo?: PolicyRepository | undefined;
+  readonly conversationRepo?: ConversationRepository | undefined;
   readonly paymentProvider?: PaymentProvider | undefined;
   readonly webhookSecret?: string | undefined;
   readonly chatModel?: ChatModel | undefined;
@@ -68,6 +71,7 @@ export function createApp(options: AppOptions = {}) {
   const cartRepo = options.cartRepo ?? new InMemoryCartRepository();
   const orderRepo = options.orderRepo ?? new InMemoryOrderRepository();
   const policyRepo = options.policyRepo ?? new InMemoryPolicyRepository();
+  const conversationRepo = options.conversationRepo ?? new InMemoryConversationRepository();
   const paymentProvider = options.paymentProvider ?? new MockPaymentProvider();
   const chatModel = options.chatModel ?? new MockChatModel();
   const guardrail = options.guardrail ?? new CompositeGuardrail();
@@ -188,6 +192,7 @@ export function createApp(options: AppOptions = {}) {
       vectorStore: options.vectorStore,
       policyRepo,
       guardrail,
+      conversationRepo,
     })
   );
 
