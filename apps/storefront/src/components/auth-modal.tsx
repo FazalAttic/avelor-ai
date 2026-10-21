@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRightIcon, Cancel01Icon } from "@hugeicons/core-free-icons";
+import { ArrowRightIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { motion } from "framer-motion";
 import Image from "next/image";
@@ -57,7 +57,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
       await authClient.signIn.social({
         provider: "google",
         callbackURL,
-        errorCallbackURL,
+        errorCallbackURL: callbackURL,
       });
     } catch {
       setError("Google sign-in could not be initiated. Check your client credentials.");
@@ -99,22 +99,12 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
-          "relative w-full max-w-sm overflow-hidden rounded-[32px] border border-white/50 bg-white/55 shadow-pop backdrop-blur-2xl",
-          "md:grid md:max-w-[780px] md:grid-cols-[minmax(0,1.15fr)_340px]",
-          "dark:border-white/10 dark:bg-[#15182b]/85"
+          "relative w-full max-w-sm overflow-hidden rounded-[32px] border border-white/50 bg-white/40 shadow-pop backdrop-blur-2xl",
+          "md:grid md:max-w-[640px] md:grid-cols-[minmax(0,1fr)_236px]",
+          "dark:border-white/10 dark:bg-[#15182b]/70"
         )}
       >
-        <div className="relative p-7 sm:p-8">
-          <button
-            type="button"
-            onClick={onClose}
-            title="Close"
-            aria-label="Close dialog"
-            className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-full border border-border bg-surface text-muted transition-colors hover:text-foreground md:hidden"
-          >
-            <HugeiconsIcon icon={Cancel01Icon} size={16} strokeWidth={2} />
-          </button>
-
+        <div className="p-6">
           <div className="flex flex-col items-center text-center">
             <Image
               src="/avelor-logo.png"
@@ -242,13 +232,13 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
           </p>
         </div>
 
-        <div className="relative hidden md:flex flex-col justify-between p-7 border-l border-white/30 dark:border-white/10 overflow-hidden">
+        <div aria-hidden className="relative hidden md:block">
           <Image
             src="/sky/auth-day.png"
             alt=""
             fill
             priority
-            sizes="340px"
+            sizes="236px"
             className="object-cover transition-opacity duration-500 ease-expo dark:opacity-0"
           />
           <Image
@@ -256,44 +246,10 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             alt=""
             fill
             loading="eager"
-            sizes="340px"
+            sizes="236px"
             className="object-cover opacity-0 transition-opacity duration-500 ease-expo dark:opacity-100"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-black/25" />
-
-          <div className="relative z-10 flex items-center justify-between">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/30 px-3 py-1.5 text-xs font-semibold text-white shadow-card backdrop-blur-xl dark:border-white/15 dark:bg-black/30">
-              <span className="size-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
-              <span>Avelor Commerce</span>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              title="Close"
-              aria-label="Close dialog"
-              className="flex size-8 items-center justify-center rounded-full border border-white/50 bg-white/35 text-white shadow-sm backdrop-blur-xl transition-all duration-150 ease-expo hover:bg-white/60 active:scale-95 dark:border-white/15 dark:bg-black/35"
-            >
-              <HugeiconsIcon icon={Cancel01Icon} size={16} strokeWidth={2.2} />
-            </button>
-          </div>
-
-          <div className="relative z-10 rounded-2xl border border-white/50 bg-white/25 p-5 shadow-pop backdrop-blur-2xl dark:border-white/15 dark:bg-black/40">
-            <div className="flex items-center gap-1.5 text-amber-300 drop-shadow-sm">
-              <span className="text-xs">★★★★★</span>
-              <span className="text-[11px] font-medium text-white/90">Curated AI Discovery</span>
-            </div>
-            <p className="mt-2 text-[13px] font-medium leading-relaxed text-white drop-shadow-sm">
-              “Natural conversations, verified inventory, and seamless checkout in one unified
-              experience.”
-            </p>
-            <div className="mt-3.5 flex items-center gap-2.5 border-t border-white/20 pt-3 text-[11px] font-medium text-white/85">
-              <span>Live Stock</span>
-              <span className="size-1 rounded-full bg-white/60" />
-              <span>Fast Dispatch</span>
-              <span className="size-1 rounded-full bg-white/60" />
-              <span>Free Returns</span>
-            </div>
-          </div>
+          <div className="absolute inset-y-0 left-0 w-14 bg-gradient-to-r from-white/75 to-transparent dark:from-[#15182b]/80" />
         </div>
       </motion.div>
     </div>
