@@ -139,4 +139,53 @@ describe("Order & Checkout HTTP API Endpoints", () => {
     });
     expect(getResB.status).toBe(404);
   });
+
+  it("executes 1-click buy-now, deducts stock, and confirms payment securely", async () => {
+    // 1. Instant Buy Now
+    const buyRes = await app.request("/api/v1/orders/buy-now", {
+      method: "POST",
+      headers: {
+        "x-tenant-id": tenantA,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        variantId,
+        quantity: 1,
+        customerEmail: "charlie@example.com",
+        idempotencyKey: "idemp_buynow_1",
+      }),
+    });
+
+    expect(buyRes.status).toBe(201);
+    const order = await buyRes.json();
+    expect(order.id).toBeDefined();
+    expect(order.status).toBe("pending");
+    expect(order.total.amount).toBe(3500);
+    expect(order.items[0].variantId).toBe(variantId);
+
+    // 2. Complete secure payment
+    const payRes = await app.request(`/api/v1/orders/${order.id}/pay`, {
+      method: "POST",
+      headers: {
+        "x-tenant-id": tenantA,
+        "content-type": "application/json",
+      },
+    });
+
+    expect(payRes.status).toBe(200);
+    const payResult = await payRes.json();
+    expect(payResult.success).toBe(true);
+    expect(payResult.order.status).toBe("paid");
+    expect(payResult.transactionId).toMatch(/^txn_/);
+
+    // 3. List orders filtered by email
+    const listRes = await app.request("/api/v1/orders?email=charlie@example.com", {
+      headers: { "x-tenant-id": tenantA },
+    });
+    expect(listRes.status).toBe(200);
+    const listData = await listRes.json();
+    expect(listData.orders.length).toBe(1);
+    expect(listData.orders[0].id).toBe(order.id);
+    expect(listData.orders[0].status).toBe("paid");
+  });
 });

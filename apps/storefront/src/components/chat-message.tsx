@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft01Icon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { ArrowLeft01Icon, ArrowRight01Icon, ShoppingBag01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
@@ -46,29 +46,47 @@ function renderContent(content: string) {
   });
 }
 
-function ProductCard({ product }: { product: ChatProduct }) {
+function ProductCard({
+  product,
+  onBuyNow,
+}: {
+  product: ChatProduct;
+  onBuyNow?: (product: ChatProduct) => void;
+}) {
   const price = product.variants[0]?.price ?? null;
   return (
     <article
       className={cn(
-        "w-44 shrink-0 overflow-hidden rounded-2xl border border-white/50 bg-white/40 shadow-card backdrop-blur-xl",
+        "group relative flex w-44 shrink-0 flex-col overflow-hidden rounded-2xl border border-white/50 bg-white/40 shadow-card backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-pop",
         "dark:border-white/10 dark:bg-white/10"
       )}
     >
-      <div className="relative aspect-square bg-brand-wash">
+      <div className="relative aspect-square overflow-hidden bg-brand-wash">
         {product.media[0] ? (
           <Image
             src={product.media[0]}
             alt={product.name}
             fill
             sizes="176px"
-            className="object-cover"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : null}
       </div>
-      <div className="p-3">
-        <p className="truncate text-[13px] font-semibold text-foreground">{product.name}</p>
-        {price ? <p className="mt-0.5 text-xs text-muted">{formatPrice(price)}</p> : null}
+      <div className="flex flex-1 flex-col justify-between p-3">
+        <div>
+          <p className="truncate text-[13px] font-semibold text-foreground">{product.name}</p>
+          {price ? <p className="mt-0.5 text-xs text-muted">{formatPrice(price)}</p> : null}
+        </div>
+        {onBuyNow ? (
+          <button
+            type="button"
+            onClick={() => onBuyNow(product)}
+            className="mt-2.5 flex h-8 w-full items-center justify-center gap-1.5 rounded-xl bg-foreground text-[12px] font-medium text-background shadow-xs transition-all duration-150 hover:bg-foreground/85 active:scale-[0.97]"
+          >
+            <HugeiconsIcon icon={ShoppingBag01Icon} size={13} strokeWidth={2.2} />
+            Buy now
+          </button>
+        ) : null}
       </div>
     </article>
   );
@@ -84,7 +102,13 @@ const ARROW_CLASS = cn(
   "dark:border-white/15 dark:bg-[#15182b]/70 dark:hover:bg-[#15182b]"
 );
 
-function ProductCarousel({ products }: { products: readonly ChatProduct[] }) {
+function ProductCarousel({
+  products,
+  onBuyNow,
+}: {
+  products: readonly ChatProduct[];
+  onBuyNow?: (product: ChatProduct) => void;
+}) {
   const rowRef = useRef<HTMLDivElement>(null);
   const [overflow, setOverflow] = useState({ left: false, right: false });
 
@@ -133,7 +157,7 @@ function ProductCarousel({ products }: { products: readonly ChatProduct[] }) {
         className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard key={product.id} product={product} onBuyNow={onBuyNow} />
         ))}
       </div>
       <AnimatePresence initial={false}>
@@ -186,9 +210,11 @@ const REVEAL_CHARS = 4;
 export function ChatMessageItem({
   message,
   reveal = false,
+  onBuyNow,
 }: {
   message: UiChatMessage;
   reveal?: boolean;
+  onBuyNow?: (product: ChatProduct) => void;
 }) {
   const isUser = message.role === "user";
   const reveals = reveal && !isUser;
@@ -252,7 +278,7 @@ export function ChatMessageItem({
         ) : null}
       </div>
       {!isUser && !writing && message.products.length > 0 ? (
-        <ProductCarousel products={message.products} />
+        <ProductCarousel products={message.products} onBuyNow={onBuyNow} />
       ) : null}
     </motion.div>
   );

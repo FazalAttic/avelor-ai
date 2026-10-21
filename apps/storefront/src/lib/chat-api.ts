@@ -158,3 +158,115 @@ export async function deleteConversation(conversationId: string): Promise<boolea
 
   return response.ok;
 }
+
+export interface OrderItemPayload {
+  readonly variantId: string;
+  readonly productId: string;
+  readonly sku: string;
+  readonly title: string;
+  readonly unitPrice: ChatMoney;
+  readonly quantity: number;
+  readonly totalPrice: ChatMoney;
+}
+
+export interface StoreOrder {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly cartId: string;
+  readonly customerEmail: string;
+  readonly items: readonly OrderItemPayload[];
+  readonly total: ChatMoney;
+  readonly status:
+    | "pending"
+    | "paid"
+    | "processing"
+    | "shipped"
+    | "delivered"
+    | "canceled"
+    | "failed";
+  readonly paymentSessionId?: string | undefined;
+  readonly checkoutUrl?: string | undefined;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export interface BuyNowRequest {
+  variantId: string;
+  quantity?: number;
+  customerEmail: string;
+  idempotencyKey?: string;
+}
+
+export async function buyNow(payload: BuyNowRequest): Promise<StoreOrder> {
+  const response = await fetch(`${API_URL}/orders/buy-now`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-tenant-id": TENANT_ID,
+    },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    let detail = `Checkout failed (${response.status})`;
+    try {
+      const body = (await response.json()) as ChatApiErrorBody;
+      if (body.error?.message) detail = body.error.message;
+    } catch {
+      // Non-JSON error body
+    }
+    throw new Error(detail);
+  }
+
+  return (await response.json()) as StoreOrder;
+}
+
+export async function confirmPayment(
+  orderId: string
+): Promise<{ success: boolean; order: StoreOrder; transactionId: string }> {
+  const response = await fetch(`${API_URL}/orders/${encodeURIComponent(orderId)}/pay`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-tenant-id": TENANT_ID,
+    },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    let detail = `Payment processing failed (${response.status})`;
+    try {
+      const body = (await response.json()) as ChatApiErrorBody;
+      if (body.error?.message) detail = body.error.message;
+    } catch {
+      // Non-JSON error body
+    }
+    throw new Error(detail);
+  }
+
+  return (await response.json()) as { success: boolean; order: StoreOrder; transactionId: string };
+}
+
+export async function fetchStoreOrders(customerEmail?: string): Promise<StoreOrder[]> {
+  const url = customerEmail
+    ? `${API_URL}/orders?email=${encodeURIComponent(customerEmail)}`
+    : `${API_URL}/orders`;
+  const response = await fetch(url, {
+    headers: {
+      "x-tenant-id": TENANT_ID,
+    },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    return [];
+  }
+
+  try {
+    const data = (await response.json()) as { orders?: StoreOrder[] };
+    return data.orders ?? [];
+  } catch {
+    return [];
+  }
+}
