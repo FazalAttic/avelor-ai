@@ -99,132 +99,158 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
-          "relative w-full max-w-sm rounded-[32px] border border-white/50 bg-white/40 p-6 shadow-pop backdrop-blur-2xl",
+          "relative w-full max-w-sm overflow-hidden rounded-[32px] border border-white/50 bg-white/40 shadow-pop backdrop-blur-2xl",
+          "md:grid md:max-w-[640px] md:grid-cols-[minmax(0,1fr)_236px]",
           "dark:border-white/10 dark:bg-[#15182b]/70"
         )}
       >
-        <div className="flex flex-col items-center text-center">
-          <Image
-            src="/avelor-logo.png"
-            alt=""
-            width={36}
-            height={36}
-            priority
-            style={{ width: "auto", height: "auto" }}
-          />
-          <h2 id="auth-title" className="mt-3 text-xl font-semibold tracking-tight text-foreground">
-            {mode === "sign-in" ? "Welcome back" : "Create your account"}
-          </h2>
-          <p className="mt-1 text-sm text-muted">
-            {mode === "sign-in"
-              ? "Sign in to pick up where you left off."
-              : "Join Avelor and let the shopping begin."}
-          </p>
-        </div>
-
-        <button
-          type="button"
-          disabled={pending}
-          onClick={onGoogleSignIn}
-          className={cn(
-            "mt-5 flex h-11 w-full items-center justify-center gap-3 rounded-full border border-border bg-surface px-4 text-sm font-semibold text-foreground shadow-card",
-            "transition-all duration-150 ease-expo hover:border-border-strong hover:bg-surface-hover disabled:opacity-60",
-            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
-          )}
-        >
-          <svg className="size-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              fill="#4285F4"
-              d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z"
+        <div className="p-6">
+          <div className="flex flex-col items-center text-center">
+            <Image
+              src="/avelor-logo.png"
+              alt=""
+              width={36}
+              height={36}
+              priority
+              style={{ width: "auto", height: "auto" }}
             />
-            <path
-              fill="#34A853"
-              d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.36 7.33 24 12 24z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.99 0 12s.46 3.83 1.26 5.42l4.02-3.15z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.25 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-            />
-          </svg>
-          Continue with Google
-        </button>
-
-        <div className="relative my-4 flex items-center justify-center">
-          <span className="w-full border-t border-border" />
-          <span className="absolute bg-white/60 px-2 text-[11px] font-semibold uppercase tracking-wider text-subtle backdrop-blur-md dark:bg-[#15182b]">
-            or continue with email
-          </span>
-        </div>
-
-        <form ref={formRef} onSubmit={onSubmit} className="flex flex-col gap-3">
-          {mode === "sign-up" && (
-            <Field
-              label="Name"
-              type="text"
-              value={name}
-              onChange={setName}
-              placeholder="Alex Rivera"
-              autoComplete="name"
-            />
-          )}
-          <Field
-            label="Email"
-            type="email"
-            value={email}
-            onChange={setEmail}
-            placeholder="you@example.com"
-            autoComplete="email"
-          />
-          <Field
-            label="Password"
-            type="password"
-            value={password}
-            onChange={setPassword}
-            placeholder={mode === "sign-up" ? "At least 8 characters" : "Your password"}
-            autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
-          />
-
-          {error && (
-            <p role="alert" className="text-sm font-medium text-red-500">
-              {error}
+            <h2
+              id="auth-title"
+              className="mt-3 text-xl font-semibold tracking-tight text-foreground"
+            >
+              {mode === "sign-in" ? "Welcome back" : "Create your account"}
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              {mode === "sign-in"
+                ? "Sign in to pick up where you left off."
+                : "Join Avelor and let the shopping begin."}
             </p>
-          )}
+          </div>
 
           <button
-            type="submit"
+            type="button"
             disabled={pending}
+            onClick={onGoogleSignIn}
             className={cn(
-              "mt-2 flex h-11 items-center justify-center gap-2 rounded-full text-sm font-semibold text-white",
-              "bg-[image:var(--gradient-brand)] shadow-[0_4px_16px_rgba(32,56,248,0.35)]",
-              "transition-opacity duration-150 ease-expo hover:opacity-90 disabled:opacity-60",
+              "mt-5 flex h-11 w-full items-center justify-center gap-3 rounded-full border border-border bg-surface px-4 text-sm font-semibold text-foreground shadow-card",
+              "transition-all duration-150 ease-expo hover:border-border-strong hover:bg-surface-hover disabled:opacity-60",
               "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
             )}
           >
-            {pending
-              ? mode === "sign-in"
-                ? "Signing in…"
-                : "Creating account…"
-              : mode === "sign-in"
-                ? "Sign in"
-                : "Create account"}
-            {!pending && <HugeiconsIcon icon={ArrowRightIcon} size={16} strokeWidth={2} />}
+            <svg className="size-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                fill="#4285F4"
+                d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.15z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.36 7.33 24 12 24z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.99 0 12s.46 3.83 1.26 5.42l4.02-3.15z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.25 2.64 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+              />
+            </svg>
+            Continue with Google
           </button>
-        </form>
 
-        <p className="mt-5 text-center text-sm text-muted">
-          {mode === "sign-in" ? "New to Avelor?" : "Already have an account?"}{" "}
-          <button
-            type="button"
-            onClick={() => switchMode(mode === "sign-in" ? "sign-up" : "sign-in")}
-            className="font-semibold text-foreground underline-offset-4 transition-colors duration-150 ease-expo hover:text-brand-blue hover:underline"
-          >
-            {mode === "sign-in" ? "Create an account" : "Sign in"}
-          </button>
-        </p>
+          <div className="relative my-4 flex items-center justify-center">
+            <span className="w-full border-t border-border" />
+            <span className="absolute bg-white/60 px-2 text-[11px] font-semibold uppercase tracking-wider text-subtle backdrop-blur-md dark:bg-[#15182b]">
+              or continue with email
+            </span>
+          </div>
+
+          <form ref={formRef} onSubmit={onSubmit} className="flex flex-col gap-3">
+            {mode === "sign-up" && (
+              <Field
+                label="Name"
+                type="text"
+                value={name}
+                onChange={setName}
+                placeholder="Alex Rivera"
+                autoComplete="name"
+              />
+            )}
+            <Field
+              label="Email"
+              type="email"
+              value={email}
+              onChange={setEmail}
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
+            <Field
+              label="Password"
+              type="password"
+              value={password}
+              onChange={setPassword}
+              placeholder={mode === "sign-up" ? "At least 8 characters" : "Your password"}
+              autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
+            />
+
+            {error && (
+              <p role="alert" className="text-sm font-medium text-red-500">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={pending}
+              className={cn(
+                "mt-2 flex h-11 items-center justify-center gap-2 rounded-full text-sm font-semibold text-white",
+                "bg-[image:var(--gradient-brand)] shadow-[0_4px_16px_rgba(32,56,248,0.35)]",
+                "transition-opacity duration-150 ease-expo hover:opacity-90 disabled:opacity-60",
+                "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+              )}
+            >
+              {pending
+                ? mode === "sign-in"
+                  ? "Signing in…"
+                  : "Creating account…"
+                : mode === "sign-in"
+                  ? "Sign in"
+                  : "Create account"}
+              {!pending && <HugeiconsIcon icon={ArrowRightIcon} size={16} strokeWidth={2} />}
+            </button>
+          </form>
+
+          <p className="mt-5 text-center text-sm text-muted">
+            {mode === "sign-in" ? "New to Avelor?" : "Already have an account?"}{" "}
+            <button
+              type="button"
+              onClick={() => switchMode(mode === "sign-in" ? "sign-up" : "sign-in")}
+              className="font-semibold text-foreground underline-offset-4 transition-colors duration-150 ease-expo hover:text-brand-blue hover:underline"
+            >
+              {mode === "sign-in" ? "Create an account" : "Sign in"}
+            </button>
+          </p>
+        </div>
+
+        <div aria-hidden className="relative hidden md:block">
+          <Image
+            src="/sky/auth-day.png"
+            alt=""
+            fill
+            priority
+            sizes="236px"
+            className="object-cover transition-opacity duration-500 ease-expo dark:opacity-0"
+          />
+          <Image
+            src="/sky/auth-night.png"
+            alt=""
+            fill
+            loading="eager"
+            sizes="236px"
+            className="object-cover opacity-0 transition-opacity duration-500 ease-expo dark:opacity-100"
+          />
+          <div className="absolute inset-y-0 left-0 w-14 bg-gradient-to-r from-white/75 to-transparent dark:from-[#15182b]/80" />
+        </div>
       </motion.div>
     </div>
   );
