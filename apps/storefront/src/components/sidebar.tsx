@@ -134,14 +134,33 @@ export function Sidebar({
               })}
             </div>
           ) : (
-            <div className="flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 text-xs text-subtle">
-              <HugeiconsIcon
-                icon={Clock01Icon}
-                size={14}
-                strokeWidth={1.8}
-                className="shrink-0 text-subtle/70"
-              />
-              <span>No recent conversations</span>
+            <div className="flex flex-col gap-1 px-2.5 py-2.5">
+              <p className="flex items-center gap-2 text-[13px] font-medium text-muted">
+                <HugeiconsIcon
+                  icon={Clock01Icon}
+                  size={15}
+                  strokeWidth={1.8}
+                  className="shrink-0 text-subtle/70"
+                />
+                {user ? "No conversations yet" : "Nothing saved yet"}
+              </p>
+              <p className="pl-[23px] text-[12px] leading-[1.5] text-subtle">
+                {user ? (
+                  "Chats you start collect here so you can pick one back up."
+                ) : (
+                  <>
+                    Threads are kept per account.{" "}
+                    <button
+                      type="button"
+                      onClick={onSignIn}
+                      className="cursor-pointer font-medium text-muted underline decoration-border underline-offset-2 transition-colors duration-150 ease-expo hover:text-brand-blue focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+                    >
+                      Sign in
+                    </button>{" "}
+                    to keep yours.
+                  </>
+                )}
+              </p>
             </div>
           )}
         </ScrollArea>
