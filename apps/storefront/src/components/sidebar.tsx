@@ -6,6 +6,7 @@ import {
   Edit01Icon,
   FavouriteIcon,
   PackageIcon,
+  SidebarLeftIcon,
   UserIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -21,6 +22,7 @@ export type SidebarProps = {
   open: boolean;
   recentChats?: RecentChat[];
   activeChatId?: string | null;
+  onClose: () => void;
   onSelectChat?: (id: string) => void;
   onNewChat?: () => void;
   onDeleteChat?: (id: string) => void;
@@ -37,6 +39,7 @@ export function Sidebar({
   open,
   recentChats = [],
   activeChatId,
+  onClose,
   onSelectChat,
   onNewChat,
   onDeleteChat,
@@ -56,19 +59,34 @@ export function Sidebar({
         open ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-3 opacity-0"
       )}
     >
-      <button
-        type="button"
-        title="New chat"
-        onClick={onNewChat}
-        className={cn(
-          "flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold text-white",
-          "bg-[image:var(--gradient-brand)] shadow-[0_4px_16px_rgba(32,56,248,0.35)] transition-opacity duration-150 ease-expo hover:opacity-90 active:scale-[0.98]",
-          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
-        )}
-      >
-        <HugeiconsIcon icon={Edit01Icon} size={18} strokeWidth={2} className="shrink-0" />
-        New chat
-      </button>
+      <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          title="New chat"
+          onClick={onNewChat}
+          className={cn(
+            "flex h-10 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold text-white",
+            "bg-[image:var(--gradient-brand)] shadow-[0_4px_16px_rgba(32,56,248,0.35)] transition-opacity duration-150 ease-expo hover:opacity-90 active:scale-[0.98]",
+            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+          )}
+        >
+          <HugeiconsIcon icon={Edit01Icon} size={18} strokeWidth={2} className="shrink-0" />
+          New chat
+        </button>
+        <button
+          type="button"
+          title="Close sidebar"
+          aria-label="Close sidebar"
+          onClick={onClose}
+          className={cn(
+            "flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border bg-surface-hover text-muted",
+            "transition-colors duration-150 ease-expo hover:text-foreground",
+            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+          )}
+        >
+          <HugeiconsIcon icon={SidebarLeftIcon} size={18} strokeWidth={1.8} />
+        </button>
+      </div>
 
       <nav aria-label="Main" className="mt-3 flex shrink-0 flex-col gap-1">
         {NAV_LINKS.map((item) => (
