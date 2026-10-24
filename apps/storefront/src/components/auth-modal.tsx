@@ -99,9 +99,9 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
         className={cn(
-          "relative w-full max-w-sm overflow-hidden rounded-[32px] border border-white/50 bg-white/40 shadow-pop backdrop-blur-2xl",
-          "md:grid md:max-w-[640px] md:grid-cols-[minmax(0,1fr)_236px]",
-          "dark:border-white/10 dark:bg-[#15182b]/70"
+          "relative w-full max-w-sm overflow-hidden rounded-[32px] border border-white/60 bg-white/55 shadow-pop backdrop-blur-2xl",
+          "md:grid md:max-w-[760px] md:grid-cols-2",
+          "dark:border-white/10 dark:bg-[#15182b]/75"
         )}
       >
         <div className="p-6">
@@ -158,11 +158,12 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             Continue with Google
           </button>
 
-          <div className="relative my-4 flex items-center justify-center">
-            <span className="w-full border-t border-border" />
-            <span className="absolute bg-white/60 px-2 text-[11px] font-semibold uppercase tracking-wider text-subtle backdrop-blur-md dark:bg-[#15182b]">
+          <div className="my-4 flex items-center gap-3">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-subtle">
               or continue with email
             </span>
+            <span className="h-px flex-1 bg-border" />
           </div>
 
           <form ref={formRef} onSubmit={onSubmit} className="flex flex-col gap-3">
@@ -238,18 +239,17 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
             alt=""
             fill
             priority
-            sizes="236px"
-            className="object-cover transition-opacity duration-500 ease-expo dark:opacity-0"
+            sizes="380px"
+            className="object-cover [mask-image:linear-gradient(to_right,transparent_0%,black_16%)] transition-opacity duration-500 ease-expo dark:opacity-0"
           />
           <Image
             src="/sky/auth-night.png"
             alt=""
             fill
             loading="eager"
-            sizes="236px"
-            className="object-cover opacity-0 transition-opacity duration-500 ease-expo dark:opacity-100"
+            sizes="380px"
+            className="object-cover opacity-0 [mask-image:linear-gradient(to_right,transparent_0%,black_16%)] transition-opacity duration-500 ease-expo dark:opacity-100"
           />
-          <div className="absolute inset-y-0 left-0 w-14 bg-gradient-to-r from-white/75 to-transparent dark:from-[#15182b]/80" />
         </div>
       </motion.div>
     </div>
