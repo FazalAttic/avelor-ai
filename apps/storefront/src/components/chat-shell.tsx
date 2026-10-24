@@ -83,7 +83,6 @@ export function ChatShell({
         open={sidebarOpen}
         recentChats={recentChats}
         activeChatId={activeChatId}
-        onClose={() => setSidebarOpen(false)}
         onSelectChat={(id) => {
           setSidebarOpen(false);
           onSelectChat?.(id);
@@ -115,15 +114,13 @@ export function ChatShell({
             Avelor
           </span>
         </Link>
-        {!sidebarOpen && (
-          <IconButton
-            label="Open sidebar"
-            onClick={() => setSidebarOpen(true)}
-            className="size-10 border border-white/50 bg-white/40 shadow-card backdrop-blur-xl hover:bg-white/60 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
-          >
-            <HugeiconsIcon icon={SidebarLeftIcon} size={20} strokeWidth={1.8} />
-          </IconButton>
-        )}
+        <IconButton
+          label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+          onClick={() => setSidebarOpen((value) => !value)}
+          className="size-10 border border-white/50 bg-white/40 shadow-card backdrop-blur-xl hover:bg-white/60 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+        >
+          <HugeiconsIcon icon={SidebarLeftIcon} size={20} strokeWidth={1.8} />
+        </IconButton>
         <ThemeToggle />
       </div>
 
