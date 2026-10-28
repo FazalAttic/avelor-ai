@@ -69,7 +69,7 @@ function formatApiOrder(o: StoreOrder): Order {
   const items: OrderItem[] = o.items.map((item) => ({
     name: item.title,
     qty: item.quantity,
-    price: formatPrice({ amount: item.unitPrice, currency: item.currency }),
+    price: formatPrice(item.unitPrice),
     image: "/products/volt-runner.png",
   }));
   const statusLabel =
@@ -77,16 +77,16 @@ function formatApiOrder(o: StoreOrder): Order {
       ? "Confirmed & Paid"
       : o.status === "pending"
         ? "Payment Processing"
-        : o.status === "fulfilled"
+        : o.status === "delivered"
           ? "Delivered"
           : o.status.charAt(0).toUpperCase() + o.status.slice(1);
 
   return {
-    id: o.orderNumber,
+    id: `#AV-${o.id.slice(-4).toUpperCase()}`,
     date: dateFormatted,
     status: statusLabel,
     items,
-    total: formatPrice({ amount: o.totalAmount, currency: o.currency }),
+    total: formatPrice(o.total),
   };
 }
 
