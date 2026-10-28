@@ -267,7 +267,7 @@ export interface CartDto {
 }
 
 export async function createCart(currency = "USD"): Promise<CartDto> {
-  const response = await fetch(`${API_URL}/cart`, {
+  const response = await fetch(`${API_URL}/carts`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -278,14 +278,19 @@ export async function createCart(currency = "USD"): Promise<CartDto> {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to initialize cart (${response.status})`);
+    let detail = `Failed to initialize cart (${response.status})`;
+    try {
+      const body = (await response.json()) as ChatApiErrorBody;
+      if (body.error?.message) detail = body.error.message;
+    } catch {}
+    throw new Error(detail);
   }
 
   return (await response.json()) as CartDto;
 }
 
 export async function fetchCart(cartId: string): Promise<CartDto | null> {
-  const response = await fetch(`${API_URL}/cart/${encodeURIComponent(cartId)}`, {
+  const response = await fetch(`${API_URL}/carts/${encodeURIComponent(cartId)}`, {
     headers: {
       "x-tenant-id": TENANT_ID,
     },
@@ -304,7 +309,7 @@ export async function addItemToCart(
   variantId: string,
   quantity = 1
 ): Promise<CartDto> {
-  const response = await fetch(`${API_URL}/cart/${encodeURIComponent(cartId)}/items`, {
+  const response = await fetch(`${API_URL}/carts/${encodeURIComponent(cartId)}/items`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -330,7 +335,7 @@ export async function addItemToCart(
 
 export async function removeItemFromCart(cartId: string, variantId: string): Promise<CartDto> {
   const response = await fetch(
-    `${API_URL}/cart/${encodeURIComponent(cartId)}/items/${encodeURIComponent(variantId)}`,
+    `${API_URL}/carts/${encodeURIComponent(cartId)}/items/${encodeURIComponent(variantId)}`,
     {
       method: "DELETE",
       headers: {

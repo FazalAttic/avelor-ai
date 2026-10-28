@@ -161,8 +161,10 @@ export function createApp(options: AppOptions = {}) {
     })
   );
 
-  // Mount cart routes
-  app.route("/api/v1/carts", createCartRoutes(cartRepo, catalogRepo));
+  // Mount cart routes (supporting both plural and singular aliases)
+  const cartRoutes = createCartRoutes(cartRepo, catalogRepo);
+  app.route("/api/v1/carts", cartRoutes);
+  app.route("/api/v1/cart", cartRoutes);
 
   // Mount public store policy routes
   app.route("/api/v1/policies", createPolicyRoutes(policyRepo));

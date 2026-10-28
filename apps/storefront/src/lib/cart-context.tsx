@@ -83,10 +83,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
       if (storedId) {
         setCartId(storedId);
-        // Optionally verify with server
+        // Verify with server immediately
         fetchCart(storedId)
           .then((remote) => {
-            if (remote && remote.items.length > 0) {
+            if (!remote) {
+              // Stale cart ID in localStorage (e.g. server restarted or expired), clear it
+              setCartId(null);
+              try {
+                localStorage.removeItem(CART_ID_KEY);
+              } catch {}
+              return;
+            }
+            if (remote.items.length > 0) {
               setItems((prev) => {
                 // If local items exist, keep the enriched data (like image); otherwise map from remote
                 if (prev.length > 0) return prev;
@@ -104,7 +112,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
               });
             }
           })
-          .catch(() => {});
+          .catch(() => {
+            setCartId(null);
+            try {
+              localStorage.removeItem(CART_ID_KEY);
+            } catch {}
+          });
       }
     } catch {
       // Ignore localStorage errors
@@ -137,16 +150,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items]);
 
   const ensureRemoteCart = useCallback(async (): Promise<string> => {
-    if (cartId) return cartId;
-    try {
-      const newCart = await createCart();
-      setCartId(newCart.id);
-      return newCart.id;
-    } catch {
-      const fallbackId = `cart_${crypto.randomUUID()}`;
-      setCartId(fallbackId);
-      return fallbackId;
+    if (cartId) {
+      try {
+        const remote = await fetchCart(cartId);
+        if (remote) return remote.id;
+      } catch {
+        // Stale or invalid cartId, fallback to creating fresh
+      }
     }
+    const newCart = await createCart();
+    setCartId(newCart.id);
+    return newCart.id;
   }, [cartId]);
 
   const addItem = useCallback(
@@ -196,8 +210,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // Background backend sync
       try {
         setIsSyncing(true);
-        const remoteCartId = await ensureRemoteCart();
-        await addItemToCart(remoteCartId, chosenVariant.id, quantity);
+        let remoteCartId = await ensureRemoteCart();
+        try {
+          await addItemToCart(remoteCartId, chosenVariant.id, quantity);
+        } catch {
+          // If the server cart was stale or expired, create a fresh one and retry
+          const freshCart = await createCart();
+          setCartId(freshCart.id);
+          remoteCartId = freshCart.id;
+          await addItemToCart(remoteCartId, chosenVariant.id, quantity);
+        }
       } catch {
         // Optimistic state is retained even if server cart sync encounters a transient error
       } finally {
@@ -263,24 +285,59 @@ export function CartProvider({ children }: { children: ReactNode }) {
         throw new Error("Your cart is empty. Please add items before checking out.");
       }
 
-      const activeCartId = await ensureRemoteCart();
-
-      // Ensure all current items are recorded in the server cart
-      try {
+      // Helper to instantiate a fresh server cart containing current client line items
+      const createAndPopulateRemoteCart = async (): Promise<string> => {
+        const newCart = await createCart();
+        setCartId(newCart.id);
         for (const item of items) {
-          await addItemToCart(activeCartId, item.variantId, item.quantity);
+          await addItemToCart(newCart.id, item.variantId, item.quantity);
         }
-      } catch {
-        // Continue with checkout attempt
+        return newCart.id;
+      };
+
+      // Ensure we have a valid, populated server cart
+      let activeCartId: string;
+      if (cartId) {
+        try {
+          const remote = await fetchCart(cartId);
+          if (remote) {
+            // Cart exists on server. Ensure items are present
+            if (remote.items.length === 0 && items.length > 0) {
+              for (const item of items) {
+                await addItemToCart(cartId, item.variantId, item.quantity);
+              }
+            }
+            activeCartId = remote.id;
+          } else {
+            activeCartId = await createAndPopulateRemoteCart();
+          }
+        } catch {
+          activeCartId = await createAndPopulateRemoteCart();
+        }
+      } else {
+        activeCartId = await createAndPopulateRemoteCart();
       }
 
       const idempotencyKey = `idemp_chk_${crypto.randomUUID()}`;
-      const order = await checkoutCart(activeCartId, customerEmail, idempotencyKey);
 
-      clearCart();
-      return order;
+      try {
+        const order = await checkoutCart(activeCartId, customerEmail, idempotencyKey);
+        clearCart();
+        return order;
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        // Self-heal: if the server reported CART_NOT_FOUND or cart expired/lost, recreate and retry
+        if (errMsg.includes("not found") || errMsg.includes("CART_NOT_FOUND")) {
+          const freshCartId = await createAndPopulateRemoteCart();
+          const retryKey = `idemp_chk_${crypto.randomUUID()}`;
+          const order = await checkoutCart(freshCartId, customerEmail, retryKey);
+          clearCart();
+          return order;
+        }
+        throw err;
+      }
     },
-    [items, ensureRemoteCart, clearCart]
+    [items, cartId, clearCart]
   );
 
   const value = useMemo(
