@@ -6,6 +6,7 @@ import {
   Edit01Icon,
   FavouriteIcon,
   PackageIcon,
+  ShoppingBag01Icon,
   UserIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -13,6 +14,7 @@ import { ScrollArea } from "@/components/scroll-area";
 import { SideNavItem } from "@/components/side-nav-item";
 import { UserAvatar } from "@/components/user-avatar";
 import { useSession } from "@/lib/auth-client";
+import { useCart } from "@/lib/cart-context";
 import { cn } from "@/lib/utils";
 
 export type RecentChat = { id: string; title: string };
@@ -28,11 +30,6 @@ export type SidebarProps = {
   onSettings: () => void;
 };
 
-const NAV_LINKS = [
-  { label: "Favourites", icon: FavouriteIcon, href: "/favourites" },
-  { label: "Orders", icon: PackageIcon, href: "/orders" },
-] as const;
-
 export function Sidebar({
   open,
   recentChats = [],
@@ -44,6 +41,7 @@ export function Sidebar({
   onSettings,
 }: SidebarProps) {
   const { data: session } = useSession();
+  const { itemCount } = useCart();
   const user = session?.user ?? null;
 
   return (
@@ -71,9 +69,14 @@ export function Sidebar({
       </button>
 
       <nav aria-label="Main" className="mt-3 flex shrink-0 flex-col gap-1">
-        {NAV_LINKS.map((item) => (
-          <SideNavItem key={item.href} {...item} />
-        ))}
+        <SideNavItem
+          label="Checkout"
+          icon={ShoppingBag01Icon}
+          href="/checkout"
+          badge={itemCount > 0 ? itemCount : undefined}
+        />
+        <SideNavItem label="Favourites" icon={FavouriteIcon} href="/favourites" />
+        <SideNavItem label="Orders" icon={PackageIcon} href="/orders" />
         <SideNavItem label="Account settings" icon={UserIcon} onSelect={onSettings} />
       </nav>
 

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
+import { CartProvider } from "@/lib/cart-context";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -84,7 +85,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               "(function(){try{var t=localStorage.getItem('avelor-theme');var d=t?t==='night':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark')}catch(e){}})()",
           }}
         />
-        {children}
+        <CartProvider>{children}</CartProvider>
       </body>
     </html>
   );

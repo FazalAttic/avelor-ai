@@ -3,17 +3,17 @@
 import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { BotAvatar } from "@/components/bot-avatar";
 import { ChatMessageItem, type UiChatMessage } from "@/components/chat-message";
 import { ChatShell } from "@/components/chat-shell";
-import { CheckoutModal } from "@/components/checkout-modal";
 import { Composer } from "@/components/composer";
 import { ProductMarquee } from "@/components/product-marquee";
 import { ScrollArea } from "@/components/scroll-area";
 import type { RecentChat } from "@/components/sidebar";
+import { useCart } from "@/lib/cart-context";
 import {
-  type ChatProduct,
   deleteConversation,
   fetchConversation,
   fetchRecentConversations,
@@ -59,6 +59,8 @@ function ThinkingIndicator() {
 }
 
 export default function Home() {
+  const router = useRouter();
+  const { addItem } = useCart();
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<UiChatMessage[]>([]);
   const [sending, setSending] = useState(false);
@@ -70,7 +72,6 @@ export default function Home() {
   const threadRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
   const [showJump, setShowJump] = useState(false);
-  const [checkoutProduct, setCheckoutProduct] = useState<ChatProduct | null>(null);
   const isChatting = sending || messages.length > 0;
 
   async function loadRecents() {
@@ -300,7 +301,11 @@ export default function Home() {
                     key={message.id}
                     message={message}
                     reveal={message.id === liveId}
-                    onBuyNow={setCheckoutProduct}
+                    onBuyNow={(product) => {
+                      addItem(product);
+                      router.push("/checkout");
+                    }}
+                    onAddToCart={addItem}
                   />
                 ))}
                 <AnimatePresence initial={false}>
@@ -379,11 +384,6 @@ export default function Home() {
           </motion.div>
         ) : null}
       </AnimatePresence>
-      <CheckoutModal
-        open={checkoutProduct !== null}
-        product={checkoutProduct}
-        onClose={() => setCheckoutProduct(null)}
-      />
     </ChatShell>
   );
 }

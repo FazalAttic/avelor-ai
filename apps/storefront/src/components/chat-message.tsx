@@ -1,6 +1,12 @@
 "use client";
 
-import { ArrowLeft01Icon, ArrowRight01Icon, ShoppingBag01Icon } from "@hugeicons/core-free-icons";
+import {
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  CheckmarkBadge01Icon,
+  PlusSignIcon,
+  ShoppingBag01Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
@@ -49,11 +55,23 @@ function renderContent(content: string) {
 function ProductCard({
   product,
   onBuyNow,
+  onAddToCart,
 }: {
   product: ChatProduct;
   onBuyNow?: (product: ChatProduct) => void;
+  onAddToCart?: (product: ChatProduct) => void;
 }) {
   const price = product.variants[0]?.price ?? null;
+  const [justAdded, setJustAdded] = useState(false);
+
+  function handleAdd() {
+    if (onAddToCart) {
+      onAddToCart(product);
+      setJustAdded(true);
+      setTimeout(() => setJustAdded(false), 1200);
+    }
+  }
+
   return (
     <article
       className={cn(
@@ -77,16 +95,37 @@ function ProductCard({
           <p className="truncate text-[13px] font-semibold text-foreground">{product.name}</p>
           {price ? <p className="mt-0.5 text-xs text-muted">{formatPrice(price)}</p> : null}
         </div>
-        {onBuyNow ? (
-          <button
-            type="button"
-            onClick={() => onBuyNow(product)}
-            className="mt-2.5 flex h-8 w-full items-center justify-center gap-1.5 rounded-xl bg-foreground text-[12px] font-medium text-background shadow-xs transition-all duration-150 hover:bg-foreground/85 active:scale-[0.97]"
-          >
-            <HugeiconsIcon icon={ShoppingBag01Icon} size={13} strokeWidth={2.2} />
-            Buy now
-          </button>
-        ) : null}
+        <div className="mt-2.5 flex items-center gap-1.5">
+          {onBuyNow ? (
+            <button
+              type="button"
+              onClick={() => onBuyNow(product)}
+              className="flex h-8 flex-1 items-center justify-center gap-1 rounded-xl bg-foreground text-[12px] font-medium text-background shadow-xs transition-all duration-150 hover:bg-foreground/85 active:scale-[0.97]"
+            >
+              <HugeiconsIcon icon={ShoppingBag01Icon} size={13} strokeWidth={2.2} />
+              Buy now
+            </button>
+          ) : null}
+          {onAddToCart ? (
+            <button
+              type="button"
+              onClick={handleAdd}
+              title={justAdded ? "Added to bag" : "Add to bag"}
+              className={cn(
+                "flex size-8 shrink-0 items-center justify-center rounded-xl border border-border text-foreground transition-all duration-150 active:scale-95",
+                justAdded
+                  ? "bg-emerald-500 text-white border-emerald-500"
+                  : "bg-surface hover:bg-surface-hover"
+              )}
+            >
+              <HugeiconsIcon
+                icon={justAdded ? CheckmarkBadge01Icon : PlusSignIcon}
+                size={14}
+                strokeWidth={2.2}
+              />
+            </button>
+          ) : null}
+        </div>
       </div>
     </article>
   );
@@ -105,9 +144,11 @@ const ARROW_CLASS = cn(
 function ProductCarousel({
   products,
   onBuyNow,
+  onAddToCart,
 }: {
   products: readonly ChatProduct[];
   onBuyNow?: (product: ChatProduct) => void;
+  onAddToCart?: (product: ChatProduct) => void;
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const [overflow, setOverflow] = useState({ left: false, right: false });
@@ -157,7 +198,12 @@ function ProductCarousel({
         className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} onBuyNow={onBuyNow} />
+          <ProductCard
+            key={product.id}
+            product={product}
+            onBuyNow={onBuyNow}
+            onAddToCart={onAddToCart}
+          />
         ))}
       </div>
       <AnimatePresence initial={false}>
@@ -211,10 +257,12 @@ export function ChatMessageItem({
   message,
   reveal = false,
   onBuyNow,
+  onAddToCart,
 }: {
   message: UiChatMessage;
   reveal?: boolean;
   onBuyNow?: (product: ChatProduct) => void;
+  onAddToCart?: (product: ChatProduct) => void;
 }) {
   const isUser = message.role === "user";
   const reveals = reveal && !isUser;
@@ -278,7 +326,11 @@ export function ChatMessageItem({
         ) : null}
       </div>
       {!isUser && !writing && message.products.length > 0 ? (
-        <ProductCarousel products={message.products} onBuyNow={onBuyNow} />
+        <ProductCarousel
+          products={message.products}
+          onBuyNow={onBuyNow}
+          onAddToCart={onAddToCart}
+        />
       ) : null}
     </motion.div>
   );

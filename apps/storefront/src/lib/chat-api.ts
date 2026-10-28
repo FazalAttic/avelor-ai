@@ -248,6 +248,134 @@ export async function confirmPayment(
   return (await response.json()) as { success: boolean; order: StoreOrder; transactionId: string };
 }
 
+export interface CartItemDto {
+  readonly variantId: string;
+  readonly productId: string;
+  readonly sku: string;
+  readonly title: string;
+  readonly unitPrice: ChatMoney;
+  readonly quantity: number;
+  readonly totalPrice: ChatMoney;
+}
+
+export interface CartDto {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly currency: string;
+  readonly items: readonly CartItemDto[];
+  readonly subtotal: ChatMoney;
+}
+
+export async function createCart(currency = "USD"): Promise<CartDto> {
+  const response = await fetch(`${API_URL}/cart`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-tenant-id": TENANT_ID,
+    },
+    credentials: "include",
+    body: JSON.stringify({ currency }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to initialize cart (${response.status})`);
+  }
+
+  return (await response.json()) as CartDto;
+}
+
+export async function fetchCart(cartId: string): Promise<CartDto | null> {
+  const response = await fetch(`${API_URL}/cart/${encodeURIComponent(cartId)}`, {
+    headers: {
+      "x-tenant-id": TENANT_ID,
+    },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  return (await response.json()) as CartDto;
+}
+
+export async function addItemToCart(
+  cartId: string,
+  variantId: string,
+  quantity = 1
+): Promise<CartDto> {
+  const response = await fetch(`${API_URL}/cart/${encodeURIComponent(cartId)}/items`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-tenant-id": TENANT_ID,
+    },
+    credentials: "include",
+    body: JSON.stringify({ variantId, quantity }),
+  });
+
+  if (!response.ok) {
+    let detail = `Failed to add item to cart (${response.status})`;
+    try {
+      const body = (await response.json()) as ChatApiErrorBody;
+      if (body.error?.message) detail = body.error.message;
+    } catch {
+      // Non-JSON error body
+    }
+    throw new Error(detail);
+  }
+
+  return (await response.json()) as CartDto;
+}
+
+export async function removeItemFromCart(cartId: string, variantId: string): Promise<CartDto> {
+  const response = await fetch(
+    `${API_URL}/cart/${encodeURIComponent(cartId)}/items/${encodeURIComponent(variantId)}`,
+    {
+      method: "DELETE",
+      headers: {
+        "x-tenant-id": TENANT_ID,
+      },
+      credentials: "include",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to remove item (${response.status})`);
+  }
+
+  return (await response.json()) as CartDto;
+}
+
+export async function checkoutCart(
+  cartId: string,
+  customerEmail: string,
+  idempotencyKey?: string
+): Promise<StoreOrder> {
+  const response = await fetch(`${API_URL}/orders/checkout`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-tenant-id": TENANT_ID,
+    },
+    credentials: "include",
+    body: JSON.stringify({ cartId, customerEmail, idempotencyKey }),
+  });
+
+  if (!response.ok) {
+    let detail = `Checkout failed (${response.status})`;
+    try {
+      const body = (await response.json()) as ChatApiErrorBody;
+      if (body.error?.message) detail = body.error.message;
+    } catch {
+      // Non-JSON error body
+    }
+    throw new Error(detail);
+  }
+
+  return (await response.json()) as StoreOrder;
+}
+
 export async function fetchStoreOrders(customerEmail?: string): Promise<StoreOrder[]> {
   const url = customerEmail
     ? `${API_URL}/orders?email=${encodeURIComponent(customerEmail)}`

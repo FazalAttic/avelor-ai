@@ -5,6 +5,7 @@ import {
   FavouriteIcon,
   Logout03Icon,
   PackageIcon,
+  ShoppingBag01Icon,
   SidebarLeftIcon,
   UserIcon,
 } from "@hugeicons/core-free-icons";
@@ -22,6 +23,7 @@ import { Sidebar } from "@/components/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserAvatar } from "@/components/user-avatar";
 import { authClient, useSession } from "@/lib/auth-client";
+import { useCart } from "@/lib/cart-context";
 import { cn } from "@/lib/utils";
 
 export interface ChatShellProps {
@@ -46,6 +48,7 @@ export function ChatShell({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { data: session, isPending } = useSession();
+  const { itemCount } = useCart();
   const user = session?.user ?? null;
 
   useEffect(() => {
@@ -126,6 +129,18 @@ export function ChatShell({
 
       <div className="fixed right-6 top-5 z-40 sm:right-8 sm:top-6">
         <div className="flex h-10 items-center gap-0.5 rounded-full border border-white/50 bg-white/40 p-1 shadow-card backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
+          <Link
+            href="/checkout"
+            title="Checkout"
+            className="relative flex size-8 items-center justify-center rounded-full text-foreground transition-all duration-150 ease-expo hover:bg-white/60 active:scale-95 dark:hover:bg-white/15"
+          >
+            <HugeiconsIcon icon={ShoppingBag01Icon} size={18} strokeWidth={1.8} />
+            {itemCount > 0 ? (
+              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-brand-blue text-[10px] font-bold text-white shadow-xs">
+                {itemCount}
+              </span>
+            ) : null}
+          </Link>
           <IconLink label="Orders" href="/orders" className="size-8">
             <HugeiconsIcon icon={PackageIcon} size={20} strokeWidth={1.8} />
           </IconLink>
