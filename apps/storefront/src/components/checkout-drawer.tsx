@@ -3,6 +3,7 @@
 import {
   Cancel01Icon,
   CheckmarkBadge01Icon,
+  Coupon02Icon,
   MinusSignIcon,
   PackageIcon,
   PlusSignIcon,
@@ -59,6 +60,17 @@ export function CheckoutDrawer() {
   const [confirmedOrder, setConfirmedOrder] = useState<StoreOrder | null>(null);
   const [transactionId, setTransactionId] = useState<string>("");
 
+  // Coupon state
+  const [showCouponInput, setShowCouponInput] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    percentOff?: number;
+    freeShipping?: boolean;
+    description: string;
+  } | null>(null);
+
   useEffect(() => {
     if (session?.user?.email && !email) {
       setEmail(session.user.email);
@@ -75,14 +87,70 @@ export function CheckoutDrawer() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isDrawerOpen, closeDrawer]);
 
+  function handleApplyCoupon(e?: FormEvent) {
+    if (e) e.preventDefault();
+    const clean = couponInput.trim().toUpperCase();
+    if (!clean) return;
+
+    if (clean === "AVELOR10" || clean === "SAVE10" || clean === "WELCOME10") {
+      setAppliedCoupon({
+        code: clean,
+        percentOff: 10,
+        description: "10% off",
+      });
+      setCouponError(null);
+      setShowCouponInput(false);
+    } else if (clean === "AVELOR20" || clean === "SAVE20") {
+      setAppliedCoupon({
+        code: clean,
+        percentOff: 20,
+        description: "20% off",
+      });
+      setCouponError(null);
+      setShowCouponInput(false);
+    } else if (clean === "WELCOME15" || clean === "SAVE15") {
+      setAppliedCoupon({
+        code: clean,
+        percentOff: 15,
+        description: "15% off",
+      });
+      setCouponError(null);
+      setShowCouponInput(false);
+    } else if (clean === "FREESHIP" || clean === "SHIPFREE") {
+      setAppliedCoupon({
+        code: clean,
+        freeShipping: true,
+        description: "Free shipping",
+      });
+      setCouponError(null);
+      setShowCouponInput(false);
+    } else {
+      setCouponError("Invalid or expired coupon code");
+    }
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponError(null);
+  }
+
   // Financial calculations
   const currency = subtotal.currency || "USD";
   const subtotalMinor = subtotal.amount;
-  const isFreeShipping = subtotalMinor >= FREE_SHIPPING_THRESHOLD_MINOR;
+  const isFreeShipping =
+    subtotalMinor >= FREE_SHIPPING_THRESHOLD_MINOR || appliedCoupon?.freeShipping === true;
   const shippingMinor = items.length === 0 ? 0 : isFreeShipping ? 0 : STANDARD_SHIPPING_MINOR;
-  const totalMinor = subtotalMinor + shippingMinor;
+
+  let discountMinor = 0;
+  if (appliedCoupon?.percentOff) {
+    discountMinor = Math.round((subtotalMinor * appliedCoupon.percentOff) / 100);
+  }
+
+  const totalMinor = Math.max(0, subtotalMinor - discountMinor + shippingMinor);
 
   const formattedSubtotal = formatPrice(subtotal);
+  const formattedDiscount = formatPrice({ amount: discountMinor, currency });
   const formattedShipping =
     items.length === 0
       ? "$0.00"
@@ -134,6 +202,10 @@ export function CheckoutDrawer() {
     setConfirmedOrder(null);
     setTransactionId("");
     setError(null);
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setShowCouponInput(false);
+    setCouponError(null);
     closeDrawer();
   }
 
@@ -373,12 +445,98 @@ export function CheckoutDrawer() {
                     ))}
                   </div>
 
+                  {/* Coupon Option */}
+                  <div className="mt-3 border-t border-border pt-3">
+                    {appliedCoupon ? (
+                      <div className="flex items-center justify-between rounded-xl bg-emerald-500/10 px-3 py-2 text-xs text-emerald-600 dark:text-emerald-400">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <HugeiconsIcon icon={Coupon02Icon} size={14} strokeWidth={2} />
+                          <span className="font-semibold uppercase">{appliedCoupon.code}</span>
+                          <span className="text-[11px] opacity-80">
+                            ({appliedCoupon.description})
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {discountMinor > 0 && (
+                            <span className="font-semibold">-{formattedDiscount}</span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={handleRemoveCoupon}
+                            className="text-muted hover:text-foreground transition-colors"
+                            title="Remove coupon"
+                          >
+                            <HugeiconsIcon icon={Cancel01Icon} size={13} strokeWidth={2} />
+                          </button>
+                        </div>
+                      </div>
+                    ) : showCouponInput ? (
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={couponInput}
+                            onChange={(e) => {
+                              setCouponInput(e.target.value.toUpperCase());
+                              setCouponError(null);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleApplyCoupon();
+                              }
+                            }}
+                            placeholder="Enter coupon code"
+                            className="h-8 flex-1 rounded-xl border border-border bg-surface-hover px-2.5 text-xs text-foreground uppercase placeholder:normal-case placeholder:text-muted focus:border-brand-blue focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleApplyCoupon}
+                            disabled={!couponInput.trim()}
+                            className="flex h-8 items-center justify-center rounded-xl bg-foreground px-3 text-xs font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+                          >
+                            Apply
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowCouponInput(false);
+                              setCouponError(null);
+                            }}
+                            className="flex size-8 items-center justify-center rounded-xl text-muted hover:text-foreground"
+                            title="Cancel"
+                          >
+                            <HugeiconsIcon icon={Cancel01Icon} size={14} />
+                          </button>
+                        </div>
+                        {couponError && (
+                          <p className="text-[11px] text-red-500 pl-0.5">{couponError}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowCouponInput(true)}
+                        className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
+                      >
+                        <HugeiconsIcon icon={Coupon02Icon} size={14} strokeWidth={2} />
+                        <span>Do you have a coupon?</span>
+                      </button>
+                    )}
+                  </div>
+
                   {/* Calculations */}
                   <div className="mt-3 border-t border-border pt-3 text-xs text-muted flex flex-col gap-1.5">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
                       <span className="font-medium text-foreground">{formattedSubtotal}</span>
                     </div>
+                    {discountMinor > 0 && (
+                      <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
+                        <span>Discount ({appliedCoupon?.code})</span>
+                        <span className="font-medium">-{formattedDiscount}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span>Shipping</span>
                       <span
