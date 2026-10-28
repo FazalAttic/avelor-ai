@@ -3,7 +3,6 @@
 import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { BotAvatar } from "@/components/bot-avatar";
 import { ChatMessageItem, type UiChatMessage } from "@/components/chat-message";
@@ -59,8 +58,7 @@ function ThinkingIndicator() {
 }
 
 export default function Home() {
-  const router = useRouter();
-  const { addItem } = useCart();
+  const { addItem, openDrawer } = useCart();
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<UiChatMessage[]>([]);
   const [sending, setSending] = useState(false);
@@ -303,7 +301,7 @@ export default function Home() {
                     reveal={message.id === liveId}
                     onBuyNow={(product) => {
                       addItem(product);
-                      router.push("/checkout");
+                      openDrawer();
                     }}
                     onAddToCart={addItem}
                   />

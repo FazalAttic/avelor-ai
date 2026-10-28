@@ -39,6 +39,10 @@ interface CartContextValue {
   readonly itemCount: number;
   readonly subtotal: ChatMoney;
   readonly isSyncing: boolean;
+  readonly isDrawerOpen: boolean;
+  readonly openDrawer: () => void;
+  readonly closeDrawer: () => void;
+  readonly toggleDrawer: () => void;
   readonly addItem: (
     product: ChatProduct,
     variant?: ChatVariant,
@@ -60,6 +64,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartId, setCartId] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const openDrawer = useCallback(() => setIsDrawerOpen(true), []);
+  const closeDrawer = useCallback(() => setIsDrawerOpen(false), []);
+  const toggleDrawer = useCallback(() => setIsDrawerOpen((prev) => !prev), []);
 
   // Restore cart on mount
   useEffect(() => {
@@ -281,6 +290,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       itemCount,
       subtotal,
       isSyncing,
+      isDrawerOpen,
+      openDrawer,
+      closeDrawer,
+      toggleDrawer,
       addItem,
       updateQuantity,
       removeItem,
@@ -293,6 +306,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       itemCount,
       subtotal,
       isSyncing,
+      isDrawerOpen,
+      openDrawer,
+      closeDrawer,
+      toggleDrawer,
       addItem,
       updateQuantity,
       removeItem,

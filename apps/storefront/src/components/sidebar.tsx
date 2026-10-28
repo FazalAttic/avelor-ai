@@ -41,7 +41,7 @@ export function Sidebar({
   onSettings,
 }: SidebarProps) {
   const { data: session } = useSession();
-  const { itemCount } = useCart();
+  const { itemCount, openDrawer } = useCart();
   const user = session?.user ?? null;
 
   return (
@@ -72,7 +72,7 @@ export function Sidebar({
         <SideNavItem
           label="Checkout"
           icon={ShoppingBag01Icon}
-          href="/checkout"
+          onSelect={openDrawer}
           badge={itemCount > 0 ? itemCount : undefined}
         />
         <SideNavItem label="Favourites" icon={FavouriteIcon} href="/favourites" />
