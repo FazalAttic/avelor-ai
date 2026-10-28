@@ -95,9 +95,8 @@
   --color-brand-wash: var(--brand-wash);
 
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  /* `font-numbers` — the figure face. Applied per element, never globally, so
-     digits line up and read as data while sentences keep the text face. */
-  --font-numbers: var(--font-space-grotesk), var(--font-jakarta), ui-sans-serif, sans-serif;
+  --font-numbers:
+    var(--font-jakarta), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
   --color-admin-rail: var(--admin-rail);
   --color-admin-canvas: var(--admin-canvas);

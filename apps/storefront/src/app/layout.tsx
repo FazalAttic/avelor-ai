@@ -1,21 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { CartProvider } from "@/lib/cart-context";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-jakarta",
-  display: "swap",
-});
-
-/* Figures get their own face. Jakarta's digits are round and even, which reads
-   generic at the sizes the console now uses for values; Space Grotesk has
-   flagged ones, open fours and real tabular widths. Scoped through the
-   `font-numbers` utility so prose never leaves the text face. */
-const numbers = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space-grotesk",
   display: "swap",
 });
 
@@ -76,7 +66,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${jakarta.variable} ${numbers.variable}`} suppressHydrationWarning>
+    <html lang="en" className={jakarta.variable} suppressHydrationWarning>
       <body>
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: inline no-flash theme init

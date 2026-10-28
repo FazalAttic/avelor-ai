@@ -138,7 +138,7 @@ export function ChatShell({
           >
             <HugeiconsIcon icon={ShoppingBag01Icon} size={18} strokeWidth={1.8} />
             {itemCount > 0 ? (
-              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-brand-blue text-[10px] font-bold text-white shadow-xs font-numbers">
+              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-brand-blue text-[10px] font-bold text-white shadow-xs">
                 {itemCount}
               </span>
             ) : null}

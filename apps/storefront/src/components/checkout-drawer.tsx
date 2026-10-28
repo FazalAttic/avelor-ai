@@ -3,9 +3,6 @@
 import {
   Cancel01Icon,
   CheckmarkBadge01Icon,
-  CreditCardIcon,
-  Delete02Icon,
-  LockIcon,
   MinusSignIcon,
   PackageIcon,
   PlusSignIcon,
@@ -50,7 +47,6 @@ export function CheckoutDrawer() {
     isDrawerOpen,
     closeDrawer,
     updateQuantity,
-    removeItem,
     clearCart,
     checkout,
     addItem,
@@ -102,8 +98,9 @@ export function CheckoutDrawer() {
       return;
     }
 
-    if (!email || !email.includes("@")) {
-      setError("Please enter a valid receipt email.");
+    const orderEmail = email.trim() || session?.user?.email || "";
+    if (!orderEmail || !orderEmail.includes("@")) {
+      setError("Please enter a valid email address.");
       return;
     }
 
@@ -111,13 +108,8 @@ export function CheckoutDrawer() {
     setStatus("submitting");
 
     try {
-      setStatusMessage("Reserving items & initiating payment session...");
-      await new Promise((r) => setTimeout(r, 500));
-
-      const order = await checkout(email.trim());
-
-      setStatusMessage("Authorizing payment with provider gateway...");
-      await new Promise((r) => setTimeout(r, 600));
+      setStatusMessage("Processing order...");
+      const order = await checkout(orderEmail);
 
       const payResult = await confirmPayment(order.id);
 
@@ -127,7 +119,7 @@ export function CheckoutDrawer() {
 
       try {
         if (typeof window !== "undefined") {
-          localStorage.setItem("avelor_customer_email", email.trim());
+          localStorage.setItem("avelor_customer_email", orderEmail);
         }
       } catch {}
     } catch (err) {
@@ -154,7 +146,7 @@ export function CheckoutDrawer() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 0.2 }}
             onClick={closeDrawer}
             className="fixed inset-0 bg-black/40 backdrop-blur-xs"
             aria-hidden="true"
@@ -165,28 +157,21 @@ export function CheckoutDrawer() {
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="relative z-50 flex h-full w-full max-w-[420px] flex-col border-l border-border bg-surface shadow-pop"
+            transition={{ type: "spring", damping: 30, stiffness: 320 }}
+            className="relative z-50 flex h-full w-full max-w-[400px] flex-col border-l border-border bg-surface shadow-pop"
             role="dialog"
             aria-modal="true"
             aria-label="Checkout Drawer"
           >
             {/* Drawer Header */}
-            <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-5">
-              <div className="flex items-center gap-2.5">
-                <div className="flex size-8 items-center justify-center rounded-xl bg-brand-wash text-brand-blue">
-                  <HugeiconsIcon icon={ShoppingBag01Icon} size={18} strokeWidth={2} />
-                </div>
-                <div>
-                  <h2 className="text-sm font-semibold text-foreground">
-                    {status === "confirmed" ? "Order Confirmed" : "Your Bag"}
-                  </h2>
-                  <p className="text-[11px] text-muted font-numbers">
-                    {status === "confirmed"
-                      ? "Payment successful"
-                      : `${itemCount} ${itemCount === 1 ? "item" : "items"}`}
-                  </p>
-                </div>
+            <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-5">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-foreground">
+                  {status === "confirmed" ? "Order Confirmed" : "Your Bag"}
+                </h2>
+                {status !== "confirmed" && itemCount > 0 && (
+                  <span className="text-xs text-muted">({itemCount})</span>
+                )}
               </div>
 
               <div className="flex items-center gap-2">
@@ -202,16 +187,16 @@ export function CheckoutDrawer() {
                 <button
                   type="button"
                   onClick={handleResetAndClose}
-                  className="flex size-8 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
-                  title="Close sidebar"
+                  className="flex size-7 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-hover hover:text-foreground"
+                  title="Close"
                 >
-                  <HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={2} />
+                  <HugeiconsIcon icon={Cancel01Icon} size={16} strokeWidth={2} />
                 </button>
               </div>
             </div>
 
             {/* Drawer Body */}
-            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-4 [scrollbar-width:thin]">
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-3 [scrollbar-width:thin]">
               {status === "confirmed" && confirmedOrder ? (
                 /* Success Screen */
                 <motion.div
@@ -219,44 +204,46 @@ export function CheckoutDrawer() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="my-auto flex flex-col items-center justify-center py-6 text-center"
                 >
-                  <div className="flex size-14 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                    <HugeiconsIcon icon={CheckmarkBadge01Icon} size={32} strokeWidth={2.2} />
+                  <div className="flex size-12 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                    <HugeiconsIcon icon={CheckmarkBadge01Icon} size={28} strokeWidth={2.2} />
                   </div>
-                  <h3 className="mt-3 text-lg font-bold text-foreground">
-                    Thank you for your order!
-                  </h3>
+                  <h3 className="mt-3 text-base font-bold text-foreground">Order confirmed</h3>
                   <p className="mt-1 text-xs text-muted">
-                    Confirmation receipt sent to{" "}
-                    <span className="font-semibold text-foreground">{email}</span>
+                    Receipt sent to{" "}
+                    <span className="font-medium text-foreground">
+                      {email || session?.user?.email}
+                    </span>
                   </p>
 
-                  <div className="mt-5 w-full rounded-2xl border border-border bg-surface-hover p-3.5 text-left text-xs">
+                  <div className="mt-4 w-full rounded-xl border border-border bg-surface-hover p-3 text-left text-xs">
                     <div className="flex items-center justify-between border-b border-border pb-2">
                       <span className="text-muted">Order ID</span>
-                      <span className="font-mono font-semibold text-foreground">
+                      <span className="font-semibold text-foreground">
                         #{confirmedOrder.id.slice(-8).toUpperCase()}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between border-b border-border py-2">
-                      <span className="text-muted">Transaction ID</span>
-                      <span className="font-mono text-muted">{transactionId}</span>
-                    </div>
+                    {transactionId && (
+                      <div className="flex items-center justify-between border-b border-border py-2">
+                        <span className="text-muted">Transaction ID</span>
+                        <span className="text-muted">{transactionId}</span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between pt-2">
-                      <span className="font-semibold text-foreground">Total Paid</span>
-                      <span className="font-bold text-foreground font-numbers">
+                      <span className="font-medium text-foreground">Total Paid</span>
+                      <span className="font-bold text-foreground">
                         {formatPrice(confirmedOrder.total)}
                       </span>
                     </div>
                   </div>
 
-                  <div className="mt-6 flex w-full flex-col gap-2">
+                  <div className="mt-5 flex w-full flex-col gap-2">
                     <Link
                       href="/orders"
                       onClick={handleResetAndClose}
                       className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-foreground text-xs font-semibold text-background shadow-xs transition-opacity hover:opacity-90"
                     >
                       <HugeiconsIcon icon={PackageIcon} size={15} strokeWidth={2} />
-                      View All Orders
+                      View Orders
                     </Link>
                     <button
                       type="button"
@@ -270,19 +257,19 @@ export function CheckoutDrawer() {
               ) : items.length === 0 ? (
                 /* Empty Bag State */
                 <div className="my-auto flex flex-col items-center justify-center py-8 text-center">
-                  <div className="flex size-12 items-center justify-center rounded-full bg-brand-wash text-brand-blue">
-                    <HugeiconsIcon icon={ShoppingBag01Icon} size={22} strokeWidth={1.8} />
+                  <div className="flex size-11 items-center justify-center rounded-full bg-surface-hover text-muted">
+                    <HugeiconsIcon icon={ShoppingBag01Icon} size={20} strokeWidth={1.8} />
                   </div>
                   <h3 className="mt-3 text-sm font-semibold text-foreground">Your bag is empty</h3>
-                  <p className="mt-1 text-xs text-muted max-w-[240px]">
-                    Browse products in chat or quickly add popular picks:
+                  <p className="mt-1 text-xs text-muted max-w-[220px]">
+                    Ask in chat or pick a trending favorite:
                   </p>
 
                   <div className="mt-4 flex w-full flex-col gap-2">
                     {STARTER_PRODUCTS.map((prod) => (
                       <div
                         key={prod.id}
-                        className="flex items-center justify-between rounded-xl border border-border bg-surface-hover p-2.5 text-left"
+                        className="flex items-center justify-between rounded-xl border border-border bg-surface-hover p-2 text-left"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-surface">
@@ -330,15 +317,11 @@ export function CheckoutDrawer() {
                   </div>
                 </div>
               ) : (
-                /* Items List & Summary */
-                <div className="flex flex-col gap-4">
-                  {/* Items List */}
+                /* Line Items & Calculations */
+                <div>
                   <div className="flex flex-col divide-y divide-border">
                     {items.map((item) => (
-                      <div
-                        key={item.variantId}
-                        className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-                      >
+                      <div key={item.variantId} className="flex items-center gap-3 py-3">
                         <div className="relative size-12 shrink-0 overflow-hidden rounded-xl border border-border bg-brand-wash">
                           {item.image ? (
                             <Image
@@ -351,127 +334,87 @@ export function CheckoutDrawer() {
                           ) : null}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-xs font-semibold text-foreground">
-                            {item.title}
-                          </p>
-                          <p className="truncate text-[11px] text-muted">{item.variantTitle}</p>
-                          <p className="pt-0.5 text-xs font-medium text-foreground">
-                            {formatPrice(item.unitPrice)}
-                          </p>
-                        </div>
-                        {/* Stepper */}
-                        <div className="flex items-center gap-1 rounded-lg border border-border bg-surface-hover p-0.5">
-                          <button
-                            type="button"
-                            onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
-                            className="flex size-5 items-center justify-center rounded text-foreground hover:bg-surface active:scale-95"
-                          >
-                            <HugeiconsIcon icon={MinusSignIcon} size={10} strokeWidth={2.4} />
-                          </button>
-                          <span className="w-4 text-center text-xs font-semibold text-foreground font-numbers">
-                            {item.quantity}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
-                            className="flex size-5 items-center justify-center rounded text-foreground hover:bg-surface active:scale-95"
-                          >
-                            <HugeiconsIcon icon={PlusSignIcon} size={10} strokeWidth={2.4} />
-                          </button>
-                        </div>
-                        {/* Price & Delete */}
-                        <div className="text-right">
-                          <p className="text-xs font-semibold text-foreground font-numbers">
-                            {formatPrice(item.totalPrice)}
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => removeItem(item.variantId)}
-                            className="mt-1 text-muted transition-colors hover:text-red-500"
-                            title="Remove item"
-                          >
-                            <HugeiconsIcon icon={Delete02Icon} size={13} strokeWidth={2} />
-                          </button>
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="truncate text-xs font-semibold text-foreground">
+                                {item.title}
+                              </p>
+                              <p className="truncate text-[11px] text-muted">{item.variantTitle}</p>
+                            </div>
+                            <p className="shrink-0 text-xs font-semibold text-foreground">
+                              {formatPrice(item.totalPrice)}
+                            </p>
+                          </div>
+
+                          <div className="mt-2 flex items-center justify-between">
+                            <p className="text-[11px] text-muted">{formatPrice(item.unitPrice)}</p>
+                            <div className="flex items-center gap-1 rounded-lg border border-border bg-surface-hover px-1 py-0.5">
+                              <button
+                                type="button"
+                                onClick={() => updateQuantity(item.variantId, item.quantity - 1)}
+                                className="flex size-5 items-center justify-center rounded text-muted hover:text-foreground active:scale-95"
+                              >
+                                <HugeiconsIcon icon={MinusSignIcon} size={10} strokeWidth={2.4} />
+                              </button>
+                              <span className="w-5 text-center text-xs font-medium text-foreground">
+                                {item.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => updateQuantity(item.variantId, item.quantity + 1)}
+                                className="flex size-5 items-center justify-center rounded text-muted hover:text-foreground active:scale-95"
+                              >
+                                <HugeiconsIcon icon={PlusSignIcon} size={10} strokeWidth={2.4} />
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  {/* Calculations Breakdown */}
-                  <div className="rounded-2xl border border-border bg-surface-hover p-3.5 text-xs text-muted">
-                    <div className="flex justify-between py-1">
+                  {/* Calculations */}
+                  <div className="mt-3 border-t border-border pt-3 text-xs text-muted flex flex-col gap-1.5">
+                    <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span className="font-medium text-foreground font-numbers">
-                        {formattedSubtotal}
-                      </span>
+                      <span className="font-medium text-foreground">{formattedSubtotal}</span>
                     </div>
-                    <div className="flex justify-between py-1">
+                    <div className="flex justify-between">
                       <span>Shipping</span>
                       <span
                         className={cn(
                           "font-medium",
-                          isFreeShipping
-                            ? "text-emerald-600 font-semibold"
-                            : "text-foreground font-numbers"
+                          isFreeShipping ? "text-emerald-600 font-semibold" : "text-foreground"
                         )}
                       >
                         {formattedShipping}
                       </span>
                     </div>
-                    {!isFreeShipping && (
-                      <p className="pt-1 text-[11px] text-brand-blue">
-                        Add{" "}
-                        {formatPrice({
-                          amount: FREE_SHIPPING_THRESHOLD_MINOR - subtotalMinor,
-                          currency,
-                        })}{" "}
-                        more for free shipping
-                      </p>
-                    )}
-                    <div className="flex justify-between py-1">
-                      <span>Estimated Tax</span>
-                      <span className="font-medium text-foreground font-numbers">$0.00</span>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-sm font-bold text-foreground">
-                      <span>Total Due</span>
-                      <span className="text-base font-numbers">{formattedTotal}</span>
+                    <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-sm font-semibold text-foreground">
+                      <span>Total</span>
+                      <span className="text-base font-bold">{formattedTotal}</span>
                     </div>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Drawer Footer (Payment Provider Form) */}
+            {/* Drawer Footer */}
             {items.length > 0 && status !== "confirmed" ? (
-              <form onSubmit={handleCheckoutSubmit} className="shrink-0 border-t border-border p-5">
-                <div className="mb-3">
-                  <label
-                    htmlFor="drawer-email"
-                    className="block text-[11px] font-medium text-muted mb-1"
-                  >
-                    Email for order receipt *
-                  </label>
-                  <input
-                    id="drawer-email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="h-9 w-full rounded-xl border border-border bg-surface-hover px-3 text-xs text-foreground focus:border-brand-blue focus:outline-none"
-                  />
-                </div>
-
-                <div className="mb-3 flex items-center justify-between rounded-xl bg-brand-blue/5 border border-brand-blue/15 px-3 py-2 text-[11px] text-muted">
-                  <span className="flex items-center gap-1.5 font-medium text-foreground">
-                    <HugeiconsIcon icon={CreditCardIcon} size={14} className="text-brand-blue" />
-                    Payment Gateway
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
-                    <HugeiconsIcon icon={LockIcon} size={10} strokeWidth={2.4} />
-                    PCI-DSS Encrypted
-                  </span>
-                </div>
+              <form onSubmit={handleCheckoutSubmit} className="shrink-0 border-t border-border p-4">
+                {!session?.user?.email && (
+                  <div className="mb-3">
+                    <input
+                      id="drawer-email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Email for receipt"
+                      className="h-9 w-full rounded-xl border border-border bg-surface-hover px-3 text-xs text-foreground focus:border-brand-blue focus:outline-none"
+                    />
+                  </div>
+                )}
 
                 {error ? (
                   <div className="mb-3 rounded-lg border border-red-300/60 bg-red-50/70 p-2 text-[11px] text-red-900 dark:border-red-400/30 dark:bg-red-950/40 dark:text-red-200">
@@ -487,16 +430,11 @@ export function CheckoutDrawer() {
                 ) : (
                   <button
                     type="submit"
-                    className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-foreground text-xs font-semibold text-background shadow-pop transition-all hover:bg-foreground/90 active:scale-[0.98]"
+                    className="flex h-11 w-full items-center justify-center rounded-xl bg-foreground text-xs font-semibold text-background shadow-xs transition-all hover:bg-foreground/90 active:scale-[0.98]"
                   >
-                    <HugeiconsIcon icon={LockIcon} size={14} strokeWidth={2.2} />
-                    Pay {formattedTotal} with Provider
+                    Checkout · {formattedTotal}
                   </button>
                 )}
-
-                <p className="mt-2 text-center text-[10px] text-muted">
-                  256-bit SSL · Direct gateway checkout · Zero card retention
-                </p>
               </form>
             ) : null}
           </motion.aside>
