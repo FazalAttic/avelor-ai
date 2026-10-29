@@ -296,8 +296,8 @@ input:-webkit-autofill:focus {
  * Sky — day/night cloudscapes behind the top of the stage, grain over both
  * ------------------------------------------------------------------------- */
 .sky {
-  -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
 }
 
 .sky::after {
@@ -344,7 +344,7 @@ input:-webkit-autofill:focus {
 
 .sky-day-echo {
   background-image: url("/sky/sky-day-2.png");
-  opacity: 0.2;
+  opacity: 0.45;
 }
 
 .sky-night-echo {
