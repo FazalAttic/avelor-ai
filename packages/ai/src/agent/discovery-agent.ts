@@ -131,12 +131,24 @@ export class DiscoveryAgent {
     }
 
     // If max steps reached, request final summary
+    messages.push({
+      role: "user",
+      content:
+        "Based on the catalog search results and details retrieved above, please provide your final shopping response and recommendations to the user.",
+    });
+
     const finalResponse = await this.model.generate({
       messages,
       temperature: 0.1,
     });
 
-    let finalReply = finalResponse.message.content;
+    let finalReply = finalResponse.message.content?.trim();
+    if (!finalReply) {
+      finalReply =
+        toolCallsExecuted.length > 0
+          ? "Here are the top products I found in our store for you. Feel free to ask if you would like more details on any of them!"
+          : "I searched our store but couldn't find items matching your request. Would you like to check out another category or try a different search?";
+    }
     if (this.options?.guardrail) {
       const outCheck = await this.options.guardrail.checkOutput({
         text: finalReply,

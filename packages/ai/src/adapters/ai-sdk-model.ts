@@ -1,5 +1,5 @@
 import type { CatalogRepository, TenantId } from "@avelor/core";
-import { generateText, type ModelMessage, type ToolSet, tool } from "ai";
+import { generateText, jsonSchema, type ModelMessage, type ToolSet, tool } from "ai";
 import { z } from "zod";
 import type {
   ChatInput,
@@ -100,13 +100,15 @@ export class AiSdkChatModel implements ChatModel {
       }
     }
 
-    // 2. Convert Avelor ToolDefinitions to SDK tools
+    // 2. Convert Avelor ToolDefinitions to SDK tools with full JSON schema
     const sdkTools: ToolSet = {};
     if (input.tools) {
       for (const t of input.tools) {
         sdkTools[t.name] = tool({
           description: t.description,
-          inputSchema: z.record(z.string(), z.unknown()),
+          inputSchema: t.parameters
+            ? jsonSchema(t.parameters as never)
+            : z.record(z.string(), z.unknown()),
           execute: async (args: Record<string, unknown>) => args,
         });
       }

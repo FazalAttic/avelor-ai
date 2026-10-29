@@ -88,8 +88,10 @@ export async function executeToolCall(
 
   switch (name) {
     case "search_products": {
-      const query = typeof args.query === "string" ? args.query.trim() : undefined;
-      const category = typeof args.category === "string" ? args.category.trim() : undefined;
+      const rawQuery = args.query ?? args.keyword ?? args.q;
+      const query = typeof rawQuery === "string" ? rawQuery.trim() : undefined;
+      const rawCategory = args.category ?? args.categorySlug;
+      const category = typeof rawCategory === "string" ? rawCategory.trim() : undefined;
       // Bounded output ceiling: max 10 products
       const rawLimit = typeof args.limit === "number" ? Math.floor(args.limit) : 5;
       const limit = Math.max(1, Math.min(rawLimit, 10));
@@ -164,7 +166,8 @@ export async function executeToolCall(
     }
 
     case "get_product_details": {
-      const productId = typeof args.productId === "string" ? args.productId.trim() : "";
+      const rawProductId = args.productId ?? args.id ?? args.product_id;
+      const productId = typeof rawProductId === "string" ? rawProductId.trim() : "";
       if (!productId) {
         return JSON.stringify({
           status: "error",

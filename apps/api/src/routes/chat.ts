@@ -235,6 +235,12 @@ export function createChatRoutes(
     );
     const products = found.filter((p): p is ProductWithVariants => p !== null);
 
+    const safeReply =
+      result.reply?.trim() ||
+      (products.length > 0
+        ? "Here are the top products I found in our store for you. Let me know if you would like more details or need help finding anything else!"
+        : "I couldn't find items matching your request in our catalog. Would you like to explore other categories or try a different search?");
+
     if (options?.conversationRepo && conversationId) {
       const storedProducts: StoredChatProduct[] = products.map((p) => ({
         id: p.id,
@@ -253,7 +259,7 @@ export function createChatRoutes(
       await options.conversationRepo.appendMessage(tenantId, {
         conversationId,
         role: "assistant",
-        content: result.reply,
+        content: safeReply,
         products: storedProducts,
       });
     }
@@ -262,7 +268,7 @@ export function createChatRoutes(
     // system prompt and internal tool payloads (see ADR 0007 on prompt leakage).
     return c.json({
       ...(conversationId ? { conversationId, title: conversationTitle } : {}),
-      reply: result.reply,
+      reply: safeReply,
       toolCalls: result.toolCallsExecuted,
       products,
     });
