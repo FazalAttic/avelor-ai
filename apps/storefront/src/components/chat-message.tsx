@@ -11,6 +11,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { TextMorph } from "torph/react";
 import { BotAvatar } from "@/components/bot-avatar";
 import { type ChatProduct, formatPrice } from "@/lib/chat-api";
 import { cn } from "@/lib/utils";
@@ -93,7 +94,11 @@ function ProductCard({
       <div className="flex flex-1 flex-col justify-between p-3">
         <div>
           <p className="truncate text-[13px] font-semibold text-foreground">{product.name}</p>
-          {price ? <p className="mt-0.5 text-xs text-muted">{formatPrice(price)}</p> : null}
+          {price ? (
+            <p className="mt-0.5 text-xs text-muted">
+              <TextMorph as="span">{formatPrice(price)}</TextMorph>
+            </p>
+          ) : null}
         </div>
         <div className="mt-2.5 flex items-center gap-1.5">
           {onBuyNow ? (
@@ -250,9 +255,6 @@ function ProductCarousel({
   );
 }
 
-const REVEAL_MS = 16;
-const REVEAL_CHARS = 4;
-
 export function ChatMessageItem({
   message,
   reveal = false,
@@ -271,8 +273,8 @@ export function ChatMessageItem({
   const [typed, setTyped] = useState(reveals ? "" : message.content);
   const [writing, setWriting] = useState(reveals);
 
-  // The API answers in one JSON body, so the reply is written out here — that
-  // is what gives the bot something to look like it is generating.
+  // Stream token-by-token (words & whitespace) rather than raw characters.
+  // This eliminates mid-word line breaking jumps, wrap thrashing, and viewport vibration.
   useEffect(() => {
     if (!reveals) {
       setTyped(message.content);
@@ -281,17 +283,45 @@ export function ChatMessageItem({
     }
     setTyped("");
     setWriting(true);
-    const text = message.content;
-    let shown = 0;
-    const timer = window.setInterval(() => {
-      shown = Math.min(text.length, shown + REVEAL_CHARS);
-      setTyped(text.slice(0, shown));
-      if (shown >= text.length) {
-        window.clearInterval(timer);
+
+    const tokens = message.content.match(/\s+|\S+/g) ?? [message.content];
+    let tokenIndex = 0;
+    let accumulated = "";
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
+
+    function step() {
+      if (cancelled) return;
+      if (tokenIndex >= tokens.length) {
+        setTyped(message.content);
         setWriting(false);
+        return;
       }
-    }, REVEAL_MS);
-    return () => window.clearInterval(timer);
+
+      const token = tokens[tokenIndex];
+      accumulated += token;
+      setTyped(accumulated);
+      tokenIndex += 1;
+
+      // Natural conversational cadence: micro-pause on punctuation and newlines
+      let delay = 20;
+      if (/[.!?]$/.test(token)) {
+        delay = 75;
+      } else if (/[,;:]$/.test(token)) {
+        delay = 40;
+      } else if (token.includes("\n")) {
+        delay = 50;
+      }
+
+      timeoutId = setTimeout(step, delay);
+    }
+
+    timeoutId = setTimeout(step, 30);
+
+    return () => {
+      cancelled = true;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [reveals, message.content]);
 
   return (
@@ -325,13 +355,22 @@ export function ChatMessageItem({
           />
         ) : null}
       </div>
-      {!isUser && !writing && message.products.length > 0 ? (
-        <ProductCarousel
-          products={message.products}
-          onBuyNow={onBuyNow}
-          onAddToCart={onAddToCart}
-        />
-      ) : null}
+      <AnimatePresence>
+        {!isUser && !writing && message.products.length > 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 12, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: "auto" }}
+            transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+            className="w-full overflow-hidden"
+          >
+            <ProductCarousel
+              products={message.products}
+              onBuyNow={onBuyNow}
+              onAddToCart={onAddToCart}
+            />
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </motion.div>
   );
 }

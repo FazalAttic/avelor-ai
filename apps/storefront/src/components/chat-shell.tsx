@@ -14,6 +14,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { type ReactNode, useEffect, useState } from "react";
+import { TextMorph } from "torph/react";
 import { AuthModal } from "@/components/auth-modal";
 import { CheckoutDrawer } from "@/components/checkout-drawer";
 import { IconButton } from "@/components/icon-button";
@@ -139,7 +140,7 @@ export function ChatShell({
             <HugeiconsIcon icon={ShoppingBag01Icon} size={18} strokeWidth={1.8} />
             {itemCount > 0 ? (
               <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-brand-blue text-[10px] font-bold text-white shadow-xs">
-                {itemCount}
+                <TextMorph as="span">{itemCount}</TextMorph>
               </span>
             ) : null}
           </button>

@@ -4,6 +4,7 @@ import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { TextMorph } from "torph/react";
 import { BotAvatar } from "@/components/bot-avatar";
 import { ChatMessageItem, type UiChatMessage } from "@/components/chat-message";
 import { ChatShell } from "@/components/chat-shell";
@@ -24,6 +25,14 @@ const STARTERS = [
   { emoji: "👟", text: "Running shoes under $100", tilt: "rotate-[1.4deg] translate-y-[2px]" },
   { emoji: "🎮", text: "A gift for a gamer", tilt: "-rotate-[1.8deg] -translate-y-[2.5px]" },
   { emoji: "🧥", text: "Cozy hoodie weather", tilt: "rotate-[1.1deg] translate-y-[1.5px]" },
+];
+
+const HERO_PHRASES = [
+  "perfect pair",
+  "dream sneakers",
+  "daily runners",
+  "trail kicks",
+  "signature look",
 ];
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -70,7 +79,15 @@ export default function Home() {
   const threadRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
   const [showJump, setShowJump] = useState(false);
+  const [heroPhraseIdx, setHeroPhraseIdx] = useState(0);
   const isChatting = sending || messages.length > 0;
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setHeroPhraseIdx((prev) => (prev + 1) % HERO_PHRASES.length);
+    }, 3200);
+    return () => clearInterval(timer);
+  }, []);
 
   async function loadRecents() {
     try {
@@ -125,26 +142,44 @@ export default function Home() {
     }
   }
 
-  // Follow the thread only while the reader is already at the bottom, so a new
-  // reply never yanks them out of something they were re-reading.
+  // Follow the thread when user submits or when messages change.
+  // Smooth scroll ONLY on user message; instant scroll while bot is writing to prevent jitter conflicts.
   // biome-ignore lint/correctness/useExhaustiveDependencies: re-check on every message and phase change
   useEffect(() => {
     const el = scrollRef.current;
-    if (el && pinnedRef.current) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    if (!el || !pinnedRef.current) return;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg?.role === "user") {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    } else {
+      el.scrollTop = el.scrollHeight;
+    }
   }, [messages, sending]);
 
-  // A reply grows as it is written out, so keep the bottom pinned as it grows
-  // rather than only when the message first lands.
+  // A reply grows as it is written out, so keep the bottom pinned as it grows.
+  // Throttle with requestAnimationFrame so rapid stream updates don't shake the viewport.
   // biome-ignore lint/correctness/useExhaustiveDependencies: re-observe when the thread mounts
   useEffect(() => {
     const el = scrollRef.current;
     const thread = threadRef.current;
     if (!el || !thread) return;
+
+    let rafId: number | null = null;
     const observer = new ResizeObserver(() => {
-      if (pinnedRef.current) el.scrollTop = el.scrollHeight;
+      if (!pinnedRef.current) return;
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        if (pinnedRef.current && el) {
+          el.scrollTop = el.scrollHeight;
+        }
+      });
     });
     observer.observe(thread);
-    return () => observer.disconnect();
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      observer.disconnect();
+    };
   }, [messages.length, sending]);
 
   function trackPinned() {
@@ -240,8 +275,8 @@ export default function Home() {
           >
             <h1 className="text-center text-3xl font-medium tracking-tight text-foreground sm:text-4xl md:text-5xl">
               Find your{" "}
-              <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">
-                perfect pair
+              <span className="inline-block bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">
+                <TextMorph as="span">{HERO_PHRASES[heroPhraseIdx]}</TextMorph>
               </span>{" "}
               of shoes
             </h1>

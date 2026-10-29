@@ -14,6 +14,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { type FormEvent, useEffect, useState } from "react";
+import { TextMorph } from "torph/react";
 import { useSession } from "@/lib/auth-client";
 import { useCart } from "@/lib/cart-context";
 import { confirmPayment, formatPrice, type StoreOrder } from "@/lib/chat-api";
@@ -242,7 +243,9 @@ export function CheckoutDrawer() {
                   {status === "confirmed" ? "Order Confirmed" : "Your Bag"}
                 </h2>
                 {status !== "confirmed" && itemCount > 0 && (
-                  <span className="text-xs text-muted">({itemCount})</span>
+                  <span className="text-xs text-muted">
+                    (<TextMorph as="span">{itemCount}</TextMorph>)
+                  </span>
                 )}
               </div>
 
@@ -414,7 +417,7 @@ export function CheckoutDrawer() {
                               <p className="truncate text-[11px] text-muted">{item.variantTitle}</p>
                             </div>
                             <p className="shrink-0 text-xs font-semibold text-foreground">
-                              {formatPrice(item.totalPrice)}
+                              <TextMorph as="span">{formatPrice(item.totalPrice)}</TextMorph>
                             </p>
                           </div>
 
@@ -429,7 +432,7 @@ export function CheckoutDrawer() {
                                 <HugeiconsIcon icon={MinusSignIcon} size={10} strokeWidth={2.4} />
                               </button>
                               <span className="w-5 text-center text-xs font-medium text-foreground">
-                                {item.quantity}
+                                <TextMorph as="span">{item.quantity}</TextMorph>
                               </span>
                               <button
                                 type="button"
@@ -529,12 +532,16 @@ export function CheckoutDrawer() {
                   <div className="mt-3 border-t border-border pt-3 text-xs text-muted flex flex-col gap-1.5">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span className="font-medium text-foreground">{formattedSubtotal}</span>
+                      <span className="font-medium text-foreground">
+                        <TextMorph as="span">{formattedSubtotal}</TextMorph>
+                      </span>
                     </div>
                     {discountMinor > 0 && (
                       <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
                         <span>Discount ({appliedCoupon?.code})</span>
-                        <span className="font-medium">-{formattedDiscount}</span>
+                        <span className="font-medium">
+                          -<TextMorph as="span">{formattedDiscount}</TextMorph>
+                        </span>
                       </div>
                     )}
                     <div className="flex justify-between">
@@ -545,12 +552,14 @@ export function CheckoutDrawer() {
                           isFreeShipping ? "text-emerald-600 font-semibold" : "text-foreground"
                         )}
                       >
-                        {formattedShipping}
+                        <TextMorph as="span">{formattedShipping}</TextMorph>
                       </span>
                     </div>
                     <div className="mt-2 flex items-center justify-between border-t border-border pt-2 text-sm font-semibold text-foreground">
                       <span>Total</span>
-                      <span className="text-base font-bold">{formattedTotal}</span>
+                      <span className="text-base font-bold">
+                        <TextMorph as="span">{formattedTotal}</TextMorph>
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -588,9 +597,10 @@ export function CheckoutDrawer() {
                 ) : (
                   <button
                     type="submit"
-                    className="flex h-11 w-full items-center justify-center rounded-xl bg-foreground text-xs font-semibold text-background shadow-xs transition-all hover:bg-foreground/90 active:scale-[0.98]"
+                    className="flex h-11 w-full items-center justify-center gap-1 rounded-xl bg-foreground text-xs font-semibold text-background shadow-xs transition-all hover:bg-foreground/90 active:scale-[0.98]"
                   >
-                    Checkout · {formattedTotal}
+                    <span>Checkout · </span>
+                    <TextMorph as="span">{formattedTotal}</TextMorph>
                   </button>
                 )}
               </form>
