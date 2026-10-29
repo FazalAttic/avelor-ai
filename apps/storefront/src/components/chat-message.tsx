@@ -257,7 +257,6 @@ function ProductCarousel({
 
 export function ChatMessageItem({
   message,
-  reveal = false,
   onBuyNow,
   onAddToCart,
 }: {
@@ -267,62 +266,6 @@ export function ChatMessageItem({
   onAddToCart?: (product: ChatProduct) => void;
 }) {
   const isUser = message.role === "user";
-  const reveals = reveal && !isUser;
-  // Seed empty on the first paint, otherwise the whole answer flashes before the
-  // reveal effect gets a chance to hide it.
-  const [typed, setTyped] = useState(reveals ? "" : message.content);
-  const [writing, setWriting] = useState(reveals);
-
-  // Stream token-by-token (words & whitespace) rather than raw characters.
-  // This eliminates mid-word line breaking jumps, wrap thrashing, and viewport vibration.
-  useEffect(() => {
-    if (!reveals) {
-      setTyped(message.content);
-      setWriting(false);
-      return;
-    }
-    setTyped("");
-    setWriting(true);
-
-    const tokens = message.content.match(/\s+|\S+/g) ?? [message.content];
-    let tokenIndex = 0;
-    let accumulated = "";
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    let cancelled = false;
-
-    function step() {
-      if (cancelled) return;
-      if (tokenIndex >= tokens.length) {
-        setTyped(message.content);
-        setWriting(false);
-        return;
-      }
-
-      const token = tokens[tokenIndex];
-      accumulated += token;
-      setTyped(accumulated);
-      tokenIndex += 1;
-
-      // Natural conversational cadence: micro-pause on punctuation and newlines
-      let delay = 20;
-      if (/[.!?]$/.test(token)) {
-        delay = 75;
-      } else if (/[,;:]$/.test(token)) {
-        delay = 40;
-      } else if (token.includes("\n")) {
-        delay = 50;
-      }
-
-      timeoutId = setTimeout(step, delay);
-    }
-
-    timeoutId = setTimeout(step, 30);
-
-    return () => {
-      cancelled = true;
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [reveals, message.content]);
 
   return (
     <motion.div
@@ -333,7 +276,7 @@ export function ChatMessageItem({
     >
       {!isUser ? (
         <span className="flex items-center gap-2 pl-1 text-[11px] font-medium text-muted">
-          <BotAvatar mood={writing ? "generating" : "idle"} />
+          <BotAvatar mood="idle" />
           Avelor
         </span>
       ) : null}
@@ -347,30 +290,15 @@ export function ChatMessageItem({
             "border-red-300/60 bg-red-50/70 text-red-900 dark:border-red-400/30 dark:bg-red-950/40 dark:text-red-200"
         )}
       >
-        {renderContent(isUser ? message.content : typed)}
-        {writing ? (
-          <span
-            aria-hidden
-            className="ml-0.5 inline-block h-[1.05em] w-[2px] translate-y-[2px] animate-pulse rounded-full bg-muted align-middle"
-          />
-        ) : null}
+        {renderContent(message.content)}
       </div>
-      <AnimatePresence>
-        {!isUser && !writing && message.products.length > 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 12, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: "auto" }}
-            transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full overflow-hidden"
-          >
-            <ProductCarousel
-              products={message.products}
-              onBuyNow={onBuyNow}
-              onAddToCart={onAddToCart}
-            />
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      {!isUser && message.products.length > 0 ? (
+        <ProductCarousel
+          products={message.products}
+          onBuyNow={onBuyNow}
+          onAddToCart={onAddToCart}
+        />
+      ) : null}
     </motion.div>
   );
 }

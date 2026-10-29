@@ -4,7 +4,6 @@ import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { TextMorph } from "torph/react";
 import { BotAvatar } from "@/components/bot-avatar";
 import { ChatMessageItem, type UiChatMessage } from "@/components/chat-message";
 import { ChatShell } from "@/components/chat-shell";
@@ -25,14 +24,6 @@ const STARTERS = [
   { emoji: "👟", text: "Running shoes under $100", tilt: "rotate-[1.4deg] translate-y-[2px]" },
   { emoji: "🎮", text: "A gift for a gamer", tilt: "-rotate-[1.8deg] -translate-y-[2.5px]" },
   { emoji: "🧥", text: "Cozy hoodie weather", tilt: "rotate-[1.1deg] translate-y-[1.5px]" },
-];
-
-const HERO_PHRASES = [
-  "perfect pair",
-  "dream sneakers",
-  "daily runners",
-  "trail kicks",
-  "signature look",
 ];
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -71,7 +62,6 @@ export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<UiChatMessage[]>([]);
   const [sending, setSending] = useState(false);
-  const [liveId, setLiveId] = useState<string | null>(null);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [recentChats, setRecentChats] = useState<RecentChat[]>([]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -79,15 +69,7 @@ export default function Home() {
   const threadRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
   const [showJump, setShowJump] = useState(false);
-  const [heroPhraseIdx, setHeroPhraseIdx] = useState(0);
   const isChatting = sending || messages.length > 0;
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setHeroPhraseIdx((prev) => (prev + 1) % HERO_PHRASES.length);
-    }, 3200);
-    return () => clearInterval(timer);
-  }, []);
 
   async function loadRecents() {
     try {
@@ -218,7 +200,6 @@ export default function Home() {
         setActiveConversationId(result.conversationId);
       }
       const replyId = crypto.randomUUID();
-      setLiveId(replyId);
       setMessages((prev) => [
         ...prev,
         {
@@ -275,8 +256,8 @@ export default function Home() {
           >
             <h1 className="text-center text-3xl font-medium tracking-tight text-foreground sm:text-4xl md:text-5xl">
               Find your{" "}
-              <span className="inline-block bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">
-                <TextMorph as="span">{HERO_PHRASES[heroPhraseIdx]}</TextMorph>
+              <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">
+                perfect pair
               </span>{" "}
               of shoes
             </h1>
@@ -333,7 +314,6 @@ export default function Home() {
                   <ChatMessageItem
                     key={message.id}
                     message={message}
-                    reveal={message.id === liveId}
                     onBuyNow={(product) => {
                       addItem(product);
                       openDrawer();
