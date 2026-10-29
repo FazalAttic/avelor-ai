@@ -33,9 +33,11 @@ import { createAdminRoutes } from "./routes/admin";
 import { createCartRoutes } from "./routes/cart";
 import { createCatalogRoutes } from "./routes/catalog";
 import { createChatRoutes } from "./routes/chat";
+import { createMediaRoutes } from "./routes/media";
 import { createOrderRoutes } from "./routes/orders";
 import { createPaymentRoutes } from "./routes/payments";
 import { createPolicyRoutes } from "./routes/policies";
+import type { ImageKitService } from "./services/imagekit";
 
 export type AppEnv = {
   Variables: {
@@ -63,6 +65,7 @@ export interface AppOptions {
   readonly enforceAdminAuth?: boolean | undefined;
   readonly chatRateLimiter?: RedisTokenBucket | undefined;
   readonly apiRateLimiter?: RedisTokenBucket | undefined;
+  readonly imageKitService?: ImageKitService | undefined;
 }
 
 export function createApp(options: AppOptions = {}) {
@@ -195,6 +198,15 @@ export function createApp(options: AppOptions = {}) {
       policyRepo,
       guardrail,
       conversationRepo,
+    })
+  );
+
+  // Mount media upload & ImageKit / Cloudflare CDN routes
+  app.route(
+    "/api/v1/media",
+    createMediaRoutes({
+      imageKitService: options.imageKitService,
+      authMiddleware: options.enforceAdminAuth ? authMiddleware : undefined,
     })
   );
 

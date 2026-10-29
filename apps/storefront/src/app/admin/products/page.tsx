@@ -1,9 +1,15 @@
 "use client";
 
-import { Add01Icon, Delete02Icon, Edit03Icon, PackageIcon } from "@hugeicons/core-free-icons";
+import {
+  Add01Icon,
+  Delete02Icon,
+  Edit03Icon,
+  PackageIcon,
+  Upload01Icon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClass } from "@/components/ui/button";
@@ -26,6 +32,7 @@ import {
   type ProductStatus,
   removeProduct,
   updateProduct,
+  uploadMedia,
 } from "@/lib/admin-api";
 import { cn } from "@/lib/utils";
 
@@ -433,6 +440,9 @@ function ProductSidePanel({
   const [activeVariantId, setActiveVariantId] = useState<string>("v-default");
   const [failure, setFailure] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingVariantId, setUploadingVariantId] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [lastKey, setLastKey] = useState<string | null>(null);
 
   // Re-seed the form whenever the side panel opens for a different product.
@@ -464,6 +474,20 @@ function ProductSidePanel({
       return { ...previous, variants: updatedVariants };
     });
   };
+
+  async function handleImageUpload(file: File) {
+    if (!activeVariant) return;
+    setUploadError(null);
+    setUploadingVariantId(activeVariant.id);
+    try {
+      const res = await uploadMedia(file);
+      updateActiveVariant({ image: res.url });
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Failed to upload image");
+    } finally {
+      setUploadingVariantId(null);
+    }
+  }
 
   const addVariant = () => {
     const nextIndex = draft.variants.length + 1;
@@ -809,37 +833,101 @@ function ProductSidePanel({
               </div>
 
               {/* Variant Image & Live Preview */}
-              <div className="grid items-start gap-4 sm:grid-cols-[1fr_auto]">
-                <TextField
-                  label="Variant Image URL"
-                  value={activeVariant.image}
-                  onChange={(event) => updateActiveVariant({ image: event.target.value })}
-                  placeholder="https://images.unsplash.com/photo-..."
-                  hint="Image specific to this variant. Displays as the primary visual when this variant is active."
-                />
+              <div className="space-y-3">
+                <div className="grid items-start gap-4 sm:grid-cols-[1fr_auto]">
+                  <div className="space-y-2.5">
+                    <TextField
+                      label="Variant Image URL"
+                      value={activeVariant.image}
+                      onChange={(event) => updateActiveVariant({ image: event.target.value })}
+                      placeholder="https://images.unsplash.com/photo-..."
+                      hint="Paste external image URL, or upload directly to ImageKit & Cloudflare CDN below."
+                    />
 
-                <div className="flex shrink-0 flex-col gap-1.5">
-                  <span className="px-1 text-[11px] font-semibold tracking-[0.08em] text-muted uppercase">
-                    Variant Preview
-                  </span>
-                  <div className="flex size-[74px] items-center justify-center overflow-hidden rounded-xl border border-admin-edge bg-admin-line/40 ring-1 ring-admin-edge">
-                    {activeVariant.image.trim() ? (
-                      <Image
-                        src={activeVariant.image.trim()}
-                        alt="Variant preview"
-                        width={74}
-                        height={74}
-                        unoptimized
-                        className="size-full object-cover"
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/avif"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleImageUpload(file);
+                            e.target.value = "";
+                          }
+                        }}
                       />
-                    ) : (
-                      <HugeiconsIcon
-                        icon={PackageIcon}
-                        size={24}
-                        strokeWidth={1.6}
-                        className="text-muted/60"
-                      />
-                    )}
+
+                      <button
+                        type="button"
+                        disabled={uploadingVariantId === activeVariant.id}
+                        onClick={() => fileInputRef.current?.click()}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-admin-edge bg-admin-card px-3 py-1.5 text-xs font-medium text-admin-ink hover:border-admin-ink/30 hover:bg-admin-line/50 transition-all disabled:opacity-50 cursor-pointer"
+                      >
+                        {uploadingVariantId === activeVariant.id ? (
+                          <>
+                            <span className="size-3 animate-spin rounded-full border-2 border-admin-ink border-t-transparent" />
+                            <span>Uploading to CDN…</span>
+                          </>
+                        ) : (
+                          <>
+                            <HugeiconsIcon icon={Upload01Icon} size={14} strokeWidth={2} />
+                            <span>Upload image</span>
+                          </>
+                        )}
+                      </button>
+
+                      <span className="text-[11px] text-muted">
+                        Permanent 10-year Cloudflare Edge Cache
+                      </span>
+                    </div>
+
+                    {uploadError ? (
+                      <p className="text-[11px] font-medium text-red-600 dark:text-red-400">
+                        {uploadError}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="flex shrink-0 flex-col gap-1.5">
+                    <span className="px-1 text-[11px] font-semibold tracking-[0.08em] text-muted uppercase">
+                      Variant Preview
+                    </span>
+                    <button
+                      type="button"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
+                        if (file) handleImageUpload(file);
+                      }}
+                      onClick={() => fileInputRef.current?.click()}
+                      title="Click or drop an image file here to upload"
+                      className="group relative flex size-[82px] cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-admin-edge bg-admin-line/40 ring-1 ring-admin-edge transition-all hover:border-admin-ink/40 text-left"
+                    >
+                      {activeVariant.image.trim() ? (
+                        <Image
+                          src={activeVariant.image.trim()}
+                          alt="Variant preview"
+                          width={82}
+                          height={82}
+                          unoptimized
+                          className="size-full object-cover transition-transform duration-200 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center gap-1 text-muted/60 group-hover:text-admin-ink transition-colors">
+                          <HugeiconsIcon icon={PackageIcon} size={22} strokeWidth={1.6} />
+                          <span className="text-[9px] font-medium">Drop image</span>
+                        </div>
+                      )}
+
+                      {uploadingVariantId === activeVariant.id ? (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xs">
+                          <span className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        </div>
+                      ) : null}
+                    </button>
                   </div>
                 </div>
               </div>

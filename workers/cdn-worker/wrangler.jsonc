@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "avelor-cdn",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-09-23",
+  "vars": {
+    "IMAGEKIT_ENDPOINT": "https://ik.imagekit.io/mqz7lr6zf",
+    "BRAND_NAME": "Avelor AI CDN",
+    "ICON_URL": "https://cdn.statiqo.bond/icon.svg"
+  }
+}
+

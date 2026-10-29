@@ -171,6 +171,42 @@ export const fetchPolicies = () => request<readonly AdminPolicy[]>("/admin/polic
 export const savePolicy = (topic: PolicyTopic, input: { title: string; content: string }) =>
   request<AdminPolicy>(`/admin/policies/${topic}`, { method: "PUT", ...json(input) });
 
+export interface UploadMediaResult {
+  readonly success: boolean;
+  readonly url: string;
+  readonly rawUrl: string;
+  readonly fileId: string;
+  readonly filePath: string;
+  readonly name: string;
+  readonly size: number;
+  readonly isMock?: boolean;
+}
+
+export async function uploadMedia(file: File): Promise<UploadMediaResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_URL}/media/upload`, {
+    method: "POST",
+    headers: {
+      "x-tenant-id": TENANT_ID,
+    },
+    credentials: "include",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    let detail = `Upload failed (${response.status})`;
+    try {
+      const body = (await response.json()) as ApiErrorBody;
+      if (body.error?.message) detail = body.error.message;
+    } catch {}
+    throw new Error(detail);
+  }
+
+  return (await response.json()) as UploadMediaResult;
+}
+
 export function formatMoney(money: AdminMoney): string {
   const value = money.amount / 100;
   return money.currency === "USD"
