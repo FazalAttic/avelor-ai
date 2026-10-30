@@ -238,32 +238,48 @@ function AdminShell({ user, children }: { user: AdminUser; children: ReactNode }
           <BrandMark caption="Admin" wordmarkClassName={RAIL_TEXT} />
         </Link>
 
-        <div className={cn("relative mb-2", collapsed ? "hidden" : "max-lg:hidden")}>
-          <HugeiconsIcon
-            icon={Search01Icon}
-            size={15}
-            strokeWidth={1.9}
-            aria-hidden
-            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted"
-          />
-          <input
-            ref={searchRef}
-            type="search"
-            value={query}
-            placeholder="Search"
-            aria-label="Search the console"
-            onChange={(event) => setQuery(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && items[0]) router.push(items[0].href);
-              if (event.key === "Escape") {
-                setQuery("");
-                event.currentTarget.blur();
-              }
+        <search className={cn("relative mb-2", collapsed ? "hidden" : "max-lg:hidden")}>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (items[0]) router.push(items[0].href);
             }}
-            className={RAIL_SEARCH}
-          />
-          <kbd className={RAIL_KBD}>{shortcut}</kbd>
-        </div>
+          >
+            <HugeiconsIcon
+              icon={Search01Icon}
+              size={15}
+              strokeWidth={1.9}
+              aria-hidden
+              className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted"
+            />
+            <input
+              ref={searchRef}
+              type="search"
+              name="admin-quick-search"
+              id="admin-quick-search"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              data-lpignore="true"
+              data-1p-ignore="true"
+              data-form-type="other"
+              value={query}
+              placeholder="Search"
+              aria-label="Search the console"
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && items[0]) router.push(items[0].href);
+                if (event.key === "Escape") {
+                  setQuery("");
+                  event.currentTarget.blur();
+                }
+              }}
+              className={RAIL_SEARCH}
+            />
+            <kbd className={RAIL_KBD}>{shortcut}</kbd>
+          </form>
+        </search>
 
         <button
           type="button"

@@ -27,6 +27,13 @@ export function SearchField({
       />
       <input
         type="search"
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+        spellCheck={false}
+        data-lpignore="true"
+        data-1p-ignore="true"
+        data-form-type="other"
         aria-label={label}
         value={value}
         placeholder={placeholder}

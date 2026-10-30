@@ -261,7 +261,23 @@ export default function AdminSecurityPage() {
               </div>
             </>
           ) : (
-            <>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                start();
+              }}
+              className="flex flex-col gap-4"
+            >
+              <input
+                type="text"
+                name="username"
+                autoComplete="username"
+                value={(session?.user as { email?: string } | undefined)?.email ?? "admin"}
+                readOnly
+                tabIndex={-1}
+                aria-hidden="true"
+                className="sr-only"
+              />
               <p className="text-[13px] leading-relaxed text-muted">
                 Setup takes a minute: confirm your password to generate a key, add that key to your
                 authenticator, then enter the code it shows.
@@ -269,6 +285,7 @@ export default function AdminSecurityPage() {
               <TextField
                 label="Confirm password"
                 type="password"
+                name="password"
                 value={password}
                 autoComplete="current-password"
                 disabled={busy}
@@ -278,15 +295,15 @@ export default function AdminSecurityPage() {
                 wrapperClassName="max-w-[320px]"
               />
               <Button
+                type="submit"
                 variant="ink"
                 className="self-start"
                 disabled={busy || !password}
-                onClick={start}
               >
                 <HugeiconsIcon icon={KeyIcon} size={15} strokeWidth={1.9} />
                 {busy ? "Generating…" : "Generate setup key"}
               </Button>
-            </>
+            </form>
           )}
         </div>
       </Panel>
@@ -302,21 +319,41 @@ export default function AdminSecurityPage() {
             <Button className={LINE_BUTTON} onClick={() => setOffOpen(false)}>
               Keep it on
             </Button>
-            <Button variant="ink" disabled={busy} onClick={turnOff}>
+            <Button type="submit" form="turn-off-2fa-form" variant="ink" disabled={busy}>
               {busy ? "Turning off…" : "Turn off"}
             </Button>
           </>
         }
       >
-        <TextField
-          label="Confirm password"
-          type="password"
-          value={password}
-          autoComplete="current-password"
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="Your admin password"
-          className="border-admin-edge bg-admin-canvas"
-        />
+        <form
+          id="turn-off-2fa-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            turnOff();
+          }}
+          className="flex flex-col gap-3"
+        >
+          <input
+            type="text"
+            name="username"
+            autoComplete="username"
+            value={(session?.user as { email?: string } | undefined)?.email ?? "admin"}
+            readOnly
+            tabIndex={-1}
+            aria-hidden="true"
+            className="sr-only"
+          />
+          <TextField
+            label="Confirm password"
+            type="password"
+            name="password"
+            value={password}
+            autoComplete="current-password"
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Your admin password"
+            className="border-admin-edge bg-admin-canvas"
+          />
+        </form>
       </Dialog>
     </section>
   );
