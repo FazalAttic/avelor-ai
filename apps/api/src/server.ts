@@ -25,7 +25,6 @@ import {
 } from "@avelor/database";
 import { createApp } from "./app";
 import { createAuth } from "./auth";
-import { seedDemoOrders, seedDemoStore } from "./seed";
 
 const port = Number(process.env.PORT ?? 5000);
 const tenantId = parseTenantId(process.env.AVELOR_TENANT_ID ?? "store_alpha");
@@ -77,8 +76,6 @@ const policyRepo = new InMemoryPolicyRepository();
 const orderRepo = new InMemoryOrderRepository();
 const conversationRepo = new InMemoryConversationRepository();
 
-await seedDemoStore(catalogRepo, policyRepo, tenantId);
-await seedDemoOrders(orderRepo, catalogRepo, tenantId);
 await reindexCatalog({ tenantId, catalogRepo, embeddingModel, vectorStore });
 
 const app = createApp({
