@@ -60,7 +60,7 @@
      canvas and the modules match, this is the only thing telling them apart, so
      it has to be confident without turning into a frame. Night needs more:
      light-on-dark hairlines lose punch faster. */
-  --admin-edge: color-mix(in oklab, var(--admin-ink) 5%, transparent);
+  --admin-edge: color-mix(in oklab, var(--admin-ink) 12%, transparent);
   --admin-ink: #15171a;
   --admin-ink-contrast: #ffffff;
   --delta-up: #12854f;
@@ -140,8 +140,8 @@ body:has(#admin-login-shell) {
    editing those shared files or touching the storefront. */
 body:has(#admin-shell),
 body:has(#admin-login-shell) {
-  --border: var(--admin-edge);
-  --border-strong: color-mix(in oklab, var(--admin-ink) 22%, transparent);
+  --border: var(--admin-line);
+  --border-strong: color-mix(in oklab, var(--admin-ink) 25%, transparent);
 }
 
 /* Console dialogs enter softly and leave instantly — no animation callback
@@ -268,7 +268,7 @@ html {
   --admin-canvas: #0e1122;
   --admin-card: #0e1122;
   --admin-line: #232840;
-  --admin-edge: color-mix(in oklab, var(--admin-ink) 7%, transparent);
+  --admin-edge: color-mix(in oklab, var(--admin-ink) 14%, transparent);
   --admin-ink: #eef0fb;
   --admin-ink-contrast: #0a0c18;
   --delta-up: #4ade80;

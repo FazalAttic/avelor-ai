@@ -78,18 +78,18 @@ export function SlideOver({
         aria-labelledby={headingId}
         className={cn(
           "admin-slide-left relative z-10 flex h-full w-full flex-col overflow-hidden",
-          "border-l border-admin-edge bg-admin-card shadow-2xl outline-none",
+          "border-l border-admin-line bg-admin-rail/20 shadow-2xl outline-none backdrop-blur-xs",
           WIDTH_MAP[width],
           className
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-admin-edge px-6 py-4 sm:px-7">
+        <div className="flex items-start justify-between gap-4 border-b border-admin-line bg-admin-card px-6 py-5 sm:px-7">
           <div className="min-w-0">
-            <h2 id={headingId} className="text-base font-semibold tracking-tight text-admin-ink">
+            <h2 id={headingId} className="text-lg font-semibold tracking-tight text-admin-ink">
               {title}
             </h2>
             {description ? (
-              <p className="pt-0.5 text-xs leading-relaxed text-muted">{description}</p>
+              <p className="pt-1 text-xs leading-relaxed text-muted">{description}</p>
             ) : null}
           </div>
           <button
@@ -97,8 +97,8 @@ export function SlideOver({
             onClick={onClose}
             aria-label="Close"
             className={cn(
-              "-mr-1.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted",
-              "transition-colors duration-150 ease-expo hover:bg-admin-line/60 hover:text-admin-ink",
+              "-mr-1.5 flex size-8 shrink-0 items-center justify-center rounded-lg text-muted cursor-pointer",
+              "transition-colors duration-150 ease-expo hover:bg-admin-line hover:text-admin-ink",
               "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
             )}
           >
@@ -109,7 +109,7 @@ export function SlideOver({
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-7">{children}</div>
 
         {footer ? (
-          <div className="flex items-center justify-end gap-2.5 border-t border-admin-edge bg-admin-line/40 px-6 py-3.5 sm:px-7">
+          <div className="flex items-center justify-end gap-3 border-t border-admin-line bg-admin-card px-6 py-4 sm:px-7">
             {footer}
           </div>
         ) : null}

@@ -635,94 +635,96 @@ function ProductSidePanel({
       >
         {failure ? <Alert>{failure}</Alert> : null}
 
-        {/* Section 1: Product Overview & Comprehensive Description */}
-        <div className="space-y-4 rounded-2xl border border-admin-edge bg-admin-canvas/50 p-5">
-          <div className="border-b border-admin-edge/70 pb-3">
-            <h3 className="text-xs font-semibold tracking-wider text-admin-ink uppercase">
-              Product Overview
-            </h3>
-            <p className="text-[11px] text-muted">
-              The product name and description define the catalog record. All images, pricing, and
-              inventory depend on the variants below.
+        {/* Section 1: General Information */}
+        <div className="space-y-4 rounded-2xl border border-admin-line bg-admin-card p-6 shadow-xs">
+          <div className="border-b border-admin-line pb-3.5">
+            <h3 className="text-sm font-semibold text-admin-ink">General Information</h3>
+            <p className="mt-0.5 text-xs text-muted">
+              Define the product title, catalog status, categories, and full description.
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <TextField
-              label="Product Name"
-              value={draft.name}
-              onChange={(event) => set({ name: event.target.value })}
-              placeholder="e.g. Apex Minimalist Desk Lamp"
-              required
-            />
-            <SelectField
-              label="Status"
-              value={draft.status}
-              onChange={(event) => set({ status: event.target.value as ProductStatus })}
-              options={[
-                { value: "active", label: "Active" },
-                { value: "draft", label: "Draft" },
-                { value: "archived", label: "Archived" },
-              ]}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="product-description"
-              className="px-1 text-[11px] font-semibold tracking-[0.08em] text-muted uppercase"
-            >
-              Description & Specifications
-            </label>
-            <textarea
-              id="product-description"
-              rows={5}
-              value={draft.description}
-              onChange={(event) => set({ description: event.target.value })}
-              placeholder="Write the full product description here — specifications, materials, dimensions, highlights, sizing, and details. Customers and the AI assistant rely directly on this description."
-              className={cn(
-                "w-full resize-y rounded-xl border border-admin-edge bg-admin-canvas px-3.5 py-2.5 text-[13px] leading-relaxed text-admin-ink",
-                "transition-colors duration-150 ease-expo placeholder:text-subtle",
-                "focus:border-admin-ink/35 focus:outline-none"
-              )}
-            />
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="sm:col-span-2">
+              <TextField
+                label="Product Name"
+                value={draft.name}
+                onChange={(event) => set({ name: event.target.value })}
+                placeholder="e.g. Apex Minimalist Desk Lamp"
+                required
+              />
+            </div>
+            <div className="sm:col-span-1">
+              <SelectField
+                direction="vertical"
+                label="Status"
+                value={draft.status}
+                onChange={(event) => set({ status: event.target.value as ProductStatus })}
+                options={[
+                  { value: "active", label: "Active" },
+                  { value: "draft", label: "Draft" },
+                  { value: "archived", label: "Archived" },
+                ]}
+              />
+            </div>
           </div>
 
           <TextField
             label="Categories"
             value={draft.categories}
             onChange={(event) => set({ categories: event.target.value })}
-            placeholder="lighting, workspace, home"
-            hint="Comma separated. Used for catalog filtering and search discovery."
+            placeholder="e.g. lighting, workspace, decor"
+            hint="Comma-separated tags used for storefront filtering and conversational search."
           />
+
+          <div className="flex flex-col gap-1.5">
+            <label
+              htmlFor="product-description"
+              className="px-0.5 text-xs font-semibold text-admin-ink"
+            >
+              Description & Specifications
+            </label>
+            <textarea
+              id="product-description"
+              rows={4}
+              value={draft.description}
+              onChange={(event) => set({ description: event.target.value })}
+              placeholder="Write the full product description here — specifications, materials, dimensions, highlights, and sizing. Customers and the AI assistant rely directly on this description."
+              className={cn(
+                "w-full resize-y rounded-xl border border-border bg-background px-3.5 py-2.5 text-[13px] leading-relaxed text-foreground shadow-2xs",
+                "transition-colors duration-150 ease-expo placeholder:text-muted/60",
+                "hover:border-admin-ink/30 focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/15 focus:outline-none"
+              )}
+            />
+            <p className="px-0.5 text-xs text-muted">
+              Detailed descriptions provide richer context for shoppers and AI recommendations.
+            </p>
+          </div>
         </div>
 
         {/* Section 2: Variant-Driven Information & Imagery */}
-        <div className="space-y-4 rounded-2xl border border-admin-edge bg-admin-canvas/50 p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-admin-edge/70 pb-3">
+        <div className="space-y-5 rounded-2xl border border-admin-line bg-admin-card p-6 shadow-xs">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-admin-line pb-3.5">
             <div>
-              <h3 className="text-xs font-semibold tracking-wider text-admin-ink uppercase">
-                Variants & Imagery
-              </h3>
-              <p className="text-[11px] text-muted">
-                Images, pricing, stock, and SKUs belong to each variant. Selecting a variant updates
-                all its information.
+              <h3 className="text-sm font-semibold text-admin-ink">Variants & Pricing</h3>
+              <p className="mt-0.5 text-xs text-muted">
+                Each variant contains its own title, SKU, price, stock inventory, and image.
               </p>
             </div>
             <Button
               type="button"
               variant="secondary"
               size="sm"
-              className="border-admin-edge bg-admin-card hover:bg-admin-line/70"
+              className="gap-1.5 border-admin-line bg-admin-card hover:bg-admin-line/50 text-admin-ink shadow-2xs"
               onClick={addVariant}
             >
-              <HugeiconsIcon icon={Add01Icon} size={14} strokeWidth={2} />
-              Add variant
+              <HugeiconsIcon icon={Add01Icon} size={15} strokeWidth={2} />
+              <span>Add variant</span>
             </Button>
           </div>
 
           {/* Dynamic Variant Switcher Tabs */}
-          <div className="flex flex-wrap items-center gap-2 border-b border-admin-edge/50 pb-3">
+          <div className="flex flex-wrap items-center gap-2 border-b border-admin-line pb-3.5">
             {draft.variants.map((v, i) => {
               const isSelected = v.id === activeVariant?.id;
               return (
@@ -731,13 +733,18 @@ function ProductSidePanel({
                   type="button"
                   onClick={() => setActiveVariantId(v.id)}
                   className={cn(
-                    "flex items-center gap-2.5 rounded-xl border px-3 py-1.5 text-xs transition-all duration-150",
+                    "flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs transition-all duration-150 cursor-pointer",
                     isSelected
-                      ? "border-admin-ink/40 bg-admin-card text-admin-ink font-semibold shadow-sm ring-1 ring-admin-ink/20"
-                      : "border-admin-edge bg-admin-card/50 text-muted hover:border-admin-ink/20 hover:text-admin-ink"
+                      ? "border-admin-ink bg-admin-ink text-white font-semibold shadow-xs"
+                      : "border-admin-line bg-admin-card text-admin-ink hover:border-admin-ink/30 hover:bg-admin-line/30"
                   )}
                 >
-                  <span className="flex size-5 shrink-0 items-center justify-center overflow-hidden rounded bg-admin-line/60">
+                  <span
+                    className={cn(
+                      "flex size-5 shrink-0 items-center justify-center overflow-hidden rounded",
+                      isSelected ? "bg-white/20" : "bg-admin-line"
+                    )}
+                  >
                     {v.image.trim() ? (
                       <Image
                         src={v.image.trim()}
@@ -752,13 +759,20 @@ function ProductSidePanel({
                         icon={PackageIcon}
                         size={12}
                         strokeWidth={1.8}
-                        className="text-muted/60"
+                        className={isSelected ? "text-white/80" : "text-muted"}
                       />
                     )}
                   </span>
                   <span>{v.title || `Variant ${i + 1}`}</span>
                   {v.price ? (
-                    <span className="font-mono text-[11px] opacity-75">${v.price}</span>
+                    <span
+                      className={cn(
+                        "font-mono text-[11px]",
+                        isSelected ? "text-white/80" : "text-muted"
+                      )}
+                    >
+                      ${v.price}
+                    </span>
                   ) : null}
                 </button>
               );
@@ -767,14 +781,14 @@ function ProductSidePanel({
 
           {/* Active Variant Editor */}
           {activeVariant ? (
-            <div className="space-y-4 rounded-xl border border-admin-edge bg-admin-card p-4.5">
-              <div className="flex items-center justify-between border-b border-admin-edge/60 pb-2.5">
+            <div className="space-y-4 rounded-xl border border-admin-line bg-admin-rail/35 p-5">
+              <div className="flex items-center justify-between border-b border-admin-line pb-2.5">
                 <div className="flex items-center gap-2">
-                  <Badge className="border-admin-edge bg-admin-line/60 text-[11px]">
+                  <Badge className="border-admin-line bg-white/90 text-[11px] font-medium text-admin-ink dark:bg-zinc-800">
                     Variant: {activeVariant.title || "Default"}
                   </Badge>
                   {draft.variants[0]?.id === activeVariant.id ? (
-                    <span className="text-[11px] text-muted">(Primary cover)</span>
+                    <span className="text-xs text-muted">(Primary cover)</span>
                   ) : null}
                 </div>
                 {draft.variants.length > 1 ? (
@@ -782,7 +796,7 @@ function ProductSidePanel({
                     type="button"
                     aria-label={`Remove variant ${activeVariant.title}`}
                     onClick={() => removeVariant(activeVariant.id)}
-                    className="flex items-center gap-1 text-[11px] font-medium text-red-600 hover:text-red-700 dark:text-red-400"
+                    className="flex items-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400 transition-colors cursor-pointer"
                   >
                     <HugeiconsIcon icon={Delete02Icon} size={14} strokeWidth={1.8} />
                     <span>Delete variant</span>
@@ -793,7 +807,7 @@ function ProductSidePanel({
               {/* Title & SKU */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <TextField
-                  label="Variant Name / Title"
+                  label="Variant Title / Color / Size"
                   value={activeVariant.title}
                   onChange={(event) => updateActiveVariant({ title: event.target.value })}
                   placeholder="e.g. Matte Black / Large"
@@ -804,6 +818,7 @@ function ProductSidePanel({
                   value={activeVariant.sku}
                   onChange={(event) => updateActiveVariant({ sku: event.target.value })}
                   placeholder="e.g. apex-lamp-blk"
+                  hint="Optional unique inventory identifier"
                 />
               </div>
 
@@ -829,22 +844,64 @@ function ProductSidePanel({
                   value={activeVariant.stock}
                   onChange={(event) => updateActiveVariant({ stock: event.target.value })}
                   placeholder="25"
+                  hint="Available units in inventory"
                 />
               </div>
 
               {/* Variant Image & Live Preview */}
-              <div className="space-y-3">
-                <div className="grid items-start gap-4 sm:grid-cols-[1fr_auto]">
-                  <div className="space-y-2.5">
+              <div className="space-y-2 pt-1">
+                <span className="px-0.5 text-xs font-semibold text-admin-ink block">
+                  Variant Media & Imagery
+                </span>
+                <div className="flex flex-col sm:flex-row items-start gap-4 rounded-xl border border-admin-line bg-admin-card p-4 shadow-2xs">
+                  {/* Thumbnail / Dropzone */}
+                  <button
+                    type="button"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const file = e.dataTransfer.files?.[0];
+                      if (file) handleImageUpload(file);
+                    }}
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Click or drop an image file here to upload"
+                    className="group relative flex size-24 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-admin-line bg-admin-line/20 transition-all hover:border-brand-blue hover:bg-brand-blue/5 text-center"
+                  >
+                    {activeVariant.image.trim() ? (
+                      <Image
+                        src={activeVariant.image.trim()}
+                        alt="Variant preview"
+                        width={96}
+                        height={96}
+                        unoptimized
+                        className="size-full object-cover transition-transform duration-200 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center gap-1.5 p-2 text-muted group-hover:text-brand-blue transition-colors">
+                        <HugeiconsIcon icon={Upload01Icon} size={22} strokeWidth={1.8} />
+                        <span className="text-[10px] font-medium leading-tight">
+                          Click or drop image
+                        </span>
+                      </div>
+                    )}
+
+                    {uploadingVariantId === activeVariant.id ? (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xs">
+                        <span className="size-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      </div>
+                    ) : null}
+                  </button>
+
+                  {/* URL Input & Direct Upload Button */}
+                  <div className="min-w-0 flex-1 space-y-2.5">
                     <TextField
-                      label="Variant Image URL"
+                      label="Image URL"
                       value={activeVariant.image}
                       onChange={(event) => updateActiveVariant({ image: event.target.value })}
                       placeholder="https://images.unsplash.com/photo-..."
-                      hint="Paste external image URL, or upload directly to ImageKit & Cloudflare CDN below."
                     />
 
-                    <div className="flex flex-wrap items-center gap-2.5">
+                    <div className="flex flex-wrap items-center gap-3">
                       <input
                         type="file"
                         ref={fileInputRef}
@@ -863,71 +920,29 @@ function ProductSidePanel({
                         type="button"
                         disabled={uploadingVariantId === activeVariant.id}
                         onClick={() => fileInputRef.current?.click()}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-admin-edge bg-admin-card px-3 py-1.5 text-xs font-medium text-admin-ink hover:border-admin-ink/30 hover:bg-admin-line/50 transition-all disabled:opacity-50 cursor-pointer"
+                        className="inline-flex items-center gap-2 rounded-xl border border-admin-line bg-admin-card px-3.5 py-2 text-xs font-medium text-admin-ink hover:border-admin-ink/40 hover:bg-admin-line/50 transition-all disabled:opacity-50 cursor-pointer shadow-2xs"
                       >
                         {uploadingVariantId === activeVariant.id ? (
                           <>
-                            <span className="size-3 animate-spin rounded-full border-2 border-admin-ink border-t-transparent" />
+                            <span className="size-3.5 animate-spin rounded-full border-2 border-admin-ink border-t-transparent" />
                             <span>Uploading to CDN…</span>
                           </>
                         ) : (
                           <>
-                            <HugeiconsIcon icon={Upload01Icon} size={14} strokeWidth={2} />
-                            <span>Upload image</span>
+                            <HugeiconsIcon icon={Upload01Icon} size={15} strokeWidth={2} />
+                            <span>Choose file from computer</span>
                           </>
                         )}
                       </button>
 
-                      <span className="text-[11px] text-muted">
-                        Permanent 10-year Cloudflare Edge Cache
-                      </span>
+                      <span className="text-xs text-muted">JPG, PNG, WebP with CDN edge cache</span>
                     </div>
 
                     {uploadError ? (
-                      <p className="text-[11px] font-medium text-red-600 dark:text-red-400">
+                      <p className="text-xs font-medium text-red-600 dark:text-red-400">
                         {uploadError}
                       </p>
                     ) : null}
-                  </div>
-
-                  <div className="flex shrink-0 flex-col gap-1.5">
-                    <span className="px-1 text-[11px] font-semibold tracking-[0.08em] text-muted uppercase">
-                      Variant Preview
-                    </span>
-                    <button
-                      type="button"
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        const file = e.dataTransfer.files?.[0];
-                        if (file) handleImageUpload(file);
-                      }}
-                      onClick={() => fileInputRef.current?.click()}
-                      title="Click or drop an image file here to upload"
-                      className="group relative flex size-[82px] cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-admin-edge bg-admin-line/40 ring-1 ring-admin-edge transition-all hover:border-admin-ink/40 text-left"
-                    >
-                      {activeVariant.image.trim() ? (
-                        <Image
-                          src={activeVariant.image.trim()}
-                          alt="Variant preview"
-                          width={82}
-                          height={82}
-                          unoptimized
-                          className="size-full object-cover transition-transform duration-200 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="flex flex-col items-center gap-1 text-muted/60 group-hover:text-admin-ink transition-colors">
-                          <HugeiconsIcon icon={PackageIcon} size={22} strokeWidth={1.6} />
-                          <span className="text-[9px] font-medium">Drop image</span>
-                        </div>
-                      )}
-
-                      {uploadingVariantId === activeVariant.id ? (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xs">
-                          <span className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        </div>
-                      ) : null}
-                    </button>
                   </div>
                 </div>
               </div>
@@ -935,13 +950,14 @@ function ProductSidePanel({
           ) : null}
 
           {/* Product Live Aggregate Summary */}
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-admin-edge/70 bg-admin-card/60 px-4 py-2.5 text-xs text-muted">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-admin-line bg-admin-card px-4 py-3 text-xs text-muted shadow-2xs">
             <span>
-              Total Variants: <strong className="text-admin-ink">{draft.variants.length}</strong>
+              Total Variants:{" "}
+              <strong className="text-admin-ink font-semibold">{draft.variants.length}</strong>
             </span>
             <span>
               Price Range:{" "}
-              <strong className="text-admin-ink">
+              <strong className="text-admin-ink font-semibold">
                 {minPrice !== null && maxPrice !== null
                   ? minPrice === maxPrice
                     ? `$${minPrice.toFixed(2)}`
@@ -950,7 +966,8 @@ function ProductSidePanel({
               </strong>
             </span>
             <span>
-              Combined Stock: <strong className="text-admin-ink">{totalStock} units</strong>
+              Combined Stock:{" "}
+              <strong className="text-admin-ink font-semibold">{totalStock} units</strong>
             </span>
           </div>
         </div>
