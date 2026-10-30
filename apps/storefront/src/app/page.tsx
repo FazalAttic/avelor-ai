@@ -16,7 +16,7 @@ import {
   deleteConversation,
   fetchConversation,
   fetchRecentConversations,
-  sendChatMessage,
+  streamChatMessage,
 } from "@/lib/chat-api";
 import { cn } from "@/lib/utils";
 
@@ -188,39 +188,92 @@ export default function Home() {
 
   async function handleSubmit(text: string) {
     if (sending) return;
-    setMessages((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), role: "user", content: text, products: [] },
-    ]);
+    const userMsgId = crypto.randomUUID();
+    const replyId = crypto.randomUUID();
+
+    setMessages((prev) => [...prev, { id: userMsgId, role: "user", content: text, products: [] }]);
     setSending(true);
+
     try {
       const history = messages.map(({ role, content }) => ({ role, content }));
-      const result = await sendChatMessage(text, history, activeConversationId);
-      if (result.conversationId) {
-        setActiveConversationId(result.conversationId);
-      }
-      const replyId = crypto.randomUUID();
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: replyId,
-          role: "assistant",
-          content: result.reply,
-          products: result.products,
+      let accumulated = "";
+      let hasReceivedToken = false;
+
+      await streamChatMessage(text, history, activeConversationId, {
+        onMeta: (meta) => {
+          if (meta.conversationId) setActiveConversationId(meta.conversationId);
         },
-      ]);
-      await loadRecents();
+        onDelta: (delta) => {
+          accumulated += delta;
+          if (!hasReceivedToken) {
+            hasReceivedToken = true;
+            setSending(false);
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: replyId,
+                role: "assistant",
+                content: accumulated,
+                products: [],
+                isStreaming: true,
+              },
+            ]);
+          } else {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === replyId ? { ...m, content: accumulated, isStreaming: true } : m
+              )
+            );
+          }
+        },
+        onDone: (data) => {
+          if (data.conversationId) setActiveConversationId(data.conversationId);
+          setMessages((prev) => {
+            const exists = prev.some((m) => m.id === replyId);
+            const finalContent = data.reply || accumulated;
+            if (!exists) {
+              return [
+                ...prev,
+                {
+                  id: replyId,
+                  role: "assistant",
+                  content: finalContent,
+                  products: data.products,
+                  isStreaming: false,
+                },
+              ];
+            }
+            return prev.map((m) =>
+              m.id === replyId
+                ? {
+                    ...m,
+                    content: finalContent,
+                    products: data.products,
+                    isStreaming: false,
+                  }
+                : m
+            );
+          });
+          loadRecents();
+        },
+      });
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: "Something went wrong on my end. Give it another try?",
-          products: [],
-          isError: true,
-        },
-      ]);
+      setMessages((prev) => {
+        const exists = prev.some((m) => m.id === replyId);
+        if (exists) {
+          return prev.map((m) => (m.id === replyId ? { ...m, isStreaming: false } : m));
+        }
+        return [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: "Something went wrong on my end. Give it another try?",
+            products: [],
+            isError: true,
+          },
+        ];
+      });
     } finally {
       setSending(false);
     }

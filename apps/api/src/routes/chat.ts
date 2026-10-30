@@ -15,6 +15,7 @@ import {
   type StoredChatProduct,
 } from "@avelor/core";
 import { Hono } from "hono";
+import { streamSSE } from "hono/streaming";
 import type { AppEnv } from "../app";
 import { requireTenant } from "../middleware/tenant";
 
@@ -22,6 +23,7 @@ interface ChatRequestBody {
   message: string;
   conversationId?: string | undefined;
   history?: readonly ChatMessage[] | undefined;
+  stream?: boolean | undefined;
 }
 
 interface ToolResultPayload {
@@ -223,6 +225,78 @@ export function createChatRoutes(
         conversationId,
         role: "user",
         content: trimmedPrompt,
+      });
+    }
+
+    const wantsStream =
+      body.stream === true || c.req.header("accept")?.includes("text/event-stream");
+
+    if (wantsStream) {
+      return streamSSE(c, async (stream) => {
+        if (conversationId) {
+          await stream.writeSSE({
+            data: JSON.stringify({
+              type: "meta",
+              conversationId,
+              title: conversationTitle,
+            }),
+          });
+        }
+
+        const agent = new DiscoveryAgent(model, repo, tenantId, options);
+        const result = await agent.chatStream(trimmedPrompt, agentHistory, async (delta) => {
+          await stream.writeSSE({
+            data: JSON.stringify({
+              type: "delta",
+              text: delta,
+            }),
+          });
+        });
+
+        const productIds = extractProductIds(result.messages);
+        const found = await Promise.all(
+          productIds.map((id) => repo.getProductWithVariants(tenantId, id))
+        );
+        const products = found.filter((p): p is ProductWithVariants => p !== null);
+
+        const safeReply =
+          result.reply?.trim() ||
+          (products.length > 0
+            ? "Here are the top products I found in our store for you. Let me know if you would like more details or need help finding anything else!"
+            : "I couldn't find items matching your request in our catalog. Would you like to explore other categories or try a different search?");
+
+        if (options?.conversationRepo && conversationId) {
+          const storedProducts: StoredChatProduct[] = products.map((p) => ({
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            categories: p.categories,
+            media: p.media,
+            variants: p.variants.map((v) => ({
+              id: v.id,
+              title: v.title,
+              price: { amount: v.price.amount, currency: v.price.currency },
+              inventoryQuantity: v.inventoryQuantity,
+            })),
+          }));
+
+          await options.conversationRepo.appendMessage(tenantId, {
+            conversationId,
+            role: "assistant",
+            content: safeReply,
+            products: storedProducts,
+          });
+        }
+
+        await stream.writeSSE({
+          data: JSON.stringify({
+            type: "done",
+            reply: safeReply,
+            products,
+            conversationId,
+            title: conversationTitle,
+          }),
+        });
       });
     }
 

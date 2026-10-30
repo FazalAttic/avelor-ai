@@ -58,4 +58,8 @@ export interface ChatResult {
 
 export interface ChatModel {
   generate(input: ChatInput): Promise<ChatResult>;
+  streamText?(
+    input: ChatInput,
+    onChunk: (delta: string) => Promise<void> | void
+  ): Promise<ChatResult>;
 }

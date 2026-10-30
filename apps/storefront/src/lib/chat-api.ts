@@ -66,6 +66,118 @@ export function formatPrice(money: ChatMoney): string {
   return money.currency === "USD" ? `$${value}` : `${value} ${money.currency}`;
 }
 
+export interface StreamChatCallbacks {
+  onMeta?: (meta: { conversationId?: string; title?: string }) => void;
+  onDelta?: (delta: string) => void;
+  onDone?: (data: {
+    reply: string;
+    products: readonly ChatProduct[];
+    conversationId?: string;
+    title?: string;
+  }) => void;
+}
+
+export async function streamChatMessage(
+  message: string,
+  history?: readonly ChatHistoryMessage[] | undefined,
+  conversationId?: string | null | undefined,
+  callbacks?: StreamChatCallbacks
+): Promise<ChatApiResponse> {
+  const response = await fetch(`${API_URL}/chat`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      accept: "text/event-stream",
+      "x-tenant-id": TENANT_ID,
+    },
+    credentials: "include",
+    body: JSON.stringify({
+      message,
+      stream: true,
+      ...(history && history.length > 0 ? { history } : {}),
+      ...(conversationId ? { conversationId } : {}),
+    }),
+  });
+
+  if (!response.ok) {
+    let detail = `Request failed (${response.status})`;
+    try {
+      const body = (await response.json()) as ChatApiErrorBody;
+      if (body.error?.message) detail = body.error.message;
+    } catch {
+      // Non-JSON error body — keep the status-based message
+    }
+    throw new Error(detail);
+  }
+
+  // If response is not SSE, fall back to JSON
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("text/event-stream")) {
+    const data = (await response.json()) as ChatApiResponse;
+    if (callbacks?.onDelta) callbacks.onDelta(data.reply);
+    if (callbacks?.onDone) callbacks.onDone(data);
+    return data;
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error("Response body is not readable");
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let finalReply = "";
+  let finalProducts: readonly ChatProduct[] = [];
+  let finalConversationId = conversationId ?? undefined;
+  let finalTitle: string | undefined;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data:")) continue;
+        const jsonStr = trimmed.slice(5).trim();
+        if (!jsonStr) continue;
+
+        try {
+          const payload = JSON.parse(jsonStr);
+          if (payload.type === "meta") {
+            if (payload.conversationId) finalConversationId = payload.conversationId;
+            if (payload.title) finalTitle = payload.title;
+            callbacks?.onMeta?.(payload);
+          } else if (payload.type === "delta" && typeof payload.text === "string") {
+            finalReply += payload.text;
+            callbacks?.onDelta?.(payload.text);
+          } else if (payload.type === "done") {
+            if (payload.reply) finalReply = payload.reply;
+            if (payload.products) finalProducts = payload.products;
+            if (payload.conversationId) finalConversationId = payload.conversationId;
+            if (payload.title) finalTitle = payload.title;
+            callbacks?.onDone?.(payload);
+          }
+        } catch {
+          // ignore partial JSON parse error
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  return {
+    reply: finalReply,
+    products: finalProducts,
+    conversationId: finalConversationId,
+    title: finalTitle,
+  };
+}
+
 export async function sendChatMessage(
   message: string,
   history?: readonly ChatHistoryMessage[] | undefined,

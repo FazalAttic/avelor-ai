@@ -22,6 +22,7 @@ export type UiChatMessage = {
   readonly content: string;
   readonly products: readonly ChatProduct[];
   readonly isError?: boolean;
+  readonly isStreaming?: boolean;
 };
 
 function renderContent(content: string) {
@@ -276,7 +277,7 @@ export function ChatMessageItem({
     >
       {!isUser ? (
         <span className="flex items-center gap-2 pl-1 text-[11px] font-medium text-muted">
-          <BotAvatar mood="idle" />
+          <BotAvatar mood={message.isStreaming ? "generating" : "idle"} />
           Avelor
         </span>
       ) : null}
@@ -291,6 +292,12 @@ export function ChatMessageItem({
         )}
       >
         {renderContent(message.content)}
+        {message.isStreaming ? (
+          <span
+            aria-hidden
+            className="ml-0.5 inline-block h-[1.05em] w-[2px] translate-y-[2px] animate-pulse rounded-full bg-brand-blue align-middle"
+          />
+        ) : null}
       </div>
       {!isUser && message.products.length > 0 ? (
         <ProductCarousel

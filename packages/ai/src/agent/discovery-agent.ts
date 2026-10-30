@@ -171,4 +171,169 @@ export class DiscoveryAgent {
       toolCallsExecuted: Object.freeze(toolCallsExecuted),
     };
   }
+
+  async chatStream(
+    userQuery: string,
+    history: readonly ChatMessage[] = [],
+    onChunk: (delta: string) => Promise<void> | void
+  ): Promise<AgentExecutionResult> {
+    const messages: ChatMessage[] = [
+      { role: "system", content: DISCOVERY_SYSTEM_PROMPT },
+      ...history.filter((m) => m.role !== "system"),
+      { role: "user", content: userQuery.trim() },
+    ];
+
+    // 1. Pre-execution Input Guardrail
+    if (this.options?.guardrail) {
+      const inputCheck = await this.options.guardrail.checkInput({
+        text: userQuery,
+        role: "user",
+      });
+
+      if (inputCheck.verdict === "rejected") {
+        let rejectionReply: string;
+        if (
+          inputCheck.category === "prompt_injection" ||
+          inputCheck.category === "malicious_script"
+        ) {
+          rejectionReply =
+            "I am your store shopping assistant. I cannot execute system overrides or external scripts, but I'm happy to help you discover products, check stock, or review store policies.";
+        } else if (inputCheck.category === "out_of_domain") {
+          rejectionReply =
+            "I specialize exclusively in helping you find products and assist with your shopping at our store. How can I help you with our catalog today?";
+        } else {
+          rejectionReply =
+            "Your message could not be processed due to store safety policies. Please rephrase your shopping inquiry.";
+        }
+
+        await onChunk(rejectionReply);
+        const rejectionMessage: ChatMessage = {
+          role: "assistant",
+          content: rejectionReply,
+        };
+
+        return {
+          reply: rejectionReply,
+          messages: Object.freeze([...messages, rejectionMessage]),
+          toolCallsExecuted: Object.freeze([]),
+        };
+      }
+    }
+
+    const toolCallsExecuted: ToolCall[] = [];
+    const MAX_STEPS = 3;
+
+    for (let step = 0; step < MAX_STEPS; step++) {
+      const response = await this.model.generate({
+        messages,
+        tools: CATALOG_TOOLS,
+        temperature: 0.1,
+      });
+
+      const assistantMessage = response.message;
+      messages.push(assistantMessage);
+
+      // If no tool calls requested, we can stream the response directly!
+      if (!assistantMessage.toolCalls || assistantMessage.toolCalls.length === 0) {
+        let reply = assistantMessage.content;
+        if (this.options?.guardrail) {
+          const outCheck = await this.options.guardrail.checkOutput({
+            text: reply,
+            role: "assistant",
+          });
+          if (outCheck.verdict === "rejected") {
+            reply =
+              "I encountered an issue verifying the response against safety policies. Please try again.";
+          }
+        }
+
+        await onChunk(reply);
+        return {
+          reply,
+          messages: Object.freeze(messages),
+          toolCallsExecuted: Object.freeze(toolCallsExecuted),
+        };
+      }
+
+      // Execute each tool call
+      for (const call of assistantMessage.toolCalls) {
+        toolCallsExecuted.push(call);
+        const resultString = await executeToolCall(call.name, call.arguments, {
+          tenantId: this.tenantId,
+          catalogRepo: this.catalogRepo,
+          ...(this.options?.policyRepo ? { policyRepo: this.options.policyRepo } : {}),
+          ...(this.options?.embeddingModel ? { embeddingModel: this.options.embeddingModel } : {}),
+          ...(this.options?.vectorStore ? { vectorStore: this.options.vectorStore } : {}),
+        });
+
+        messages.push({
+          role: "tool",
+          content: resultString,
+          name: call.name,
+          toolCallId: call.id,
+        });
+      }
+    }
+
+    // Tools have finished. Prompt for final synthesis and STREAM the response!
+    messages.push({
+      role: "user",
+      content:
+        "Based on the catalog search results and details retrieved above, please provide your final shopping response and recommendations to the user.",
+    });
+
+    let finalReply = "";
+    if (this.model.streamText) {
+      const res = await this.model.streamText(
+        {
+          messages,
+          temperature: 0.1,
+        },
+        async (chunk) => {
+          finalReply += chunk;
+          await onChunk(chunk);
+        }
+      );
+      if (!finalReply.trim()) {
+        finalReply = res.message.content?.trim() || "";
+      }
+    } else {
+      const finalResponse = await this.model.generate({
+        messages,
+        temperature: 0.1,
+      });
+      finalReply = finalResponse.message.content?.trim() || "";
+      await onChunk(finalReply);
+    }
+
+    if (!finalReply) {
+      finalReply =
+        toolCallsExecuted.length > 0
+          ? "Here are the top products I found in our store for you. Feel free to ask if you would like more details on any of them!"
+          : "I searched our store but couldn't find items matching your request. Would you like to check out another category or try a different search?";
+      await onChunk(finalReply);
+    }
+
+    if (this.options?.guardrail) {
+      const outCheck = await this.options.guardrail.checkOutput({
+        text: finalReply,
+        role: "assistant",
+      });
+      if (outCheck.verdict === "rejected") {
+        finalReply =
+          "I encountered an issue verifying the response against safety policies. Please try again.";
+      }
+    }
+
+    messages.push({
+      role: "assistant",
+      content: finalReply,
+    });
+
+    return {
+      reply: finalReply,
+      messages: Object.freeze(messages),
+      toolCallsExecuted: Object.freeze(toolCallsExecuted),
+    };
+  }
 }

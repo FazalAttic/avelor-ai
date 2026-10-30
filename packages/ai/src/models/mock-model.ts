@@ -173,4 +173,19 @@ export class MockChatModel implements ChatModel {
       finishReason: "stop",
     };
   }
+
+  async streamText(
+    input: ChatInput,
+    onChunk: (delta: string) => Promise<void> | void
+  ): Promise<ChatResult> {
+    const res = await this.generate(input);
+    if (res.message.content) {
+      const words = res.message.content.split(" ");
+      for (let i = 0; i < words.length; i++) {
+        const word = (i === 0 ? "" : " ") + words[i];
+        await onChunk(word);
+      }
+    }
+    return res;
+  }
 }

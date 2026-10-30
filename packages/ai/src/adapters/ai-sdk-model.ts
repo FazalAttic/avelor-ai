@@ -1,5 +1,5 @@
 import type { CatalogRepository, TenantId } from "@avelor/core";
-import { generateText, jsonSchema, type ModelMessage, type ToolSet, tool } from "ai";
+import { generateText, jsonSchema, type ModelMessage, streamText, type ToolSet, tool } from "ai";
 import { z } from "zod";
 import type {
   ChatInput,
@@ -61,18 +61,17 @@ export function createAiSdkTools(tenantId: TenantId, catalogRepo: CatalogReposit
 export class AiSdkChatModel implements ChatModel {
   constructor(private readonly model: Parameters<typeof generateText>[0]["model"]) {}
 
-  async generate(input: ChatInput): Promise<ChatResult> {
-    // 1. Convert Avelor ChatMessages to ModelMessages
-    const messages: ModelMessage[] = [];
+  private buildModelMessages(messages: readonly ChatInput["messages"][number][]): ModelMessage[] {
+    const result: ModelMessage[] = [];
 
-    for (const msg of input.messages) {
+    for (const msg of messages) {
       if (msg.role === "system") {
-        messages.push({ role: "system", content: msg.content });
+        result.push({ role: "system", content: msg.content });
       } else if (msg.role === "user") {
-        messages.push({ role: "user", content: msg.content });
+        result.push({ role: "user", content: msg.content });
       } else if (msg.role === "assistant") {
         if (msg.toolCalls && msg.toolCalls.length > 0) {
-          messages.push({
+          result.push({
             role: "assistant",
             content: msg.toolCalls.map((tc) => ({
               type: "tool-call" as const,
@@ -83,10 +82,10 @@ export class AiSdkChatModel implements ChatModel {
             })),
           });
         } else {
-          messages.push({ role: "assistant", content: msg.content });
+          result.push({ role: "assistant", content: msg.content });
         }
       } else if (msg.role === "tool") {
-        messages.push({
+        result.push({
           role: "tool",
           content: [
             {
@@ -100,10 +99,13 @@ export class AiSdkChatModel implements ChatModel {
       }
     }
 
-    // 2. Convert Avelor ToolDefinitions to SDK tools with full JSON schema
+    return result;
+  }
+
+  private buildSdkTools(tools?: ChatInput["tools"]): ToolSet {
     const sdkTools: ToolSet = {};
-    if (input.tools) {
-      for (const t of input.tools) {
+    if (tools) {
+      for (const t of tools) {
         sdkTools[t.name] = tool({
           description: t.description,
           inputSchema: t.parameters
@@ -113,8 +115,14 @@ export class AiSdkChatModel implements ChatModel {
         });
       }
     }
+    return sdkTools;
+  }
 
-    // 3. Build generateText arguments adhering to exactOptionalPropertyTypes
+  async generate(input: ChatInput): Promise<ChatResult> {
+    const messages = this.buildModelMessages(input.messages);
+    const sdkTools = this.buildSdkTools(input.tools);
+
+    // Build generateText arguments adhering to exactOptionalPropertyTypes
     const generateArgs: Parameters<typeof generateText>[0] = {
       model: this.model,
       messages,
@@ -123,11 +131,10 @@ export class AiSdkChatModel implements ChatModel {
       ...(input.maxTokens !== undefined ? { maxOutputTokens: input.maxTokens } : {}),
     };
 
-    // 4. Invoke model execution
+    // Invoke model execution
     const response = await generateText(generateArgs);
 
-    // 5. Map back to Avelor ChatResult, preserving provider metadata (e.g. Gemini
-    // thought signatures) so multi-step tool loops can round-trip them.
+    // Map back to Avelor ChatResult, preserving provider metadata
     const metadataByCallId = new Map<
       string,
       Record<string, Record<string, ProviderMetadataValue>>
@@ -157,6 +164,70 @@ export class AiSdkChatModel implements ChatModel {
         toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
       },
       finishReason: response.finishReason === "tool-calls" ? "tool_calls" : "stop",
+    };
+  }
+
+  async streamText(
+    input: ChatInput,
+    onChunk: (delta: string) => Promise<void> | void
+  ): Promise<ChatResult> {
+    const messages = this.buildModelMessages(input.messages);
+    const sdkTools = this.buildSdkTools(input.tools);
+
+    const streamArgs: Parameters<typeof streamText>[0] = {
+      model: this.model,
+      messages,
+      ...(Object.keys(sdkTools).length > 0 ? { tools: sdkTools } : {}),
+      ...(input.temperature !== undefined ? { temperature: input.temperature } : {}),
+      ...(input.maxTokens !== undefined ? { maxOutputTokens: input.maxTokens } : {}),
+    };
+
+    const response = streamText(streamArgs);
+
+    let fullText = "";
+    for await (const chunk of response.textStream) {
+      fullText += chunk;
+      await onChunk(chunk);
+    }
+
+    const toolCallsRaw = await response.toolCalls;
+    const metadataByCallId = new Map<
+      string,
+      Record<string, Record<string, ProviderMetadataValue>>
+    >();
+
+    try {
+      const responseMessages = (await response.response)?.messages ?? [];
+      for (const m of responseMessages) {
+        if (m.role !== "assistant" || typeof m.content === "string") continue;
+        for (const part of m.content) {
+          if (part.type === "tool-call" && part.providerOptions) {
+            metadataByCallId.set(part.toolCallId, part.providerOptions);
+          }
+        }
+      }
+    } catch {
+      // Ignore if response messages couldn't be parsed
+    }
+
+    const toolCalls: ToolCall[] = toolCallsRaw.map((tc) => ({
+      id: tc.toolCallId,
+      name: tc.toolName,
+      arguments: (tc.input ?? {}) as Record<string, unknown>,
+      ...(metadataByCallId.has(tc.toolCallId)
+        ? { providerMetadata: metadataByCallId.get(tc.toolCallId) }
+        : {}),
+    }));
+
+    const finishReason = await response.finishReason;
+
+    return {
+      message: {
+        role: "assistant",
+        content: fullText,
+        toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+      },
+      finishReason: finishReason === "tool-calls" ? "tool_calls" : "stop",
     };
   }
 }
