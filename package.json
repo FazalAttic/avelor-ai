@@ -17,6 +17,7 @@
     "docker:db": "docker compose up -d postgres redis",
     "docker:down": "docker compose down",
     "db:push": "bun --filter @avelor/database db:push",
+    "db:studio": "bun --filter @avelor/database db:studio",
     "test": "bun test",
     "typecheck": "tsc -b",
     "lint": "biome check .",
