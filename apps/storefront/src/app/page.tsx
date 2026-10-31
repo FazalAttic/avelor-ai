@@ -39,6 +39,8 @@ export default function Home() {
   const threadRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
   const scrollToBottomOnLoadRef = useRef(false);
+  const isGlidingRef = useRef(false);
+  const rafFollowIdRef = useRef<number | null>(null);
   const [showJump, setShowJump] = useState(false);
   const isChatting = sending || messages.length > 0;
 
@@ -114,51 +116,134 @@ export default function Home() {
     return () => cancelAnimationFrame(frame);
   }, [messages, activeConversationId]);
 
-  // Smooth scroll down when a new user query is submitted
-  // biome-ignore lint/correctness/useExhaustiveDependencies: react only to newly submitted message pair
+  function triggerFollow() {
+    if (!pinnedRef.current) return;
+    if (rafFollowIdRef.current !== null) return;
+
+    function step() {
+      const el = scrollRef.current;
+      if (!el || !pinnedRef.current) {
+        isGlidingRef.current = false;
+        rafFollowIdRef.current = null;
+        return;
+      }
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      const diff = maxScroll - el.scrollTop;
+
+      if (diff > 1) {
+        isGlidingRef.current = true;
+        // Smooth exponential glide: moves a fraction of the distance each frame
+        const stepAmount = Math.max(diff * 0.18, 2);
+        el.scrollTop = Math.min(el.scrollTop + stepAmount, maxScroll);
+        rafFollowIdRef.current = requestAnimationFrame(step);
+      } else {
+        el.scrollTop = maxScroll;
+        isGlidingRef.current = false;
+        rafFollowIdRef.current = null;
+      }
+    }
+
+    rafFollowIdRef.current = requestAnimationFrame(step);
+  }
+
+  // Listen for user wheel or touch gestures to distinguish manual user scrolling from auto-follow
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-attach when chat thread mounts
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el || !pinnedRef.current) return;
-    const lastMsg = messages[messages.length - 1];
-    if (lastMsg?.role === "assistant" && !lastMsg.content) {
-      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    if (!el) return;
+
+    function onWheel(e: WheelEvent) {
+      if (!el) return;
+      if (e.deltaY < 0) {
+        // User deliberately scrolled UP
+        pinnedRef.current = false;
+        setShowJump(true);
+        if (rafFollowIdRef.current !== null) {
+          cancelAnimationFrame(rafFollowIdRef.current);
+          rafFollowIdRef.current = null;
+          isGlidingRef.current = false;
+        }
+      } else if (e.deltaY > 0) {
+        // User scrolled DOWN - if near bottom, re-engage pin
+        const gap = el.scrollHeight - el.clientHeight - (el.scrollTop + e.deltaY);
+        if (gap <= 40) {
+          pinnedRef.current = true;
+          setShowJump(false);
+        }
+      }
     }
-  }, [messages.length]);
+
+    let touchStartY = 0;
+    function onTouchStart(e: TouchEvent) {
+      touchStartY = e.touches[0]?.clientY ?? 0;
+    }
+    function onTouchMove(e: TouchEvent) {
+      if (!el) return;
+      const currentY = e.touches[0]?.clientY ?? 0;
+      if (currentY > touchStartY + 10) {
+        // Swiped down (scrolled up)
+        pinnedRef.current = false;
+        setShowJump(true);
+        if (rafFollowIdRef.current !== null) {
+          cancelAnimationFrame(rafFollowIdRef.current);
+          rafFollowIdRef.current = null;
+          isGlidingRef.current = false;
+        }
+      } else if (currentY < touchStartY - 10) {
+        // Swiped up (scrolled down towards bottom)
+        const gap = el.scrollHeight - el.clientHeight - el.scrollTop;
+        if (gap <= 40) {
+          pinnedRef.current = true;
+          setShowJump(false);
+        }
+      }
+    }
+
+    el.addEventListener("wheel", onWheel, { passive: true });
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: true });
+
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+    };
+  }, [isChatting]);
 
   // Keep pinned to the bottom smoothly as the thread grows during token streaming
+  // biome-ignore lint/correctness/useExhaustiveDependencies: observe thread whenever chat mounts
   useEffect(() => {
-    const el = scrollRef.current;
     const thread = threadRef.current;
-    if (!el || !thread) return;
+    if (!thread) return;
 
-    let rafId: number | null = null;
     const observer = new ResizeObserver(() => {
-      if (!pinnedRef.current) return;
-      if (rafId !== null) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = null;
-        if (pinnedRef.current && el) {
-          const gap = el.scrollHeight - el.clientHeight - el.scrollTop;
-          if (gap > 0) {
-            // Smoothly track as text wraps or elements expand
-            el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-          }
-        }
-      });
+      if (pinnedRef.current) {
+        triggerFollow();
+      }
     });
+
     observer.observe(thread);
+
     return () => {
-      if (rafId !== null) cancelAnimationFrame(rafId);
       observer.disconnect();
+      if (rafFollowIdRef.current !== null) {
+        cancelAnimationFrame(rafFollowIdRef.current);
+        rafFollowIdRef.current = null;
+        isGlidingRef.current = false;
+      }
     };
-  }, []);
+  }, [isChatting]);
 
   function trackPinned() {
     const el = scrollRef.current;
-    if (!el) return;
+    if (!el || isGlidingRef.current) return;
     const gap = el.scrollHeight - el.clientHeight - el.scrollTop;
-    pinnedRef.current = gap < 120;
-    setShowJump(gap > 120);
+    if (gap <= 40) {
+      pinnedRef.current = true;
+      setShowJump(false);
+    } else if (gap > 160 && !pinnedRef.current) {
+      setShowJump(true);
+    }
   }
 
   function jumpToLatest() {
@@ -166,7 +251,7 @@ export default function Home() {
     if (!el) return;
     pinnedRef.current = true;
     setShowJump(false);
-    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    triggerFollow();
   }
 
   useEffect(() => {
@@ -180,6 +265,9 @@ export default function Home() {
     const userMsgId = crypto.randomUUID();
     const replyId = crypto.randomUUID();
 
+    pinnedRef.current = true;
+    setShowJump(false);
+
     // Immediately add both user message and assistant placeholder (with pulsing dots)
     setMessages((prev) => [
       ...prev,
@@ -187,6 +275,7 @@ export default function Home() {
       { id: replyId, role: "assistant", content: "", products: [], isStreaming: true },
     ]);
     setSending(true);
+    triggerFollow();
 
     try {
       const history = messages.map(({ role, content }) => ({ role, content }));
@@ -203,6 +292,9 @@ export default function Home() {
               m.id === replyId ? { ...m, content: accumulated, isStreaming: true } : m
             )
           );
+          if (pinnedRef.current) {
+            triggerFollow();
+          }
         },
         onDone: (data) => {
           if (data.conversationId) setActiveConversationId(data.conversationId);
@@ -218,6 +310,9 @@ export default function Home() {
                 : m
             )
           );
+          if (pinnedRef.current) {
+            triggerFollow();
+          }
           loadRecents();
         },
       });
