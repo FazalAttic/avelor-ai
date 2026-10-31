@@ -2,7 +2,8 @@
 
 import { Add01Icon, ArrowUp01Icon, Mic01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { type Ref, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { type Ref, useEffect, useRef, useState } from "react";
 import { IconButton } from "@/components/icon-button";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ export function Composer({
   inputRef,
 }: ComposerProps) {
   const [innerValue, setInnerValue] = useState("");
+  const [height, setHeight] = useState<number | undefined>(undefined);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const value = controlledValue ?? innerValue;
@@ -42,18 +44,21 @@ export function Composer({
     else if (inputRef) inputRef.current = el;
   };
 
-  function resize() {
+  // biome-ignore lint/correctness/useExhaustiveDependencies: value change triggers height measurement
+  useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
-    el.style.height = "0px";
-    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
-  }
+    const current = el.style.height;
+    el.style.height = "auto";
+    const nextHeight = Math.min(Math.max(el.scrollHeight, 44), 200);
+    el.style.height = current;
+    setHeight(nextHeight);
+  }, [value]);
 
   function submit() {
     if (!canSend) return;
     onSubmit?.(value.trim());
     setValue("");
-    requestAnimationFrame(resize);
   }
 
   return (
@@ -68,15 +73,21 @@ export function Composer({
         className
       )}
     >
-      <textarea
+      <motion.textarea
         ref={setRefs}
         rows={1}
         value={value}
         disabled={disabled}
         placeholder={placeholder}
+        animate={height !== undefined ? { height } : undefined}
+        transition={{
+          type: "spring",
+          stiffness: 420,
+          damping: 32,
+          mass: 0.7,
+        }}
         onChange={(event) => {
           setValue(event.target.value);
-          resize();
         }}
         onKeyDown={(event) => {
           if (event.key === "Enter" && !event.shiftKey) {
@@ -84,7 +95,10 @@ export function Composer({
             submit();
           }
         }}
-        className="max-h-[200px] w-full resize-none bg-transparent px-4 pt-3 pb-1 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-subtle"
+        className={cn(
+          "max-h-[200px] w-full resize-none bg-transparent px-4 pt-3 pb-1 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-subtle",
+          height && height >= 200 ? "overflow-y-auto" : "overflow-hidden"
+        )}
       />
       <div className="flex items-center justify-between px-1 pb-1">
         <div className="flex items-center gap-1.5">
