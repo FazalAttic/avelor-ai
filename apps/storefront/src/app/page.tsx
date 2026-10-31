@@ -3,7 +3,7 @@
 import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChatMessageItem, type UiChatMessage } from "@/components/chat-message";
 import { ChatShell } from "@/components/chat-shell";
 import { Composer } from "@/components/composer";
@@ -37,9 +37,40 @@ export default function Home() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
-  const pinnedRef = useRef(true);
+  const userScrolledUpRef = useRef(false);
+  const rafScrollId = useRef<number | null>(null);
   const [showJump, setShowJump] = useState(false);
   const isChatting = sending || messages.length > 0;
+
+  const smoothScrollToBottom = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el || userScrolledUpRef.current) return;
+
+    if (rafScrollId.current !== null) return;
+
+    function step() {
+      if (!el || userScrolledUpRef.current) {
+        rafScrollId.current = null;
+        return;
+      }
+
+      const target = Math.max(0, el.scrollHeight - el.clientHeight);
+      const current = el.scrollTop;
+      const diff = target - current;
+
+      if (diff > 0.5) {
+        // Organic exponential decay glide (~22% per frame at 60/120fps)
+        const stepSize = Math.max(diff * 0.22, 1);
+        el.scrollTop = Math.min(target, current + stepSize);
+        rafScrollId.current = requestAnimationFrame(step);
+      } else {
+        el.scrollTop = target;
+        rafScrollId.current = null;
+      }
+    }
+
+    rafScrollId.current = requestAnimationFrame(step);
+  }, []);
 
   async function loadRecents() {
     try {
@@ -58,6 +89,8 @@ export default function Home() {
   async function handleSelectChat(id: string) {
     if (id === activeConversationId) return;
     setActiveConversationId(id);
+    userScrolledUpRef.current = false;
+    setShowJump(false);
     try {
       const details = await fetchConversation(id);
       if (details) {
@@ -69,6 +102,7 @@ export default function Home() {
             products: m.products ?? [],
           }))
         );
+        requestAnimationFrame(() => smoothScrollToBottom());
       }
     } catch {
       // Ignore retrieval errors
@@ -77,6 +111,8 @@ export default function Home() {
 
   function handleNewChat() {
     setActiveConversationId(null);
+    userScrolledUpRef.current = false;
+    setShowJump(false);
     setMessages([]);
     setPrompt("");
     inputRef.current?.focus();
@@ -94,59 +130,96 @@ export default function Home() {
     }
   }
 
-  // Smooth scroll down when a new user query is submitted
-  // biome-ignore lint/correctness/useExhaustiveDependencies: react only to newly submitted message pair
+  // Detect manual user scrolling to pause auto-follow when reading earlier history
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el || !pinnedRef.current) return;
-    const lastMsg = messages[messages.length - 1];
-    if (lastMsg?.role === "assistant" && !lastMsg.content) {
-      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    const node = scrollRef.current;
+    if (!node) return;
+
+    function onWheel(e: WheelEvent) {
+      if (!node) return;
+      if (e.deltaY < 0) {
+        // User scrolled UP
+        userScrolledUpRef.current = true;
+        setShowJump(true);
+      } else if (e.deltaY > 0) {
+        // User scrolled DOWN - check if near bottom
+        const gap = node.scrollHeight - node.clientHeight - (node.scrollTop + e.deltaY);
+        if (gap <= 40) {
+          userScrolledUpRef.current = false;
+          setShowJump(false);
+        }
+      }
     }
-  }, [messages.length]);
+
+    let touchStartY = 0;
+    function onTouchStart(e: TouchEvent) {
+      touchStartY = e.touches[0]?.clientY ?? 0;
+    }
+    function onTouchMove(e: TouchEvent) {
+      if (!node) return;
+      const currentY = e.touches[0]?.clientY ?? 0;
+      if (currentY > touchStartY + 10) {
+        // User swiped down to view earlier messages
+        userScrolledUpRef.current = true;
+        setShowJump(true);
+      } else if (currentY < touchStartY - 10) {
+        // User swiped up towards bottom
+        const gap = node.scrollHeight - node.clientHeight - node.scrollTop;
+        if (gap <= 40) {
+          userScrolledUpRef.current = false;
+          setShowJump(false);
+        }
+      }
+    }
+
+    node.addEventListener("wheel", onWheel, { passive: true });
+    node.addEventListener("touchstart", onTouchStart, { passive: true });
+    node.addEventListener("touchmove", onTouchMove, { passive: true });
+
+    return () => {
+      node.removeEventListener("wheel", onWheel);
+      node.removeEventListener("touchstart", onTouchStart);
+      node.removeEventListener("touchmove", onTouchMove);
+    };
+  }, []);
 
   // Keep pinned to the bottom smoothly as the thread grows during token streaming
   useEffect(() => {
-    const el = scrollRef.current;
     const thread = threadRef.current;
-    if (!el || !thread) return;
+    if (!thread) return;
 
-    let rafId: number | null = null;
     const observer = new ResizeObserver(() => {
-      if (!pinnedRef.current) return;
-      if (rafId !== null) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = null;
-        if (pinnedRef.current && el) {
-          const gap = el.scrollHeight - el.clientHeight - el.scrollTop;
-          if (gap > 0) {
-            // Smoothly track as text wraps or elements expand
-            el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-          }
-        }
-      });
+      if (!userScrolledUpRef.current) {
+        smoothScrollToBottom();
+      }
     });
+
     observer.observe(thread);
     return () => {
-      if (rafId !== null) cancelAnimationFrame(rafId);
       observer.disconnect();
+      if (rafScrollId.current !== null) {
+        cancelAnimationFrame(rafScrollId.current);
+        rafScrollId.current = null;
+      }
     };
-  }, []);
+  }, [smoothScrollToBottom]);
 
   function trackPinned() {
     const el = scrollRef.current;
     if (!el) return;
     const gap = el.scrollHeight - el.clientHeight - el.scrollTop;
-    pinnedRef.current = gap < 120;
-    setShowJump(gap > 120);
+    if (gap <= 40) {
+      userScrolledUpRef.current = false;
+      setShowJump(false);
+    } else if (gap > 160 && userScrolledUpRef.current) {
+      setShowJump(true);
+    }
   }
 
   function jumpToLatest() {
-    const el = scrollRef.current;
-    if (!el) return;
-    pinnedRef.current = true;
+    userScrolledUpRef.current = false;
     setShowJump(false);
-    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    smoothScrollToBottom();
   }
 
   useEffect(() => {
@@ -160,6 +233,10 @@ export default function Home() {
     const userMsgId = crypto.randomUUID();
     const replyId = crypto.randomUUID();
 
+    // Reset user scroll state on new message submission
+    userScrolledUpRef.current = false;
+    setShowJump(false);
+
     // Immediately add both user message and assistant placeholder (with pulsing dots)
     setMessages((prev) => [
       ...prev,
@@ -167,6 +244,7 @@ export default function Home() {
       { id: replyId, role: "assistant", content: "", products: [], isStreaming: true },
     ]);
     setSending(true);
+    smoothScrollToBottom();
 
     try {
       const history = messages.map(({ role, content }) => ({ role, content }));
@@ -183,6 +261,9 @@ export default function Home() {
               m.id === replyId ? { ...m, content: accumulated, isStreaming: true } : m
             )
           );
+          if (!userScrolledUpRef.current) {
+            smoothScrollToBottom();
+          }
         },
         onDone: (data) => {
           if (data.conversationId) setActiveConversationId(data.conversationId);
@@ -198,6 +279,9 @@ export default function Home() {
                 : m
             )
           );
+          if (!userScrolledUpRef.current) {
+            smoothScrollToBottom();
+          }
           loadRecents();
         },
       });
