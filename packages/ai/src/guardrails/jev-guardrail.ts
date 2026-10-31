@@ -107,11 +107,13 @@ export class JevGuardrail implements GuardrailEngine {
         };
       }
 
+      // Allow conversational/out_of_scope queries to proceed to the grounded LLM
+      // so the AI responds naturally rather than blocking users with canned mock messages
       if (intentChoice === "out_of_scope") {
         return {
-          verdict: "rejected",
-          category: "out_of_domain",
-          reason: "Query is out of scope for store shopping assistance",
+          verdict: "allowed",
+          category: "safe",
+          reason: "Conversational query allowed for natural shopping LLM response",
           confidence: response.answers.intent.confidence,
         };
       }

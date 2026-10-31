@@ -44,7 +44,7 @@ export class DiscoveryAgent {
         role: "user",
       });
 
-      if (inputCheck.verdict === "rejected") {
+      if (inputCheck.verdict === "rejected" && inputCheck.category !== "out_of_domain") {
         let rejectionReply: string;
         if (
           inputCheck.category === "prompt_injection" ||
@@ -52,9 +52,6 @@ export class DiscoveryAgent {
         ) {
           rejectionReply =
             "I am your store shopping assistant. I cannot execute system overrides or external scripts, but I'm happy to help you discover products, check stock, or review store policies.";
-        } else if (inputCheck.category === "out_of_domain") {
-          rejectionReply =
-            "I specialize exclusively in helping you find products and assist with your shopping at our store. How can I help you with our catalog today?";
         } else {
           rejectionReply =
             "Your message could not be processed due to store safety policies. Please rephrase your shopping inquiry.";
@@ -190,7 +187,7 @@ export class DiscoveryAgent {
         role: "user",
       });
 
-      if (inputCheck.verdict === "rejected") {
+      if (inputCheck.verdict === "rejected" && inputCheck.category !== "out_of_domain") {
         let rejectionReply: string;
         if (
           inputCheck.category === "prompt_injection" ||
@@ -198,9 +195,6 @@ export class DiscoveryAgent {
         ) {
           rejectionReply =
             "I am your store shopping assistant. I cannot execute system overrides or external scripts, but I'm happy to help you discover products, check stock, or review store policies.";
-        } else if (inputCheck.category === "out_of_domain") {
-          rejectionReply =
-            "I specialize exclusively in helping you find products and assist with your shopping at our store. How can I help you with our catalog today?";
         } else {
           rejectionReply =
             "Your message could not be processed due to store safety policies. Please rephrase your shopping inquiry.";
