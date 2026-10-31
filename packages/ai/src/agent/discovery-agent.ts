@@ -218,18 +218,45 @@ export class DiscoveryAgent {
     const MAX_STEPS = 3;
 
     for (let step = 0; step < MAX_STEPS; step++) {
-      const response = await this.model.generate({
-        messages,
-        tools: CATALOG_TOOLS,
-        temperature: 0.1,
-      });
+      let assistantMessage: ChatMessage;
 
-      const assistantMessage = response.message;
+      if (this.model.streamText) {
+        const response = await this.model.streamText(
+          {
+            messages,
+            tools: CATALOG_TOOLS,
+            temperature: 0.1,
+          },
+          async (chunk) => {
+            await onChunk(chunk);
+          }
+        );
+        assistantMessage = response.message;
+      } else {
+        const response = await this.model.generate({
+          messages,
+          tools: CATALOG_TOOLS,
+          temperature: 0.1,
+        });
+        assistantMessage = response.message;
+        if (!assistantMessage.toolCalls || assistantMessage.toolCalls.length === 0) {
+          await onChunk(assistantMessage.content);
+        }
+      }
+
       messages.push(assistantMessage);
 
-      // If no tool calls requested, we can stream the response directly!
+      // If no tool calls requested, we are done and tokens were streamed live!
       if (!assistantMessage.toolCalls || assistantMessage.toolCalls.length === 0) {
-        let reply = assistantMessage.content;
+        let reply = assistantMessage.content?.trim();
+        if (!reply) {
+          reply =
+            toolCallsExecuted.length > 0
+              ? "Here are the top products I found in our store for you. Feel free to ask if you would like more details on any of them!"
+              : "I searched our store but couldn't find items matching your request. Would you like to check out another category or try a different search?";
+          await onChunk(reply);
+        }
+
         if (this.options?.guardrail) {
           const outCheck = await this.options.guardrail.checkOutput({
             text: reply,
@@ -241,7 +268,6 @@ export class DiscoveryAgent {
           }
         }
 
-        await onChunk(reply);
         return {
           reply,
           messages: Object.freeze(messages),

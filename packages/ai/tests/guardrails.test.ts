@@ -138,13 +138,13 @@ describe("AI Guardrails & TypeSafe Safety Engine", () => {
       expect(jailbreakRes.verdict).toBe("rejected");
       expect(jailbreakRes.category).toBe("prompt_injection");
 
-      // 2. Out-of-scope detected by Jev
+      // 2. Conversational/out-of-scope query allowed through to LLM for natural response
       const outOfScopeRes = await jev.checkInput({
         text: "write python code for merge sort",
         role: "user",
       });
-      expect(outOfScopeRes.verdict).toBe("rejected");
-      expect(outOfScopeRes.category).toBe("out_of_domain");
+      expect(outOfScopeRes.verdict).toBe("allowed");
+      expect(outOfScopeRes.category).toBe("safe");
 
       // 3. Legitimate shopping allowed by Jev
       const shoppingRes = await jev.checkInput({

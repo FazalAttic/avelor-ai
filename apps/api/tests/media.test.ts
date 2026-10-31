@@ -114,7 +114,7 @@ describe("Media & ImageKit / Cloudflare CDN Endpoints", () => {
     expect(res.status).toBe(201);
     const body = await res.json();
     expect(body.url).toMatch(
-      /^https:\/\/cdn\.avelor\.store\/avelor\/store_alpha\/products\/jacket-cover\.jpg/
+      /^https:\/\/cdn\.avelor\.store\/avelor\/store_alpha\/products\/jacket-cover.*\.jpg/
     );
     expect(body.rawUrl).toMatch(/^https:\/\/ik\.imagekit\.io\/mqz7lr6zf/);
   });

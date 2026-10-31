@@ -61,17 +61,21 @@ export function createAiSdkTools(tenantId: TenantId, catalogRepo: CatalogReposit
 export class AiSdkChatModel implements ChatModel {
   constructor(private readonly model: Parameters<typeof generateText>[0]["model"]) {}
 
-  private buildModelMessages(messages: readonly ChatInput["messages"][number][]): ModelMessage[] {
-    const result: ModelMessage[] = [];
+  private extractSystemAndMessages(messages: readonly ChatInput["messages"][number][]): {
+    system?: string | undefined;
+    modelMessages: ModelMessage[];
+  } {
+    const modelMessages: ModelMessage[] = [];
+    const systemParts: string[] = [];
 
     for (const msg of messages) {
       if (msg.role === "system") {
-        result.push({ role: "system", content: msg.content });
+        systemParts.push(msg.content);
       } else if (msg.role === "user") {
-        result.push({ role: "user", content: msg.content });
+        modelMessages.push({ role: "user", content: msg.content });
       } else if (msg.role === "assistant") {
         if (msg.toolCalls && msg.toolCalls.length > 0) {
-          result.push({
+          modelMessages.push({
             role: "assistant",
             content: msg.toolCalls.map((tc) => ({
               type: "tool-call" as const,
@@ -82,10 +86,10 @@ export class AiSdkChatModel implements ChatModel {
             })),
           });
         } else {
-          result.push({ role: "assistant", content: msg.content });
+          modelMessages.push({ role: "assistant", content: msg.content });
         }
       } else if (msg.role === "tool") {
-        result.push({
+        modelMessages.push({
           role: "tool",
           content: [
             {
@@ -99,7 +103,10 @@ export class AiSdkChatModel implements ChatModel {
       }
     }
 
-    return result;
+    return {
+      system: systemParts.length > 0 ? systemParts.join("\n\n") : undefined,
+      modelMessages,
+    };
   }
 
   private buildSdkTools(tools?: ChatInput["tools"]): ToolSet {
@@ -119,13 +126,14 @@ export class AiSdkChatModel implements ChatModel {
   }
 
   async generate(input: ChatInput): Promise<ChatResult> {
-    const messages = this.buildModelMessages(input.messages);
+    const { system, modelMessages } = this.extractSystemAndMessages(input.messages);
     const sdkTools = this.buildSdkTools(input.tools);
 
     // Build generateText arguments adhering to exactOptionalPropertyTypes
     const generateArgs: Parameters<typeof generateText>[0] = {
       model: this.model,
-      messages,
+      messages: modelMessages,
+      ...(system ? { system } : {}),
       ...(Object.keys(sdkTools).length > 0 ? { tools: sdkTools } : {}),
       ...(input.temperature !== undefined ? { temperature: input.temperature } : {}),
       ...(input.maxTokens !== undefined ? { maxOutputTokens: input.maxTokens } : {}),
@@ -171,12 +179,13 @@ export class AiSdkChatModel implements ChatModel {
     input: ChatInput,
     onChunk: (delta: string) => Promise<void> | void
   ): Promise<ChatResult> {
-    const messages = this.buildModelMessages(input.messages);
+    const { system, modelMessages } = this.extractSystemAndMessages(input.messages);
     const sdkTools = this.buildSdkTools(input.tools);
 
     const streamArgs: Parameters<typeof streamText>[0] = {
       model: this.model,
-      messages,
+      messages: modelMessages,
+      ...(system ? { system } : {}),
       ...(Object.keys(sdkTools).length > 0 ? { tools: sdkTools } : {}),
       ...(input.temperature !== undefined ? { temperature: input.temperature } : {}),
       ...(input.maxTokens !== undefined ? { maxOutputTokens: input.maxTokens } : {}),

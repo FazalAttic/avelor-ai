@@ -4,7 +4,6 @@ import { ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { BotAvatar } from "@/components/bot-avatar";
 import { ChatMessageItem, type UiChatMessage } from "@/components/chat-message";
 import { ChatShell } from "@/components/chat-shell";
 import { Composer } from "@/components/composer";
@@ -27,35 +26,6 @@ const STARTERS = [
 ];
 
 const EASE = [0.16, 1, 0.3, 1] as const;
-
-function ThinkingIndicator() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -6 }}
-      transition={{ duration: 0.25, ease: EASE }}
-      className="flex flex-col items-start gap-2"
-    >
-      <span className="flex items-center gap-2 pl-1 text-[11px] font-medium text-muted">
-        <BotAvatar mood="thinking" />
-        Avelor
-      </span>
-      <span className="flex items-center gap-1.5 rounded-[22px] rounded-bl-lg border border-white/50 bg-white/40 px-4 py-3.5 backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
-        {[0, 1, 2].map((dot) => (
-          <motion.span
-            key={dot}
-            aria-hidden
-            className="size-1.5 rounded-full bg-muted"
-            animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
-            transition={{ duration: 0.9, repeat: Infinity, delay: dot * 0.15, ease: "easeInOut" }}
-          />
-        ))}
-        <span className="sr-only">is thinking</span>
-      </span>
-    </motion.div>
-  );
-}
 
 export default function Home() {
   const { addItem, openDrawer } = useCart();
@@ -124,23 +94,18 @@ export default function Home() {
     }
   }
 
-  // Follow the thread when user submits or when messages change.
-  // Smooth scroll ONLY on user message; instant scroll while bot is writing to prevent jitter conflicts.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: re-check on every message and phase change
+  // Smooth scroll down when a new user query is submitted
+  // biome-ignore lint/correctness/useExhaustiveDependencies: react only to newly submitted message pair
   useEffect(() => {
     const el = scrollRef.current;
     if (!el || !pinnedRef.current) return;
     const lastMsg = messages[messages.length - 1];
-    if (lastMsg?.role === "user") {
+    if (lastMsg?.role === "assistant" && !lastMsg.content) {
       el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-    } else {
-      el.scrollTop = el.scrollHeight;
     }
-  }, [messages, sending]);
+  }, [messages.length]);
 
-  // A reply grows as it is written out, so keep the bottom pinned as it grows.
-  // Throttle with requestAnimationFrame so rapid stream updates don't shake the viewport.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: re-observe when the thread mounts
+  // Keep pinned to the bottom smoothly as the thread grows during token streaming
   useEffect(() => {
     const el = scrollRef.current;
     const thread = threadRef.current;
@@ -153,7 +118,11 @@ export default function Home() {
       rafId = requestAnimationFrame(() => {
         rafId = null;
         if (pinnedRef.current && el) {
-          el.scrollTop = el.scrollHeight;
+          const gap = el.scrollHeight - el.clientHeight - el.scrollTop;
+          if (gap > 0) {
+            // Smoothly track as text wraps or elements expand
+            el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+          }
         }
       });
     });
@@ -162,14 +131,14 @@ export default function Home() {
       if (rafId !== null) cancelAnimationFrame(rafId);
       observer.disconnect();
     };
-  }, [messages.length, sending]);
+  }, []);
 
   function trackPinned() {
     const el = scrollRef.current;
     if (!el) return;
     const gap = el.scrollHeight - el.clientHeight - el.scrollTop;
-    pinnedRef.current = gap < 160;
-    setShowJump(gap > 160);
+    pinnedRef.current = gap < 120;
+    setShowJump(gap > 120);
   }
 
   function jumpToLatest() {
@@ -191,13 +160,17 @@ export default function Home() {
     const userMsgId = crypto.randomUUID();
     const replyId = crypto.randomUUID();
 
-    setMessages((prev) => [...prev, { id: userMsgId, role: "user", content: text, products: [] }]);
+    // Immediately add both user message and assistant placeholder (with pulsing dots)
+    setMessages((prev) => [
+      ...prev,
+      { id: userMsgId, role: "user", content: text, products: [] },
+      { id: replyId, role: "assistant", content: "", products: [], isStreaming: true },
+    ]);
     setSending(true);
 
     try {
       const history = messages.map(({ role, content }) => ({ role, content }));
       let accumulated = "";
-      let hasReceivedToken = false;
 
       await streamChatMessage(text, history, activeConversationId, {
         onMeta: (meta) => {
@@ -205,75 +178,43 @@ export default function Home() {
         },
         onDelta: (delta) => {
           accumulated += delta;
-          if (!hasReceivedToken) {
-            hasReceivedToken = true;
-            setSending(false);
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: replyId,
-                role: "assistant",
-                content: accumulated,
-                products: [],
-                isStreaming: true,
-              },
-            ]);
-          } else {
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === replyId ? { ...m, content: accumulated, isStreaming: true } : m
-              )
-            );
-          }
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === replyId ? { ...m, content: accumulated, isStreaming: true } : m
+            )
+          );
         },
         onDone: (data) => {
           if (data.conversationId) setActiveConversationId(data.conversationId);
-          setMessages((prev) => {
-            const exists = prev.some((m) => m.id === replyId);
-            const finalContent = data.reply || accumulated;
-            if (!exists) {
-              return [
-                ...prev,
-                {
-                  id: replyId,
-                  role: "assistant",
-                  content: finalContent,
-                  products: data.products,
-                  isStreaming: false,
-                },
-              ];
-            }
-            return prev.map((m) =>
+          setMessages((prev) =>
+            prev.map((m) =>
               m.id === replyId
                 ? {
                     ...m,
-                    content: finalContent,
+                    content: data.reply || accumulated,
                     products: data.products,
                     isStreaming: false,
                   }
                 : m
-            );
-          });
+            )
+          );
           loadRecents();
         },
       });
     } catch {
-      setMessages((prev) => {
-        const exists = prev.some((m) => m.id === replyId);
-        if (exists) {
-          return prev.map((m) => (m.id === replyId ? { ...m, isStreaming: false } : m));
-        }
-        return [
-          ...prev,
-          {
-            id: crypto.randomUUID(),
-            role: "assistant",
-            content: "Something went wrong on my end. Give it another try?",
-            products: [],
-            isError: true,
-          },
-        ];
-      });
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === replyId
+            ? {
+                ...m,
+                content: "Something went wrong on my end. Give it another try?",
+                products: [],
+                isStreaming: false,
+                isError: true,
+              }
+            : m
+        )
+      );
     } finally {
       setSending(false);
     }
@@ -374,9 +315,6 @@ export default function Home() {
                     onAddToCart={addItem}
                   />
                 ))}
-                <AnimatePresence initial={false}>
-                  {sending ? <ThinkingIndicator key="thinking" /> : null}
-                </AnimatePresence>
               </div>
             </ScrollArea>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center px-6 pb-5 sm:px-8 sm:pb-6">

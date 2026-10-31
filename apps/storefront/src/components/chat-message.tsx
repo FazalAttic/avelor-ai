@@ -270,9 +270,9 @@ export function ChatMessageItem({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: isUser ? 8 : 4 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
       className={cn("flex flex-col gap-2", isUser ? "items-end" : "items-start")}
     >
       {!isUser ? (
@@ -291,13 +291,35 @@ export function ChatMessageItem({
             "border-red-300/60 bg-red-50/70 text-red-900 dark:border-red-400/30 dark:bg-red-950/40 dark:text-red-200"
         )}
       >
-        {renderContent(message.content)}
-        {message.isStreaming ? (
-          <span
-            aria-hidden
-            className="ml-0.5 inline-block h-[1.05em] w-[2px] translate-y-[2px] animate-pulse rounded-full bg-brand-blue align-middle"
-          />
-        ) : null}
+        {!isUser && !message.content ? (
+          <span className="flex items-center gap-1.5 py-1">
+            {[0, 1, 2].map((dot) => (
+              <motion.span
+                key={dot}
+                aria-hidden
+                className="size-1.5 rounded-full bg-muted"
+                animate={{ y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
+                transition={{
+                  duration: 0.9,
+                  repeat: Infinity,
+                  delay: dot * 0.15,
+                  ease: "easeInOut",
+                }}
+              />
+            ))}
+            <span className="sr-only">is thinking</span>
+          </span>
+        ) : (
+          <>
+            {renderContent(message.content)}
+            {message.isStreaming ? (
+              <span
+                aria-hidden
+                className="ml-0.5 inline-block h-[1.05em] w-[2px] translate-y-[2px] animate-pulse rounded-full bg-brand-blue align-middle"
+              />
+            ) : null}
+          </>
+        )}
       </div>
       {!isUser && message.products.length > 0 ? (
         <ProductCarousel
