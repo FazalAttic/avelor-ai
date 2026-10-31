@@ -19,6 +19,208 @@ import { cn } from "@/lib/utils";
 
 export type RecentChat = { id: string; title: string };
 
+const STARTER_EMOJIS: Record<string, string> = {
+  "running shoes under $100": "👟",
+  "a gift for a gamer": "🎮",
+  "cozy hoodie weather": "🧥",
+};
+
+const KEYWORD_EMOJI_RULES: Array<{ keywords: string[]; emoji: string }> = [
+  {
+    keywords: [
+      "shoe",
+      "shoes",
+      "sneaker",
+      "sneakers",
+      "kicks",
+      "runner",
+      "running",
+      "boot",
+      "boots",
+      "slides",
+      "sandals",
+      "loafers",
+      "heels",
+      "footwear",
+    ],
+    emoji: "👟",
+  },
+  {
+    keywords: [
+      "game",
+      "gamer",
+      "gaming",
+      "playstation",
+      "ps5",
+      "xbox",
+      "nintendo",
+      "switch",
+      "controller",
+      "steam",
+    ],
+    emoji: "🎮",
+  },
+  {
+    keywords: [
+      "hoodie",
+      "hoodies",
+      "sweater",
+      "sweaters",
+      "jacket",
+      "jackets",
+      "coat",
+      "coats",
+      "fleece",
+      "sweatshirt",
+      "pullover",
+      "windbreaker",
+    ],
+    emoji: "🧥",
+  },
+  {
+    keywords: [
+      "shirt",
+      "shirts",
+      "tee",
+      "tees",
+      "t-shirt",
+      "polo",
+      "tank",
+      "jersey",
+      "top",
+      "tops",
+    ],
+    emoji: "👕",
+  },
+  {
+    keywords: ["pants", "jeans", "shorts", "sweatpants", "joggers", "trousers", "leggings"],
+    emoji: "👖",
+  },
+  {
+    keywords: ["cap", "caps", "hat", "hats", "beanie", "beanies", "visor"],
+    emoji: "🧢",
+  },
+  {
+    keywords: ["watch", "watches", "smartwatch", "apple watch", "rolex", "clock"],
+    emoji: "⌚",
+  },
+  {
+    keywords: ["backpack", "backpacks", "bag", "bags", "tote", "duffel", "luggage", "suitcase"],
+    emoji: "🎒",
+  },
+  {
+    keywords: [
+      "headphone",
+      "headphones",
+      "airpod",
+      "airpods",
+      "earbuds",
+      "earphones",
+      "audio",
+      "speaker",
+      "headset",
+    ],
+    emoji: "🎧",
+  },
+  {
+    keywords: ["sunglasses", "glasses", "shades", "eyewear"],
+    emoji: "🕶️",
+  },
+  {
+    keywords: ["gift", "gifts", "present", "presents", "birthday", "anniversary"],
+    emoji: "🎁",
+  },
+  {
+    keywords: [
+      "phone",
+      "iphone",
+      "samsung",
+      "pixel",
+      "laptop",
+      "macbook",
+      "ipad",
+      "tablet",
+      "camera",
+    ],
+    emoji: "📱",
+  },
+  {
+    keywords: ["perfume", "cologne", "fragrance", "scent", "skincare", "makeup", "cosmetics"],
+    emoji: "✨",
+  },
+  {
+    keywords: [
+      "ring",
+      "necklace",
+      "bracelet",
+      "earring",
+      "jewelry",
+      "jewellery",
+      "gold",
+      "silver",
+      "diamond",
+    ],
+    emoji: "💍",
+  },
+  {
+    keywords: [
+      "gym",
+      "workout",
+      "fitness",
+      "training",
+      "tennis",
+      "basketball",
+      "soccer",
+      "football",
+      "sport",
+      "sports",
+    ],
+    emoji: "⚽",
+  },
+  {
+    keywords: [
+      "deal",
+      "deals",
+      "sale",
+      "discount",
+      "cheap",
+      "clearance",
+      "budget",
+      "under $",
+      "under 100",
+    ],
+    emoji: "🏷️",
+  },
+];
+
+export function getChatEmoji(title: string): string | null {
+  const normalized = title.trim().toLowerCase();
+  if (!normalized) return null;
+
+  // Direct starter match
+  if (STARTER_EMOJIS[normalized]) {
+    return STARTER_EMOJIS[normalized];
+  }
+
+  // If title already contains an emoji at the start
+  const leadingEmoji = title.match(/^(\p{Extended_Pictographic})/u);
+  if (leadingEmoji?.[1]) {
+    return leadingEmoji[1];
+  }
+
+  // Keyword rules
+  for (const rule of KEYWORD_EMOJI_RULES) {
+    for (const kw of rule.keywords) {
+      const regex = new RegExp(`\\b${kw}`, "i");
+      if (regex.test(normalized)) {
+        return rule.emoji;
+      }
+    }
+  }
+
+  return null;
+}
+
 export type SidebarProps = {
   open: boolean;
   recentChats?: RecentChat[];
@@ -87,6 +289,7 @@ export function Sidebar({
             <div className="flex flex-col gap-0.5">
               {recentChats.map((chat) => {
                 const isActive = chat.id === activeChatId;
+                const emoji = getChatEmoji(chat.title);
                 return (
                   <div
                     key={chat.id}
@@ -103,15 +306,24 @@ export function Sidebar({
                       title={chat.title}
                       className="flex min-w-0 flex-1 items-center gap-2 truncate text-left text-sm"
                     >
-                      <HugeiconsIcon
-                        icon={Chat01Icon}
-                        size={15}
-                        strokeWidth={1.8}
-                        className={cn(
-                          "shrink-0 transition-colors",
-                          isActive ? "text-brand-blue" : "text-subtle group-hover:text-muted"
-                        )}
-                      />
+                      {emoji ? (
+                        <span
+                          aria-hidden
+                          className="flex size-4 shrink-0 items-center justify-center text-[13px] leading-none select-none"
+                        >
+                          {emoji}
+                        </span>
+                      ) : (
+                        <HugeiconsIcon
+                          icon={Chat01Icon}
+                          size={15}
+                          strokeWidth={1.8}
+                          className={cn(
+                            "shrink-0 transition-colors",
+                            isActive ? "text-brand-blue" : "text-subtle group-hover:text-muted"
+                          )}
+                        />
+                      )}
                       <span className="truncate">{chat.title}</span>
                     </button>
                     {onDeleteChat && (

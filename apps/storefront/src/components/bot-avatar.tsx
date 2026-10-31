@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
@@ -13,15 +14,27 @@ const MOODS: Record<BotMood, string> = {
 
 export function BotAvatar({ mood, className }: { mood: BotMood; className?: string }) {
   return (
-    <Image
-      src={MOODS[mood]}
-      alt=""
-      width={320}
-      height={320}
-      aria-hidden
-      unoptimized
-      priority
-      className={cn("size-6 shrink-0 object-contain dark:invert", className)}
-    />
+    <motion.button
+      type="button"
+      aria-label="Avelor Bot"
+      whileHover={{ scale: 1.08 }}
+      whileTap={{ scale: 0.9, y: 3 }}
+      transition={{ type: "spring", stiffness: 450, damping: 17 }}
+      className={cn(
+        "inline-flex shrink-0 cursor-pointer select-none items-center justify-center border-0 bg-transparent p-0 focus:outline-none",
+        className
+      )}
+    >
+      <Image
+        src={MOODS[mood]}
+        alt=""
+        width={320}
+        height={320}
+        aria-hidden
+        unoptimized
+        priority
+        className="pointer-events-none size-6 shrink-0 object-contain dark:invert"
+      />
+    </motion.button>
   );
 }
