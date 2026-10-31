@@ -12,7 +12,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { TextMorph } from "torph/react";
-import { BotAvatar } from "@/components/bot-avatar";
+import { BotAvatar, type BotMood } from "@/components/bot-avatar";
 import { type ChatProduct, formatPrice } from "@/lib/chat-api";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +52,75 @@ function renderContent(content: string) {
     }
     return part;
   });
+}
+
+function renderStreamingBlurContent(content: string) {
+  const normalized = content.replace(/^[ \t]*[*-][ \t]+/gm, "• ");
+  const parts = normalized.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+
+  let wordIndex = 0;
+  const elements: React.ReactNode[] = [];
+
+  for (const part of parts) {
+    if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
+      const inner = part.slice(2, -2);
+      const tokens = inner.split(/(\s+)/);
+      for (const token of tokens) {
+        if (/^\s+$/.test(token)) {
+          elements.push(token);
+        } else if (token) {
+          const key = `w-${wordIndex++}`;
+          elements.push(
+            <motion.strong
+              key={key}
+              initial={{ opacity: 0, filter: "blur(6px)", y: 2 }}
+              animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+              className="inline-block font-semibold will-change-[filter,opacity]"
+            >
+              {token}
+            </motion.strong>
+          );
+        }
+      }
+    } else if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
+      const inner = part.slice(1, -1);
+      const key = `w-${wordIndex++}`;
+      elements.push(
+        <motion.span
+          key={key}
+          initial={{ opacity: 0, filter: "blur(6px)", y: 2 }}
+          animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+          className="inline-block rounded-md bg-foreground/5 px-1.5 py-px font-mono text-[13px] text-muted will-change-[filter,opacity]"
+        >
+          {inner}
+        </motion.span>
+      );
+    } else if (part) {
+      const tokens = part.split(/(\s+)/);
+      for (const token of tokens) {
+        if (/^\s+$/.test(token)) {
+          elements.push(token);
+        } else if (token) {
+          const key = `w-${wordIndex++}`;
+          elements.push(
+            <motion.span
+              key={key}
+              initial={{ opacity: 0, filter: "blur(6px)", y: 2 }}
+              animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+              className="inline-block will-change-[filter,opacity]"
+            >
+              {token}
+            </motion.span>
+          );
+        }
+      }
+    }
+  }
+
+  return elements;
 }
 
 function ProductCard({
@@ -267,17 +336,22 @@ export function ChatMessageItem({
   onAddToCart?: (product: ChatProduct) => void;
 }) {
   const isUser = message.role === "user";
+  const botMood: BotMood = !message.content
+    ? "thinking"
+    : message.isStreaming
+      ? "generating"
+      : "idle";
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: isUser ? 8 : 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      initial={{ opacity: 0, y: isUser ? 8 : 4, filter: "blur(4px)" }}
+      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
       className={cn("flex flex-col gap-2", isUser ? "items-end" : "items-start")}
     >
       {!isUser ? (
         <span className="flex items-center gap-2 pl-1 text-[11px] font-medium text-muted">
-          <BotAvatar mood={message.isStreaming ? "generating" : "idle"} />
+          <BotAvatar mood={botMood} />
           Avelor
         </span>
       ) : null}
@@ -309,6 +383,8 @@ export function ChatMessageItem({
             ))}
             <span className="sr-only">is thinking</span>
           </span>
+        ) : !isUser && message.isStreaming ? (
+          renderStreamingBlurContent(message.content)
         ) : (
           renderContent(message.content)
         )}
