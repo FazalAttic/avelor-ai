@@ -310,15 +310,7 @@ export function ChatMessageItem({
             <span className="sr-only">is thinking</span>
           </span>
         ) : (
-          <>
-            {renderContent(message.content)}
-            {message.isStreaming ? (
-              <span
-                aria-hidden
-                className="ml-0.5 inline-block h-[1.05em] w-[2px] translate-y-[2px] animate-pulse rounded-full bg-brand-blue align-middle"
-              />
-            ) : null}
-          </>
+          renderContent(message.content)
         )}
       </div>
       {!isUser && message.products.length > 0 ? (
