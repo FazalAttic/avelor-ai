@@ -38,7 +38,6 @@ export default function Home() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
-  const followBottomRef = useRef<() => void>(() => {});
   const [showJump, setShowJump] = useState(false);
   const isChatting = sending || messages.length > 0;
 
@@ -95,6 +94,17 @@ export default function Home() {
     }
   }
 
+  // Smooth scroll down when a new user query is submitted
+  // biome-ignore lint/correctness/useExhaustiveDependencies: react only to newly submitted message pair
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !pinnedRef.current) return;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg?.role === "assistant" && !lastMsg.content) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    }
+  }, [messages.length]);
+
   // Keep pinned to the bottom smoothly as the thread grows during token streaming
   useEffect(() => {
     const el = scrollRef.current;
@@ -102,40 +112,21 @@ export default function Home() {
     if (!el || !thread) return;
 
     let rafId: number | null = null;
-
-    function step() {
-      if (!pinnedRef.current || !el) {
-        rafId = null;
-        return;
-      }
-      const maxScroll = el.scrollHeight - el.clientHeight;
-      const diff = maxScroll - el.scrollTop;
-
-      if (diff > 1) {
-        // Continuous, frame-by-frame smooth glide without browser animation abortion
-        const stepAmount = Math.max(diff * 0.16, 2.5);
-        el.scrollTop = Math.min(el.scrollTop + stepAmount, maxScroll);
-        rafId = requestAnimationFrame(step);
-      } else {
-        el.scrollTop = maxScroll;
-        rafId = null;
-      }
-    }
-
-    function triggerFollow() {
-      if (!pinnedRef.current) return;
-      if (rafId === null) {
-        rafId = requestAnimationFrame(step);
-      }
-    }
-
-    followBottomRef.current = triggerFollow;
-
     const observer = new ResizeObserver(() => {
-      triggerFollow();
+      if (!pinnedRef.current) return;
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        if (pinnedRef.current && el) {
+          const gap = el.scrollHeight - el.clientHeight - el.scrollTop;
+          if (gap > 0) {
+            // Smoothly track as text wraps or elements expand
+            el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+          }
+        }
+      });
     });
     observer.observe(thread);
-
     return () => {
       if (rafId !== null) cancelAnimationFrame(rafId);
       observer.disconnect();
@@ -145,10 +136,9 @@ export default function Home() {
   function trackPinned() {
     const el = scrollRef.current;
     if (!el) return;
-    const maxScroll = el.scrollHeight - el.clientHeight;
-    const gap = maxScroll - el.scrollTop;
-    pinnedRef.current = gap < 160;
-    setShowJump(gap >= 160);
+    const gap = el.scrollHeight - el.clientHeight - el.scrollTop;
+    pinnedRef.current = gap < 120;
+    setShowJump(gap > 120);
   }
 
   function jumpToLatest() {
@@ -156,7 +146,7 @@ export default function Home() {
     if (!el) return;
     pinnedRef.current = true;
     setShowJump(false);
-    followBottomRef.current();
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
   }
 
   useEffect(() => {
@@ -169,9 +159,6 @@ export default function Home() {
     if (sending) return;
     const userMsgId = crypto.randomUUID();
     const replyId = crypto.randomUUID();
-
-    pinnedRef.current = true;
-    setShowJump(false);
 
     // Immediately add both user message and assistant placeholder (with pulsing dots)
     setMessages((prev) => [
@@ -309,27 +296,30 @@ export default function Home() {
             key="thread"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.15 } }}
             transition={{ duration: 0.35, ease: EASE }}
             className="relative z-10 flex h-full min-h-0 w-full flex-col"
           >
-            <ScrollArea onScroll={trackPinned} className="min-h-0 flex-1" viewportRef={scrollRef}>
-              <div
-                ref={threadRef}
-                className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-6 pt-24 pb-56 sm:px-8"
-              >
-                {messages.map((message) => (
-                  <ChatMessageItem
-                    key={message.id}
-                    message={message}
-                    onBuyNow={(product) => {
-                      addItem(product);
-                      openDrawer();
-                    }}
-                    onAddToCart={addItem}
-                  />
-                ))}
-              </div>
-            </ScrollArea>
+            <div className={cn("min-h-0 flex-1", !isChatting && "hidden")}>
+              <ScrollArea onScroll={trackPinned} className="h-full" viewportRef={scrollRef}>
+                <div
+                  ref={threadRef}
+                  className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-6 pt-24 pb-56 sm:px-8"
+                >
+                  {messages.map((message) => (
+                    <ChatMessageItem
+                      key={message.id}
+                      message={message}
+                      onBuyNow={(product) => {
+                        addItem(product);
+                        openDrawer();
+                      }}
+                      onAddToCart={addItem}
+                    />
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center px-6 pb-5 sm:px-8 sm:pb-6">
               <AnimatePresence initial={false}>
                 {showJump ? (
