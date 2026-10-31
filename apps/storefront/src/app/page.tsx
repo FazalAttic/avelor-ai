@@ -154,19 +154,30 @@ export default function Home() {
 
     function onWheel(e: WheelEvent) {
       if (!el) return;
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      if (maxScroll <= 60) {
+        pinnedRef.current = true;
+        setShowJump(false);
+        return;
+      }
+
       if (e.deltaY < 0) {
         // User deliberately scrolled UP
-        pinnedRef.current = false;
-        setShowJump(true);
-        if (rafFollowIdRef.current !== null) {
-          cancelAnimationFrame(rafFollowIdRef.current);
-          rafFollowIdRef.current = null;
-          isGlidingRef.current = false;
+        const newScrollTop = Math.max(0, el.scrollTop + e.deltaY);
+        const gap = maxScroll - newScrollTop;
+        if (gap > 120) {
+          pinnedRef.current = false;
+          setShowJump(true);
+          if (rafFollowIdRef.current !== null) {
+            cancelAnimationFrame(rafFollowIdRef.current);
+            rafFollowIdRef.current = null;
+            isGlidingRef.current = false;
+          }
         }
       } else if (e.deltaY > 0) {
         // User scrolled DOWN - if near bottom, re-engage pin
-        const gap = el.scrollHeight - el.clientHeight - (el.scrollTop + e.deltaY);
-        if (gap <= 40) {
+        const gap = maxScroll - (el.scrollTop + e.deltaY);
+        if (gap <= 60) {
           pinnedRef.current = true;
           setShowJump(false);
         }
@@ -179,20 +190,30 @@ export default function Home() {
     }
     function onTouchMove(e: TouchEvent) {
       if (!el) return;
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      if (maxScroll <= 60) {
+        pinnedRef.current = true;
+        setShowJump(false);
+        return;
+      }
+
       const currentY = e.touches[0]?.clientY ?? 0;
       if (currentY > touchStartY + 10) {
         // Swiped down (scrolled up)
-        pinnedRef.current = false;
-        setShowJump(true);
-        if (rafFollowIdRef.current !== null) {
-          cancelAnimationFrame(rafFollowIdRef.current);
-          rafFollowIdRef.current = null;
-          isGlidingRef.current = false;
+        const gap = maxScroll - el.scrollTop;
+        if (gap > 120) {
+          pinnedRef.current = false;
+          setShowJump(true);
+          if (rafFollowIdRef.current !== null) {
+            cancelAnimationFrame(rafFollowIdRef.current);
+            rafFollowIdRef.current = null;
+            isGlidingRef.current = false;
+          }
         }
       } else if (currentY < touchStartY - 10) {
         // Swiped up (scrolled down towards bottom)
-        const gap = el.scrollHeight - el.clientHeight - el.scrollTop;
-        if (gap <= 40) {
+        const gap = maxScroll - el.scrollTop;
+        if (gap <= 60) {
           pinnedRef.current = true;
           setShowJump(false);
         }
@@ -217,6 +238,14 @@ export default function Home() {
     if (!thread) return;
 
     const observer = new ResizeObserver(() => {
+      const el = scrollRef.current;
+      if (el) {
+        const maxScroll = el.scrollHeight - el.clientHeight;
+        if (maxScroll <= 60) {
+          pinnedRef.current = true;
+          setShowJump(false);
+        }
+      }
       if (pinnedRef.current) {
         triggerFollow();
       }
@@ -237,11 +266,17 @@ export default function Home() {
   function trackPinned() {
     const el = scrollRef.current;
     if (!el || isGlidingRef.current) return;
-    const gap = el.scrollHeight - el.clientHeight - el.scrollTop;
-    if (gap <= 40) {
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    if (maxScroll <= 60) {
       pinnedRef.current = true;
       setShowJump(false);
-    } else if (gap > 160 && !pinnedRef.current) {
+      return;
+    }
+    const gap = maxScroll - el.scrollTop;
+    if (gap <= 60) {
+      pinnedRef.current = true;
+      setShowJump(false);
+    } else if (gap > 120 && !pinnedRef.current) {
       setShowJump(true);
     }
   }

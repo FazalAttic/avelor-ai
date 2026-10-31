@@ -354,7 +354,9 @@ export function ChatMessageItem({
           <BotAvatar mood={botMood} />
           Avelor
         </span>
-      ) : null}
+      ) : (
+        <span className="pr-1 text-[11px] font-medium text-muted">You</span>
+      )}
       <div
         className={cn(
           "max-w-[85%] px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap sm:max-w-[75%]",
