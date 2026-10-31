@@ -38,6 +38,7 @@ export default function Home() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
+  const scrollToBottomOnLoadRef = useRef(false);
   const [showJump, setShowJump] = useState(false);
   const isChatting = sending || messages.length > 0;
 
@@ -61,6 +62,7 @@ export default function Home() {
     try {
       const details = await fetchConversation(id);
       if (details) {
+        scrollToBottomOnLoadRef.current = true;
         setMessages(
           details.messages.map((m) => ({
             id: m.id,
@@ -93,6 +95,24 @@ export default function Home() {
       // Ignore deletion errors
     }
   }
+
+  // Directly jump to the bottom whenever an existing previous chat is loaded
+  // biome-ignore lint/correctness/useExhaustiveDependencies: run once when chat messages are loaded
+  useEffect(() => {
+    if (!scrollToBottomOnLoadRef.current) return;
+    const el = scrollRef.current;
+    if (!el || messages.length === 0) return;
+
+    scrollToBottomOnLoadRef.current = false;
+    pinnedRef.current = true;
+    setShowJump(false);
+    el.scrollTop = el.scrollHeight;
+
+    const frame = requestAnimationFrame(() => {
+      if (el) el.scrollTop = el.scrollHeight;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [messages, activeConversationId]);
 
   // Smooth scroll down when a new user query is submitted
   // biome-ignore lint/correctness/useExhaustiveDependencies: react only to newly submitted message pair
