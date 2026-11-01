@@ -22,10 +22,12 @@ import { IconLink } from "@/components/icon-link";
 import { SettingsModal } from "@/components/settings-modal";
 import type { RecentChat } from "@/components/sidebar";
 import { Sidebar } from "@/components/sidebar";
+import { SoundToggle } from "@/components/sound-toggle";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserAvatar } from "@/components/user-avatar";
 import { authClient, useSession } from "@/lib/auth-client";
 import { useCart } from "@/lib/cart-context";
+import { sound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 
 export interface ChatShellProps {
@@ -127,13 +129,17 @@ export function ChatShell({
           <HugeiconsIcon icon={SidebarLeftIcon} size={20} strokeWidth={1.8} />
         </IconButton>
         <ThemeToggle />
+        <SoundToggle />
       </div>
 
       <div className="fixed right-6 top-5 z-40 sm:right-8 sm:top-6">
         <div className="flex h-10 items-center gap-0.5 rounded-full border border-white/50 bg-white/40 p-1 shadow-card backdrop-blur-xl dark:border-white/10 dark:bg-white/10">
           <button
             type="button"
-            onClick={openDrawer}
+            onClick={() => {
+              sound.click();
+              openDrawer();
+            }}
             title="Bag & Checkout"
             className="relative flex size-8 items-center justify-center rounded-full text-foreground transition-all duration-150 ease-expo hover:bg-white/60 active:scale-95 dark:hover:bg-white/15"
           >

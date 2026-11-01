@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { sound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 
 export type BotMood = "idle" | "thinking" | "generating";
@@ -17,6 +18,7 @@ export function BotAvatar({ mood, className }: { mood: BotMood; className?: stri
     <motion.button
       type="button"
       aria-label="Avelor Bot"
+      onClick={() => sound.botTap()}
       whileHover={{ scale: 1.08 }}
       whileTap={{ scale: 0.9, y: 3 }}
       transition={{ type: "spring", stiffness: 450, damping: 17 }}

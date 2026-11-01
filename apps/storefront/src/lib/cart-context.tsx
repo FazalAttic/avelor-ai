@@ -20,6 +20,7 @@ import {
   removeItemFromCart,
   type StoreOrder,
 } from "./chat-api";
+import { sound } from "./sound";
 
 export interface CartItem {
   readonly id: string;
@@ -167,6 +168,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     async (product: ChatProduct, variant?: ChatVariant, quantity = 1) => {
       const chosenVariant = variant ?? product.variants[0];
       if (!chosenVariant) return;
+
+      sound.addCart();
 
       const unitPrice = chosenVariant.price ?? { amount: 0, currency: "USD" };
       const image = product.media[0] ?? "/products/volt-runner.png";

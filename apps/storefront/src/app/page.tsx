@@ -17,6 +17,7 @@ import {
   fetchRecentConversations,
   streamChatMessage,
 } from "@/lib/chat-api";
+import { sound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 
 const STARTERS = [
@@ -284,6 +285,7 @@ export default function Home() {
   function jumpToLatest() {
     const el = scrollRef.current;
     if (!el) return;
+    sound.pop();
     pinnedRef.current = true;
     setShowJump(false);
     triggerFollow();
@@ -310,6 +312,7 @@ export default function Home() {
       { id: replyId, role: "assistant", content: "", products: [], isStreaming: true },
     ]);
     setSending(true);
+    sound.send();
     triggerFollow();
 
     try {
@@ -332,6 +335,7 @@ export default function Home() {
           }
         },
         onDone: (data) => {
+          sound.receive();
           if (data.conversationId) setActiveConversationId(data.conversationId);
           setMessages((prev) =>
             prev.map((m) =>
@@ -423,6 +427,7 @@ export default function Home() {
                     key={starter.text}
                     type="button"
                     onClick={() => {
+                      sound.pop();
                       setPrompt(starter.text);
                       inputRef.current?.focus();
                     }}

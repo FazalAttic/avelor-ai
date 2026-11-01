@@ -4,6 +4,7 @@ import { Moon02Icon, Sun03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useState } from "react";
 import { IconButton } from "@/components/icon-button";
+import { sound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 
 export function ThemeToggle({ className }: { className?: string }) {
@@ -14,6 +15,7 @@ export function ThemeToggle({ className }: { className?: string }) {
   }, []);
 
   function toggle() {
+    sound.click();
     const next = !night;
     setNight(next);
     document.documentElement.classList.toggle("dark", next);

@@ -15,6 +15,7 @@ import { SideNavItem } from "@/components/side-nav-item";
 import { UserAvatar } from "@/components/user-avatar";
 import { useSession } from "@/lib/auth-client";
 import { useCart } from "@/lib/cart-context";
+import { sound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 
 export type RecentChat = { id: string; title: string };
@@ -259,7 +260,10 @@ export function Sidebar({
       <button
         type="button"
         title="New chat"
-        onClick={onNewChat}
+        onClick={() => {
+          sound.pop();
+          onNewChat();
+        }}
         className={cn(
           "flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold text-white",
           "bg-[image:var(--gradient-brand)] shadow-[0_4px_16px_rgba(32,56,248,0.35)] transition-opacity duration-150 ease-expo hover:opacity-90 active:scale-[0.98]",
@@ -274,7 +278,10 @@ export function Sidebar({
         <SideNavItem
           label="Checkout"
           icon={ShoppingBag01Icon}
-          onSelect={openDrawer}
+          onSelect={() => {
+            sound.click();
+            openDrawer();
+          }}
           badge={itemCount > 0 ? itemCount : undefined}
         />
         <SideNavItem label="Favourites" icon={FavouriteIcon} href="/favourites" />
@@ -302,7 +309,10 @@ export function Sidebar({
                   >
                     <button
                       type="button"
-                      onClick={() => onSelectChat?.(chat.id)}
+                      onClick={() => {
+                        sound.click();
+                        onSelectChat?.(chat.id);
+                      }}
                       title={chat.title}
                       className="flex min-w-0 flex-1 items-center gap-2 truncate text-left text-sm"
                     >
