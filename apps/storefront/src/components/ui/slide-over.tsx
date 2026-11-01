@@ -78,7 +78,7 @@ export function SlideOver({
         aria-labelledby={headingId}
         className={cn(
           "admin-slide-left relative z-10 flex h-full w-full flex-col overflow-hidden",
-          "border-l border-admin-line bg-admin-rail/20 shadow-2xl outline-none backdrop-blur-xs",
+          "border-l border-admin-line bg-admin-rail shadow-2xl outline-none",
           WIDTH_MAP[width],
           className
         )}
@@ -106,7 +106,9 @@ export function SlideOver({
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6 sm:px-7">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto bg-admin-rail px-6 py-6 sm:px-7">
+          {children}
+        </div>
 
         {footer ? (
           <div className="flex items-center justify-end gap-3 border-t border-admin-line bg-admin-card px-6 py-4 sm:px-7">
