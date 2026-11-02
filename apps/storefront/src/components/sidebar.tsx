@@ -12,6 +12,8 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ScrollArea } from "@/components/scroll-area";
 import { SideNavItem } from "@/components/side-nav-item";
+import { SoundToggle } from "@/components/sound-toggle";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { UserAvatar } from "@/components/user-avatar";
 import { useSession } from "@/lib/auth-client";
 import { useCart } from "@/lib/cart-context";
@@ -265,8 +267,7 @@ export function Sidebar({
           onNewChat();
         }}
         className={cn(
-          "flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold text-white",
-          "bg-[image:var(--gradient-brand)] shadow-[0_4px_16px_rgba(32,56,248,0.35)] transition-opacity duration-150 ease-expo hover:opacity-90 active:scale-[0.98]",
+          "btn-brand flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
         )}
       >
@@ -387,31 +388,44 @@ export function Sidebar({
         </ScrollArea>
       </div>
 
-      {user ? (
-        <div className="flex shrink-0 items-center gap-3 rounded-xl p-2">
-          <UserAvatar name={user.name} image={user.image} size="sm" />
-          <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-            {user.name}
-          </span>
+      <div className="flex shrink-0 items-center justify-between gap-2 pt-2">
+        {user ? (
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl p-1.5">
+            <UserAvatar name={user.name} image={user.image} size="sm" />
+            <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+              {user.name}
+            </span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={onSignIn}
+            title="Sign in"
+            className={cn(
+              "flex min-w-0 flex-1 items-center gap-2.5 rounded-xl p-1.5 text-left",
+              "transition-colors duration-150 ease-expo hover:bg-surface-hover"
+            )}
+          >
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
+              <HugeiconsIcon icon={UserIcon} size={14} strokeWidth={2.2} />
+            </span>
+            <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+              Sign in
+            </span>
+          </button>
+        )}
+
+        <div className="flex shrink-0 items-center gap-1 sm:hidden">
+          <ThemeToggle
+            iconSize={18}
+            className="size-9 border border-border/50 bg-background/50 shadow-none hover:bg-surface-hover dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+          />
+          <SoundToggle
+            iconSize={18}
+            className="size-9 border border-border/50 bg-background/50 shadow-none hover:bg-surface-hover dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+          />
         </div>
-      ) : (
-        <button
-          type="button"
-          onClick={onSignIn}
-          title="Sign in"
-          className={cn(
-            "flex shrink-0 items-center gap-3 rounded-xl p-2 text-left",
-            "transition-colors duration-150 ease-expo hover:bg-surface-hover"
-          )}
-        >
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
-            <HugeiconsIcon icon={UserIcon} size={14} strokeWidth={2.2} />
-          </span>
-          <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-            Sign in
-          </span>
-        </button>
-      )}
+      </div>
     </aside>
   );
 }

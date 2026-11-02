@@ -62,9 +62,8 @@ const INPUT_CLASS = cn(
 );
 
 const SAVE_CLASS = cn(
-  "flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-4 text-[13px] font-semibold text-white",
-  "bg-[image:var(--gradient-brand)] shadow-[0_4px_16px_rgba(32,56,248,0.35)]",
-  "transition-opacity duration-150 ease-expo hover:opacity-90 disabled:opacity-50",
+  "btn-brand flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-full px-4 text-[13px] font-semibold",
+  "disabled:opacity-50",
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
 );
 

@@ -7,7 +7,13 @@ import { IconButton } from "@/components/icon-button";
 import { sound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 
-export function SoundToggle({ className }: { className?: string }) {
+export function SoundToggle({
+  className,
+  iconSize = 20,
+}: {
+  className?: string;
+  iconSize?: number;
+}) {
   const [muted, setMuted] = useState(false);
 
   useEffect(() => {
@@ -33,7 +39,11 @@ export function SoundToggle({ className }: { className?: string }) {
         className
       )}
     >
-      <HugeiconsIcon icon={muted ? VolumeOffIcon : VolumeHighIcon} size={20} strokeWidth={1.8} />
+      <HugeiconsIcon
+        icon={muted ? VolumeOffIcon : VolumeHighIcon}
+        size={iconSize}
+        strokeWidth={1.8}
+      />
     </IconButton>
   );
 }

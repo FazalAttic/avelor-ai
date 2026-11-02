@@ -204,9 +204,8 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
               type="submit"
               disabled={pending}
               className={cn(
-                "mt-2 flex h-11 items-center justify-center gap-2 rounded-full text-sm font-semibold text-white",
-                "bg-[image:var(--gradient-brand)] shadow-[0_4px_16px_rgba(32,56,248,0.35)]",
-                "transition-opacity duration-150 ease-expo hover:opacity-90 disabled:opacity-60",
+                "btn-brand mt-2 flex h-11 items-center justify-center gap-2 rounded-full text-sm font-semibold",
+                "disabled:opacity-60",
                 "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
               )}
             >

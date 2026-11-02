@@ -7,7 +7,13 @@ import { IconButton } from "@/components/icon-button";
 import { sound } from "@/lib/sound";
 import { cn } from "@/lib/utils";
 
-export function ThemeToggle({ className }: { className?: string }) {
+export function ThemeToggle({
+  className,
+  iconSize = 20,
+}: {
+  className?: string;
+  iconSize?: number;
+}) {
   const [night, setNight] = useState(false);
 
   useEffect(() => {
@@ -36,8 +42,13 @@ export function ThemeToggle({ className }: { className?: string }) {
         className
       )}
     >
-      <HugeiconsIcon icon={Sun03Icon} size={20} strokeWidth={1.8} className="hidden dark:block" />
-      <HugeiconsIcon icon={Moon02Icon} size={20} strokeWidth={1.8} className="dark:hidden" />
+      <HugeiconsIcon
+        icon={Sun03Icon}
+        size={iconSize}
+        strokeWidth={1.8}
+        className="hidden dark:block"
+      />
+      <HugeiconsIcon icon={Moon02Icon} size={iconSize} strokeWidth={1.8} className="dark:hidden" />
     </IconButton>
   );
 }

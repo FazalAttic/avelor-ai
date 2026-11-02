@@ -163,6 +163,7 @@ body:has(#admin-login-shell) {
   from {
     transform: translateX(100%);
   }
+
   to {
     transform: translateX(0);
   }
@@ -230,6 +231,59 @@ body:has(#admin-login-shell) {
     width: 1.5px;
     pointer-events: none;
     background-color: var(--admin-edge);
+  }
+
+  /* Tactile primary button — top-lit with specular rim highlight, clean single-hue depth */
+  .btn-brand {
+    position: relative;
+    background-image: linear-gradient(180deg, #516dfc 0%, #2c46ff 38%, #162bc7 100%);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.65),
+      inset 0 2px 4px 0 rgba(255, 255, 255, 0.2),
+      inset 0 -1.5px 1px 0 rgba(0, 0, 0, 0.32),
+      0 4px 14px -2px rgba(32, 56, 248, 0.42),
+      0 1px 2px 0 rgba(0, 0, 0, 0.12);
+    color: #ffffff;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+    transition: all 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .btn-brand:hover {
+    background-image: linear-gradient(180deg, #6079fe 0%, #3952ff 38%, #1a30d4 100%);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.8),
+      inset 0 2px 5px 0 rgba(255, 255, 255, 0.28),
+      inset 0 -1.5px 1px 0 rgba(0, 0, 0, 0.32),
+      0 6px 18px -2px rgba(32, 56, 248, 0.5),
+      0 1px 2px 0 rgba(0, 0, 0, 0.15);
+  }
+
+  .btn-brand:active {
+    background-image: linear-gradient(180deg, #192ec5 0%, #12219b 100%);
+    box-shadow:
+      inset 0 2px 4px 0 rgba(0, 0, 0, 0.45),
+      inset 0 1px 1px 0 rgba(0, 0, 0, 0.3),
+      0 1px 2px 0 rgba(32, 56, 248, 0.25);
+    transform: scale(0.98);
+  }
+
+  .dark .btn-brand {
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.75),
+      inset 0 2px 4px 0 rgba(255, 255, 255, 0.25),
+      inset 0 -1.5px 1px 0 rgba(0, 0, 0, 0.4),
+      0 4px 16px -2px rgba(45, 75, 255, 0.45),
+      0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  .dark .btn-brand:hover {
+    box-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
+      inset 0 2px 5px 0 rgba(255, 255, 255, 0.32),
+      inset 0 -1.5px 1px 0 rgba(0, 0, 0, 0.4),
+      0 6px 20px -2px rgba(45, 75, 255, 0.55),
+      0 1px 2px 0 rgba(0, 0, 0, 0.35);
   }
 }
 

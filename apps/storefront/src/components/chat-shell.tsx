@@ -128,8 +128,8 @@ export function ChatShell({
         >
           <HugeiconsIcon icon={SidebarLeftIcon} size={20} strokeWidth={1.8} />
         </IconButton>
-        <ThemeToggle />
-        <SoundToggle />
+        <ThemeToggle className="hidden sm:inline-flex" />
+        <SoundToggle className="hidden sm:inline-flex" />
       </div>
 
       <div className="fixed right-6 top-5 z-40 sm:right-8 sm:top-6">
@@ -150,10 +150,10 @@ export function ChatShell({
               </span>
             ) : null}
           </button>
-          <IconLink label="Orders" href="/orders" className="size-8">
+          <IconLink label="Orders" href="/orders" className="hidden size-8 sm:inline-flex">
             <HugeiconsIcon icon={PackageIcon} size={20} strokeWidth={1.8} />
           </IconLink>
-          <IconLink label="Favourites" href="/favourites" className="size-8">
+          <IconLink label="Favourites" href="/favourites" className="hidden size-8 sm:inline-flex">
             <HugeiconsIcon icon={FavouriteIcon} size={20} strokeWidth={1.8} />
           </IconLink>
 
@@ -201,6 +201,28 @@ export function ChatShell({
                 <span className="block truncate text-xs text-muted">{user.email}</span>
               </span>
             </div>
+            <Link
+              href="/orders"
+              onClick={() => setMenuOpen(false)}
+              className={cn(
+                "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium text-foreground sm:hidden",
+                "transition-colors duration-150 ease-expo hover:bg-white/70 dark:hover:bg-white/10"
+              )}
+            >
+              <HugeiconsIcon icon={PackageIcon} size={18} strokeWidth={1.8} />
+              Orders
+            </Link>
+            <Link
+              href="/favourites"
+              onClick={() => setMenuOpen(false)}
+              className={cn(
+                "flex w-full items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-medium text-foreground sm:hidden",
+                "transition-colors duration-150 ease-expo hover:bg-white/70 dark:hover:bg-white/10"
+              )}
+            >
+              <HugeiconsIcon icon={FavouriteIcon} size={18} strokeWidth={1.8} />
+              Favourites
+            </Link>
             <button
               type="button"
               role="menuitem"

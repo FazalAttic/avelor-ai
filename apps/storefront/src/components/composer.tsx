@@ -237,21 +237,21 @@ export function Composer({
               <HugeiconsIcon icon={Mic01Icon} size={20} strokeWidth={1.8} />
             )}
           </button>
-          <button
+          <motion.button
             type="submit"
             aria-label="Send message"
             disabled={!canSend}
+            whileHover={canSend ? { scale: 1.05 } : undefined}
+            whileTap={canSend ? { scale: 0.9 } : undefined}
+            transition={{ type: "spring", stiffness: 450, damping: 20 }}
             className={cn(
-              "inline-flex size-10 items-center justify-center rounded-full text-white",
-              "transition-all duration-200 ease-expo",
+              "inline-flex size-10 items-center justify-center rounded-full",
               "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue",
-              canSend
-                ? "bg-[image:var(--gradient-brand)] shadow-[0_4px_16px_rgba(32,56,248,0.35)] hover:opacity-90"
-                : "cursor-default bg-border-strong"
+              canSend ? "btn-brand cursor-pointer" : "cursor-default bg-border-strong text-white/50"
             )}
           >
             <HugeiconsIcon icon={ArrowUp01Icon} size={20} strokeWidth={2} />
-          </button>
+          </motion.button>
         </div>
       </div>
     </form>

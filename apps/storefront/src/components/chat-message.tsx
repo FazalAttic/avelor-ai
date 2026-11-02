@@ -344,10 +344,24 @@ export function ChatMessageItem({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: isUser ? 8 : 4, filter: "blur(4px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-      className={cn("flex flex-col gap-2", isUser ? "items-end" : "items-start")}
+      initial={
+        isUser
+          ? { opacity: 0, y: 24, x: 12, scale: 0.88, filter: "blur(6px)" }
+          : { opacity: 0, y: 6, filter: "blur(4px)" }
+      }
+      animate={{ opacity: 1, y: 0, x: 0, scale: 1, filter: "blur(0px)" }}
+      transition={
+        isUser
+          ? {
+              type: "spring",
+              stiffness: 440,
+              damping: 26,
+              mass: 0.8,
+            }
+          : { duration: 0.28, ease: [0.16, 1, 0.3, 1] }
+      }
+      style={isUser ? { transformOrigin: "bottom right" } : undefined}
+      className={cn("flex flex-col gap-1.5", isUser ? "items-end" : "items-start")}
     >
       {!isUser ? (
         <span className="flex items-center gap-2 pl-1 text-[11px] font-medium text-muted">
@@ -355,13 +369,22 @@ export function ChatMessageItem({
           Avelor
         </span>
       ) : (
-        <span className="pr-1 text-[11px] font-medium text-muted">You</span>
+        <motion.span
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, delay: 0.05 }}
+          className="pr-1 text-[11px] font-medium text-muted"
+        >
+          You
+        </motion.span>
       )}
-      <div
+      <motion.div
+        whileHover={isUser ? { scale: 1.01 } : undefined}
+        transition={{ type: "spring", stiffness: 400, damping: 25 }}
         className={cn(
           "max-w-[85%] px-4 py-2.5 text-[15px] leading-relaxed whitespace-pre-wrap sm:max-w-[75%]",
           isUser
-            ? "rounded-[22px] rounded-br-lg bg-foreground text-background"
+            ? "rounded-[22px] rounded-br-lg bg-foreground text-background shadow-xs"
             : "rounded-[22px] rounded-bl-lg border border-white/50 bg-white/40 backdrop-blur-xl dark:border-white/10 dark:bg-white/10",
           message.isError === true &&
             "border-red-300/60 bg-red-50/70 text-red-900 dark:border-red-400/30 dark:bg-red-950/40 dark:text-red-200"
@@ -390,7 +413,7 @@ export function ChatMessageItem({
         ) : (
           renderContent(message.content)
         )}
-      </div>
+      </motion.div>
       {!isUser && message.products.length > 0 ? (
         <ProductCarousel
           products={message.products}
