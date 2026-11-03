@@ -160,12 +160,13 @@ function ProductCard({
 
   return (
     <article
+      draggable={false}
       className={cn(
-        "group relative flex w-44 shrink-0 flex-col overflow-hidden rounded-2xl border border-white/50 bg-white/40 shadow-card backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-pop",
+        "group relative flex w-44 shrink-0 snap-start select-none flex-col overflow-hidden rounded-2xl border border-white/50 bg-white/40 shadow-card backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-pop",
         "dark:border-white/10 dark:bg-white/10"
       )}
     >
-      <div className="relative aspect-square overflow-hidden bg-brand-wash">
+      <div className="relative aspect-square overflow-hidden bg-brand-wash select-none pointer-events-none">
         {product.media[0] ? (
           <Image
             src={product.media[0]}
@@ -173,7 +174,8 @@ function ProductCard({
             fill
             sizes="176px"
             unoptimized
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            draggable={false}
+            className="pointer-events-none select-none object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : null}
       </div>
@@ -226,10 +228,9 @@ const CARD_STRIDE = 188; // w-44 card + gap-3
 const EDGE_FADE = 40;
 
 const ARROW_CLASS = cn(
-  "flex size-8 items-center justify-center rounded-full border border-white/50 bg-white/70 text-foreground shadow-card backdrop-blur-xl",
-  "transition-all duration-150 ease-expo hover:bg-white hover:shadow-pop active:scale-95",
-  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue",
-  "dark:border-white/15 dark:bg-[#15182b]/70 dark:hover:bg-[#15182b]"
+  "flex size-9 items-center justify-center rounded-full border border-border/80 bg-surface/90 text-foreground shadow-pop backdrop-blur-xl",
+  "transition-all duration-150 ease-expo hover:bg-surface hover:scale-105 active:scale-95",
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
 );
 
 function ProductCarousel({
@@ -243,6 +244,59 @@ function ProductCarousel({
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const [overflow, setOverflow] = useState({ left: false, right: false });
+
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+  const didDragRef = useRef(false);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    const target = e.target as HTMLElement;
+    if (target.closest("button, a")) return;
+
+    const el = rowRef.current;
+    if (!el) return;
+    isDraggingRef.current = true;
+    didDragRef.current = false;
+    startXRef.current = e.pageX - el.offsetLeft;
+    scrollLeftRef.current = el.scrollLeft;
+    try {
+      el.setPointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    const el = rowRef.current;
+    if (!el) return;
+    const x = e.pageX - el.offsetLeft;
+    const walk = x - startXRef.current;
+    if (Math.abs(walk) > 4) {
+      didDragRef.current = true;
+    }
+    el.scrollLeft = scrollLeftRef.current - walk;
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    try {
+      rowRef.current?.releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleClickCapture = (e: React.MouseEvent) => {
+    if (didDragRef.current) {
+      e.stopPropagation();
+      e.preventDefault();
+      didDragRef.current = false;
+    }
+  };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: re-measure when the row's products change
   useEffect(() => {
@@ -283,10 +337,17 @@ function ProductCarousel({
 
   return (
     <div className="relative w-full">
-      <div
+      <section
         ref={rowRef}
+        aria-label="Recommended products"
         style={{ WebkitMaskImage: edgeMask, maskImage: edgeMask }}
-        className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={handlePointerUp}
+        onDragStart={(e) => e.preventDefault()}
+        onClickCapture={handleClickCapture}
+        className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {products.map((product) => (
           <ProductCard
@@ -296,16 +357,16 @@ function ProductCarousel({
             onAddToCart={onAddToCart}
           />
         ))}
-      </div>
+      </section>
       <AnimatePresence initial={false}>
         {overflow.left ? (
           <motion.div
             key="left"
-            initial={{ opacity: 0, x: 8 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 8 }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute left-2 top-[72px] z-10"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="absolute left-1 top-1/2 -translate-y-1/2 z-20"
           >
             <button
               type="button"
@@ -313,18 +374,18 @@ function ProductCarousel({
               onClick={() => scroll(-1)}
               className={ARROW_CLASS}
             >
-              <HugeiconsIcon icon={ArrowLeft01Icon} size={16} strokeWidth={2.2} />
+              <HugeiconsIcon icon={ArrowLeft01Icon} size={18} strokeWidth={2.2} />
             </button>
           </motion.div>
         ) : null}
         {overflow.right ? (
           <motion.div
             key="right"
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -8 }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute right-2 top-[72px] z-10"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="absolute right-1 top-1/2 -translate-y-1/2 z-20"
           >
             <button
               type="button"
@@ -332,7 +393,7 @@ function ProductCarousel({
               onClick={() => scroll(1)}
               className={ARROW_CLASS}
             >
-              <HugeiconsIcon icon={ArrowRight01Icon} size={16} strokeWidth={2.2} />
+              <HugeiconsIcon icon={ArrowRight01Icon} size={18} strokeWidth={2.2} />
             </button>
           </motion.div>
         ) : null}
