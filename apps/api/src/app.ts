@@ -12,10 +12,6 @@ import {
   type ConversationRepository,
   type EmailService,
   InMemoryCartRepository,
-  InMemoryCatalogRepository,
-  InMemoryConversationRepository,
-  InMemoryOrderRepository,
-  InMemoryPolicyRepository,
   MockPaymentProvider,
   type OrderRepository,
   type PaymentProvider,
@@ -23,7 +19,16 @@ import {
   ResendEmailService,
   type TenantId,
 } from "@avelor/core";
-import type { RedisTokenBucket } from "@avelor/database";
+import {
+  createDatabaseClient,
+  type Database,
+  DrizzleCatalogRepository,
+  DrizzleConversationRepository,
+  DrizzleOrderRepository,
+  DrizzlePolicyRepository,
+  PgVectorStore,
+  type RedisTokenBucket,
+} from "@avelor/database";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { type AuthInstance, type AuthSession, type AuthUser, createAuth } from "./auth";
@@ -49,6 +54,7 @@ export type AppEnv = {
 };
 
 export interface AppOptions {
+  readonly database?: Database | undefined;
   readonly catalogRepo?: CatalogRepository | undefined;
   readonly cartRepo?: CartRepository | undefined;
   readonly orderRepo?: OrderRepository | undefined;
@@ -70,17 +76,23 @@ export interface AppOptions {
 
 export function createApp(options: AppOptions = {}) {
   const app = new Hono<AppEnv>();
-  const catalogRepo = options.catalogRepo ?? new InMemoryCatalogRepository();
+  const db =
+    options.database ??
+    createDatabaseClient(
+      process.env.DATABASE_URL ?? "postgres://avelor:avelor@localhost:5433/avelor_dev"
+    );
+  const catalogRepo = options.catalogRepo ?? new DrizzleCatalogRepository(db);
   const cartRepo = options.cartRepo ?? new InMemoryCartRepository();
-  const orderRepo = options.orderRepo ?? new InMemoryOrderRepository();
-  const policyRepo = options.policyRepo ?? new InMemoryPolicyRepository();
-  const conversationRepo = options.conversationRepo ?? new InMemoryConversationRepository();
+  const orderRepo = options.orderRepo ?? new DrizzleOrderRepository(db);
+  const policyRepo = options.policyRepo ?? new DrizzlePolicyRepository(db);
+  const conversationRepo = options.conversationRepo ?? new DrizzleConversationRepository(db);
+  const vectorStore = options.vectorStore ?? new PgVectorStore(db);
   const paymentProvider = options.paymentProvider ?? new MockPaymentProvider();
   const chatModel = options.chatModel ?? new MockChatModel();
   const guardrail = options.guardrail ?? new CompositeGuardrail();
   const emailService = options.emailService ?? new ResendEmailService();
 
-  const auth = options.auth ?? createAuth({ emailService });
+  const auth = options.auth ?? createAuth({ database: db, emailService });
   const authMiddleware = createAuthMiddleware(auth);
 
   // CORS: only browser origins on the allowlist may call the API with credentials.
@@ -160,7 +172,7 @@ export function createApp(options: AppOptions = {}) {
       policyRepo,
       authMiddleware,
       embeddingModel: options.embeddingModel,
-      vectorStore: options.vectorStore,
+      vectorStore,
     })
   );
 
@@ -194,7 +206,7 @@ export function createApp(options: AppOptions = {}) {
     "/api/v1/chat",
     createChatRoutes(chatModel, catalogRepo, {
       embeddingModel: options.embeddingModel,
-      vectorStore: options.vectorStore,
+      vectorStore,
       policyRepo,
       guardrail,
       conversationRepo,

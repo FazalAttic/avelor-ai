@@ -4,7 +4,7 @@ import { products } from "./products";
 export const productEmbeddings = pgTable(
   "product_embeddings",
   {
-    id: varchar("id", { length: 64 }).primaryKey(),
+    id: varchar("id", { length: 128 }).primaryKey(),
     productId: varchar("product_id", { length: 64 })
       .notNull()
       .references(() => products.id, { onDelete: "cascade" }),

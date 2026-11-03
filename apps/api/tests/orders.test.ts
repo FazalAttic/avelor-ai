@@ -1,29 +1,36 @@
 import { beforeEach, describe, expect, it } from "bun:test";
+import { createMoney, InMemoryCartRepository, parseTenantId } from "@avelor/core";
 import {
-  createMoney,
-  InMemoryCartRepository,
-  InMemoryCatalogRepository,
-  InMemoryOrderRepository,
-  parseTenantId,
-} from "@avelor/core";
+  createDatabaseClient,
+  DrizzleCatalogRepository,
+  DrizzleOrderRepository,
+} from "@avelor/database";
 import { createApp } from "../src/app";
 
 describe("Order & Checkout HTTP API Endpoints", () => {
   let app: ReturnType<typeof createApp>;
-  let catalogRepo: InMemoryCatalogRepository;
+  let catalogRepo: DrizzleCatalogRepository;
   let cartRepo: InMemoryCartRepository;
-  let orderRepo: InMemoryOrderRepository;
+  let orderRepo: DrizzleOrderRepository;
 
-  const tenantA = "store_alpha";
-  const tenantB = "store_beta";
+  let tenantA: string;
+  let tenantB: string;
   let variantId: string;
   let cartId: string;
 
   beforeEach(async () => {
-    catalogRepo = new InMemoryCatalogRepository();
+    const db = createDatabaseClient(
+      process.env.DATABASE_URL ?? "postgres://avelor:avelor@localhost:5433/avelor_dev"
+    );
+    catalogRepo = new DrizzleCatalogRepository(db);
     cartRepo = new InMemoryCartRepository();
-    orderRepo = new InMemoryOrderRepository();
-    app = createApp({ catalogRepo, cartRepo, orderRepo });
+    orderRepo = new DrizzleOrderRepository(db);
+
+    const rand = Math.random().toString(36).substring(2, 9);
+    tenantA = `test_ord_a_${rand}`;
+    tenantB = `test_ord_b_${rand}`;
+
+    app = createApp({ database: db, catalogRepo, cartRepo, orderRepo });
 
     // Seed product with 5 in stock
     const product = await catalogRepo.createProduct({

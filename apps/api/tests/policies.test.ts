@@ -1,17 +1,25 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import { InMemoryPolicyRepository } from "@avelor/core";
+import { createDatabaseClient, DrizzlePolicyRepository } from "@avelor/database";
 import { createApp } from "../src/app";
 
 describe("Public Store Policy HTTP API Endpoints", () => {
   let app: ReturnType<typeof createApp>;
-  let policyRepo: InMemoryPolicyRepository;
+  let policyRepo: DrizzlePolicyRepository;
 
-  const tenantA = "store_alpha";
-  const tenantB = "store_beta";
+  let tenantA: string;
+  let tenantB: string;
 
   beforeEach(async () => {
-    policyRepo = new InMemoryPolicyRepository();
-    app = createApp({ policyRepo });
+    const db = createDatabaseClient(
+      process.env.DATABASE_URL ?? "postgres://avelor:avelor@localhost:5433/avelor_dev"
+    );
+    policyRepo = new DrizzlePolicyRepository(db);
+
+    const rand = Math.random().toString(36).substring(2, 9);
+    tenantA = `test_pol_a_${rand}`;
+    tenantB = `test_pol_b_${rand}`;
+
+    app = createApp({ database: db, policyRepo });
 
     await policyRepo.upsertPolicy(tenantA, {
       topic: "returns",

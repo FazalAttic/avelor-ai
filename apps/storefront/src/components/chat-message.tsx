@@ -25,9 +25,23 @@ export type UiChatMessage = {
   readonly isStreaming?: boolean;
 };
 
+function stripTechnicalIds(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/\s*\([iI][dD]:\s*`?[a-zA-Z0-9_.-]+`?\)/g, "")
+    .replace(/\s*\[[iI][dD]:\s*`?[a-zA-Z0-9_.-]+`?\]/g, "")
+    .replace(/\s*\(`?prod_[a-zA-Z0-9_.-]+`?\)/g, "")
+    .replace(/\s*\[`?prod_[a-zA-Z0-9_.-]+`?\]/g, "")
+    .replace(/\s*`prod_[a-zA-Z0-9_.-]+`/g, "")
+    .replace(/ +([.,!?;:])/g, "$1")
+    .replace(/ {2,}/g, " ")
+    .trim();
+}
+
 function renderContent(content: string) {
-  // Gemini answers in light markdown; keep it dependency-free.
-  const normalized = content.replace(/^[ \t]*[*-][ \t]+/gm, "• ");
+  // Gemini answers in light markdown; keep it clean and dependency-free.
+  const cleaned = stripTechnicalIds(content);
+  const normalized = cleaned.replace(/^[ \t]*[*-][ \t]+/gm, "• ");
   const parts = normalized.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
   let cursor = 0;
   return parts.map((part) => {
@@ -55,7 +69,8 @@ function renderContent(content: string) {
 }
 
 function renderStreamingBlurContent(content: string) {
-  const normalized = content.replace(/^[ \t]*[*-][ \t]+/gm, "• ");
+  const cleaned = stripTechnicalIds(content);
+  const normalized = cleaned.replace(/^[ \t]*[*-][ \t]+/gm, "• ");
   const parts = normalized.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
 
   let wordIndex = 0;
@@ -157,6 +172,7 @@ function ProductCard({
             alt={product.name}
             fill
             sizes="176px"
+            unoptimized
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : null}

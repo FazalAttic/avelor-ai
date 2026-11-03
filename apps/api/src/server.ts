@@ -2,16 +2,12 @@ import {
   createProductionChatModel,
   createProductionEmbeddingModel,
   createProductionGuardrail,
-  InMemoryVectorStore,
   reindexCatalog,
+  type VectorStore,
 } from "@avelor/ai";
 import {
   type CartRepository,
   InMemoryCartRepository,
-  InMemoryCatalogRepository,
-  InMemoryConversationRepository,
-  InMemoryOrderRepository,
-  InMemoryPolicyRepository,
   parseTenantId,
   ResendEmailService,
 } from "@avelor/core";
@@ -20,11 +16,18 @@ import {
   createDatabaseClient,
   createRedisClient,
   type Database,
+  DrizzleCatalogRepository,
+  DrizzleConversationRepository,
+  DrizzleOrderRepository,
+  DrizzlePolicyRepository,
+  PgVectorStore,
+  type Redis,
   RedisCartRepository,
   RedisTokenBucket,
 } from "@avelor/database";
 import { createApp } from "./app";
 import { createAuth } from "./auth";
+import { seedDemoOrders, seedDemoStore } from "./seed";
 
 const port = Number(process.env.PORT ?? 5000);
 const tenantId = parseTenantId(process.env.AVELOR_TENANT_ID ?? "store_alpha");
@@ -33,18 +36,20 @@ const database: Database = createDatabaseClient(
   process.env.DATABASE_URL ?? "postgres://avelor:avelor@localhost:5433/avelor_dev"
 );
 const emailService = new ResendEmailService();
-const auth = createAuth({ database, emailService });
 
-// Cart storage & Token Bucket rate limiting: use Redis when available
+// Redis cache & Token Bucket rate limiting: connect first so Auth session cache and Cart share Redis
+const redisUrl = process.env.CACHE_URL ?? process.env.REDIS_URL ?? "redis://localhost:6379";
+let redisClient: Redis | undefined;
+let isRedisAvailable = false;
 let cartRepo: CartRepository = new InMemoryCartRepository();
 let chatRateLimiter: RedisTokenBucket | undefined;
 let apiRateLimiter: RedisTokenBucket | undefined;
 
-const redisUrl = process.env.CACHE_URL ?? process.env.REDIS_URL;
-if (redisUrl) {
-  const redisClient = createRedisClient(redisUrl);
-  const isHealthy = await checkRedisHealth(redisClient);
-  if (isHealthy) {
+try {
+  const client = createRedisClient(redisUrl);
+  if (await checkRedisHealth(client)) {
+    redisClient = client;
+    isRedisAvailable = true;
     cartRepo = new RedisCartRepository(redisClient);
     chatRateLimiter = new RedisTokenBucket(redisClient, {
       capacity: 20,
@@ -57,26 +62,49 @@ if (redisUrl) {
       keyPrefix: "ratelimit:api:",
     });
     console.log(
-      `[Avelor Redis] Connected to Redis at ${redisUrl} (cart TTL & Token Bucket rate limiting active)`
+      `[Avelor Redis] Connected to Redis at ${redisUrl} (session secondaryStorage, cart TTL, and rate limiting active)`
     );
   } else {
     console.warn(
-      `[Avelor Redis] Could not reach Redis at ${redisUrl}, falling back to in-memory cart store.`
+      `[Avelor Redis] Could not reach Redis at ${redisUrl}, running without Redis cache.`
     );
   }
+} catch (redisErr) {
+  console.warn(`[Avelor Redis] Error connecting to Redis at ${redisUrl}:`, redisErr);
 }
+
+const auth = createAuth({
+  database,
+  emailService,
+  redisClient: isRedisAvailable ? redisClient : undefined,
+});
 
 const chatModel = createProductionChatModel();
 const embeddingModel = createProductionEmbeddingModel();
 const guardrail = createProductionGuardrail();
-const vectorStore = new InMemoryVectorStore();
+const catalogRepo = new DrizzleCatalogRepository(database);
+const policyRepo = new DrizzlePolicyRepository(database);
+const orderRepo = new DrizzleOrderRepository(database);
+const conversationRepo = new DrizzleConversationRepository(database);
 
-const catalogRepo = new InMemoryCatalogRepository();
-const policyRepo = new InMemoryPolicyRepository();
-const orderRepo = new InMemoryOrderRepository();
-const conversationRepo = new InMemoryConversationRepository();
+const vectorStore: VectorStore = new PgVectorStore(database);
 
-await reindexCatalog({ tenantId, catalogRepo, embeddingModel, vectorStore });
+// Seed initial demo store & orders into PostgreSQL if empty
+try {
+  await seedDemoStore(catalogRepo, policyRepo, tenantId);
+  await seedDemoOrders(orderRepo, catalogRepo, tenantId);
+  console.log(`[Avelor Catalog] Store catalog and orders initialized for tenant '${tenantId}'`);
+} catch (seedErr) {
+  console.error(`[Avelor Catalog] Error seeding demo store:`, seedErr);
+}
+
+// Index catalog into pgvector for AI semantic discovery
+try {
+  await reindexCatalog({ tenantId, catalogRepo, embeddingModel, vectorStore });
+  console.log(`[Avelor Catalog] Vector catalog indexed for tenant '${tenantId}'`);
+} catch (reindexErr) {
+  console.warn(`[Avelor Catalog] Vector indexing error:`, reindexErr);
+}
 
 const app = createApp({
   auth,
@@ -99,5 +127,6 @@ console.log(`[Avelor API] Server starting on http://localhost:${port}`);
 
 export default {
   port,
+  idleTimeout: 120, // 2 minutes for LLM reasoning loops & SSE streams
   fetch: app.fetch,
 };

@@ -353,6 +353,7 @@ export function CheckoutDrawer() {
                               alt={prod.name}
                               fill
                               sizes="40px"
+                              unoptimized
                               className="object-cover"
                             />
                           </div>
@@ -404,6 +405,7 @@ export function CheckoutDrawer() {
                               alt={item.title}
                               fill
                               sizes="48px"
+                              unoptimized
                               className="object-cover"
                             />
                           ) : null}

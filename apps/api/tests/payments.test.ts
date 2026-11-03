@@ -2,34 +2,45 @@ import { beforeEach, describe, expect, it } from "bun:test";
 import {
   createMoney,
   InMemoryCartRepository,
-  InMemoryCatalogRepository,
-  InMemoryOrderRepository,
   MockPaymentProvider,
   parseTenantId,
 } from "@avelor/core";
+import {
+  createDatabaseClient,
+  DrizzleCatalogRepository,
+  DrizzleOrderRepository,
+} from "@avelor/database";
 import { createApp } from "../src/app";
 
 describe("Payment & Webhook HTTP API Endpoints", () => {
   let app: ReturnType<typeof createApp>;
-  let catalogRepo: InMemoryCatalogRepository;
+  let catalogRepo: DrizzleCatalogRepository;
   let cartRepo: InMemoryCartRepository;
-  let orderRepo: InMemoryOrderRepository;
+  let orderRepo: DrizzleOrderRepository;
   let paymentProvider: MockPaymentProvider;
 
-  const tenantA = "store_payments_alpha";
-  const tenantB = "store_payments_beta";
+  let tenantA: string;
+  let tenantB: string;
   const webhookSecret = "whsec_test_secret_32chars_minimum";
   let variantId: string;
   let orderId: string;
   let paymentSessionId: string;
 
   beforeEach(async () => {
-    catalogRepo = new InMemoryCatalogRepository();
+    const db = createDatabaseClient(
+      process.env.DATABASE_URL ?? "postgres://avelor:avelor@localhost:5433/avelor_dev"
+    );
+    catalogRepo = new DrizzleCatalogRepository(db);
     cartRepo = new InMemoryCartRepository();
-    orderRepo = new InMemoryOrderRepository();
+    orderRepo = new DrizzleOrderRepository(db);
     paymentProvider = new MockPaymentProvider();
 
+    const rand = Math.random().toString(36).substring(2, 9);
+    tenantA = `test_pay_a_${rand}`;
+    tenantB = `test_pay_b_${rand}`;
+
     app = createApp({
+      database: db,
       catalogRepo,
       cartRepo,
       orderRepo,

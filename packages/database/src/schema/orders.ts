@@ -12,6 +12,7 @@ export const orders = pgTable(
     status: varchar("status", { length: 32 }).notNull().default("pending"),
     idempotencyKey: varchar("idempotency_key", { length: 128 }),
     paymentSessionId: varchar("payment_session_id", { length: 128 }),
+    checkoutUrl: varchar("checkout_url", { length: 512 }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

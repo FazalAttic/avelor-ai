@@ -59,6 +59,21 @@ function extractProductIds(messages: readonly ChatMessage[]): string[] {
   return [...ids];
 }
 
+// Remove raw backend UUIDs, product IDs (e.g. (ID: prod_...)), and developer metadata
+// so shoppers only see clean, customer-facing product titles and descriptions.
+function cleanCustomerFacingReply(text: string): string {
+  if (!text) return "";
+  return text
+    .replace(/\s*\([iI][dD]:\s*`?[a-zA-Z0-9_.-]+`?\)/g, "")
+    .replace(/\s*\[[iI][dD]:\s*`?[a-zA-Z0-9_.-]+`?\]/g, "")
+    .replace(/\s*\(`?prod_[a-zA-Z0-9_.-]+`?\)/g, "")
+    .replace(/\s*\[`?prod_[a-zA-Z0-9_.-]+`?\]/g, "")
+    .replace(/\s*`prod_[a-zA-Z0-9_.-]+`/g, "")
+    .replace(/ +([.,!?;:])/g, "$1")
+    .replace(/ {2,}/g, " ")
+    .trim();
+}
+
 export interface ChatRoutesOptions {
   readonly embeddingModel?: EmbeddingModel | undefined;
   readonly vectorStore?: VectorStore | undefined;
@@ -221,11 +236,18 @@ export function createChatRoutes(
         }
       }
 
-      await options.conversationRepo.appendMessage(tenantId, {
-        conversationId,
-        role: "user",
-        content: trimmedPrompt,
-      });
+      try {
+        await options.conversationRepo.appendMessage(tenantId, {
+          conversationId,
+          role: "user",
+          content: trimmedPrompt,
+        });
+      } catch (err) {
+        console.warn(
+          `[Avelor Chat] Failed to persist user message to conversation ${conversationId}:`,
+          err
+        );
+      }
     }
 
     const wantsStream =
@@ -233,39 +255,135 @@ export function createChatRoutes(
 
     if (wantsStream) {
       return streamSSE(c, async (stream) => {
-        if (conversationId) {
+        let heartbeat: ReturnType<typeof setInterval> | undefined;
+        try {
+          if (conversationId) {
+            await stream.writeSSE({
+              data: JSON.stringify({
+                type: "meta",
+                conversationId,
+                title: conversationTitle,
+              }),
+            });
+          }
+
+          // Keep-alive ping every 3 seconds to prevent proxy / browser / socket idle timeouts during LLM tool calls
+          heartbeat = setInterval(() => {
+            stream
+              .writeSSE({
+                data: JSON.stringify({ type: "ping" }),
+              })
+              .catch(() => {
+                if (heartbeat) clearInterval(heartbeat);
+              });
+          }, 3000);
+
+          const agent = new DiscoveryAgent(model, repo, tenantId, options);
+          const result = await agent.chatStream(trimmedPrompt, agentHistory, async (delta) => {
+            await stream.writeSSE({
+              data: JSON.stringify({
+                type: "delta",
+                text: delta,
+              }),
+            });
+          });
+
+          if (heartbeat) clearInterval(heartbeat);
+
+          const productIds = extractProductIds(result.messages);
+          const found = await Promise.all(
+            productIds.map((id) => repo.getProductWithVariants(tenantId, id))
+          );
+          const products = found.filter((p): p is ProductWithVariants => p !== null);
+
+          const rawReply = result.reply?.trim() || "";
+          const cleanedReply = cleanCustomerFacingReply(rawReply);
+          const safeReply =
+            cleanedReply ||
+            (products.length > 0
+              ? "Here are the top products I found in our store for you. Let me know if you would like more details or need help finding anything else!"
+              : "I couldn't find items matching your request in our catalog. Would you like to explore other categories or try a different search?");
+
+          if (options?.conversationRepo && conversationId) {
+            try {
+              const storedProducts: StoredChatProduct[] = products.map((p) => ({
+                id: p.id,
+                name: p.name,
+                description: p.description,
+                categories: p.categories,
+                media: p.media,
+                variants: p.variants.map((v) => ({
+                  id: v.id,
+                  title: v.title,
+                  price: { amount: v.price.amount, currency: v.price.currency },
+                  inventoryQuantity: v.inventoryQuantity,
+                })),
+              }));
+
+              await options.conversationRepo.appendMessage(tenantId, {
+                conversationId,
+                role: "assistant",
+                content: safeReply,
+                products: storedProducts,
+              });
+            } catch (err) {
+              console.warn(
+                `[Avelor Chat] Failed to persist assistant message to conversation ${conversationId}:`,
+                err
+              );
+            }
+          }
+
           await stream.writeSSE({
             data: JSON.stringify({
-              type: "meta",
+              type: "done",
+              reply: safeReply,
+              products,
               conversationId,
               title: conversationTitle,
             }),
           });
+        } catch (streamErr) {
+          if (heartbeat) clearInterval(heartbeat);
+          console.error("[Avelor Chat] Streaming error:", streamErr);
+          try {
+            await stream.writeSSE({
+              data: JSON.stringify({
+                type: "done",
+                reply:
+                  "I had a momentary glitch connecting to our catalog. Please try asking again, or browse our store collections below!",
+                products: [],
+                conversationId,
+                title: conversationTitle,
+              }),
+            });
+          } catch {
+            // Stream was closed
+          }
         }
+      });
+    }
 
-        const agent = new DiscoveryAgent(model, repo, tenantId, options);
-        const result = await agent.chatStream(trimmedPrompt, agentHistory, async (delta) => {
-          await stream.writeSSE({
-            data: JSON.stringify({
-              type: "delta",
-              text: delta,
-            }),
-          });
-        });
+    try {
+      const agent = new DiscoveryAgent(model, repo, tenantId, options);
+      const result = await agent.chat(trimmedPrompt, agentHistory);
 
-        const productIds = extractProductIds(result.messages);
-        const found = await Promise.all(
-          productIds.map((id) => repo.getProductWithVariants(tenantId, id))
-        );
-        const products = found.filter((p): p is ProductWithVariants => p !== null);
+      const productIds = extractProductIds(result.messages);
+      const found = await Promise.all(
+        productIds.map((id) => repo.getProductWithVariants(tenantId, id))
+      );
+      const products = found.filter((p): p is ProductWithVariants => p !== null);
 
-        const safeReply =
-          result.reply?.trim() ||
-          (products.length > 0
-            ? "Here are the top products I found in our store for you. Let me know if you would like more details or need help finding anything else!"
-            : "I couldn't find items matching your request in our catalog. Would you like to explore other categories or try a different search?");
+      const rawReply = result.reply?.trim() || "";
+      const cleanedReply = cleanCustomerFacingReply(rawReply);
+      const safeReply =
+        cleanedReply ||
+        (products.length > 0
+          ? "Here are the top products I found in our store for you. Let me know if you would like more details or need help finding anything else!"
+          : "I couldn't find items matching your request in our catalog. Would you like to explore other categories or try a different search?");
 
-        if (options?.conversationRepo && conversationId) {
+      if (options?.conversationRepo && conversationId) {
+        try {
           const storedProducts: StoredChatProduct[] = products.map((p) => ({
             id: p.id,
             name: p.name,
@@ -286,66 +404,32 @@ export function createChatRoutes(
             content: safeReply,
             products: storedProducts,
           });
+        } catch (err) {
+          console.warn(
+            `[Avelor Chat] Failed to persist assistant message to conversation ${conversationId}:`,
+            err
+          );
         }
+      }
 
-        await stream.writeSSE({
-          data: JSON.stringify({
-            type: "done",
-            reply: safeReply,
-            products,
-            conversationId,
-            title: conversationTitle,
-          }),
-        });
+      // Raw model/tool messages are intentionally NOT returned: they contain the
+      // system prompt and internal tool payloads (see ADR 0007 on prompt leakage).
+      return c.json({
+        ...(conversationId ? { conversationId, title: conversationTitle } : {}),
+        reply: safeReply,
+        toolCalls: result.toolCallsExecuted,
+        products,
+      });
+    } catch (chatErr) {
+      console.error("[Avelor Chat] Chat generation error:", chatErr);
+      return c.json({
+        ...(conversationId ? { conversationId, title: conversationTitle } : {}),
+        reply:
+          "I had a momentary glitch connecting to our catalog. Please try asking again, or browse our store collections below!",
+        toolCalls: [],
+        products: [],
       });
     }
-
-    const agent = new DiscoveryAgent(model, repo, tenantId, options);
-    const result = await agent.chat(trimmedPrompt, agentHistory);
-
-    const productIds = extractProductIds(result.messages);
-    const found = await Promise.all(
-      productIds.map((id) => repo.getProductWithVariants(tenantId, id))
-    );
-    const products = found.filter((p): p is ProductWithVariants => p !== null);
-
-    const safeReply =
-      result.reply?.trim() ||
-      (products.length > 0
-        ? "Here are the top products I found in our store for you. Let me know if you would like more details or need help finding anything else!"
-        : "I couldn't find items matching your request in our catalog. Would you like to explore other categories or try a different search?");
-
-    if (options?.conversationRepo && conversationId) {
-      const storedProducts: StoredChatProduct[] = products.map((p) => ({
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        categories: p.categories,
-        media: p.media,
-        variants: p.variants.map((v) => ({
-          id: v.id,
-          title: v.title,
-          price: { amount: v.price.amount, currency: v.price.currency },
-          inventoryQuantity: v.inventoryQuantity,
-        })),
-      }));
-
-      await options.conversationRepo.appendMessage(tenantId, {
-        conversationId,
-        role: "assistant",
-        content: safeReply,
-        products: storedProducts,
-      });
-    }
-
-    // Raw model/tool messages are intentionally NOT returned: they contain the
-    // system prompt and internal tool payloads (see ADR 0007 on prompt leakage).
-    return c.json({
-      ...(conversationId ? { conversationId, title: conversationTitle } : {}),
-      reply: safeReply,
-      toolCalls: result.toolCallsExecuted,
-      products,
-    });
   });
 
   return router;

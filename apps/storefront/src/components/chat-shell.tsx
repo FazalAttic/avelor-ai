@@ -115,7 +115,7 @@ export function ChatShell({
             width={24}
             height={24}
             priority
-            style={{ width: "auto", height: "auto" }}
+            className="size-6 object-contain"
           />
           <span className="hidden text-sm font-semibold tracking-tight text-foreground min-[420px]:inline">
             Avelor

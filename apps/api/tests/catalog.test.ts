@@ -1,17 +1,23 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import { InMemoryCatalogRepository } from "@avelor/core";
+import { createDatabaseClient, DrizzleCatalogRepository } from "@avelor/database";
 import { createApp } from "../src/app";
 
 describe("Catalog HTTP API Endpoints", () => {
   let app: ReturnType<typeof createApp>;
-  let repo: InMemoryCatalogRepository;
+  let repo: DrizzleCatalogRepository;
 
-  const tenantA = "store_alpha";
-  const tenantB = "store_beta";
+  let tenantA: string;
+  let tenantB: string;
 
   beforeEach(() => {
-    repo = new InMemoryCatalogRepository();
-    app = createApp({ catalogRepo: repo });
+    const db = createDatabaseClient(
+      process.env.DATABASE_URL ?? "postgres://avelor:avelor@localhost:5433/avelor_dev"
+    );
+    repo = new DrizzleCatalogRepository(db);
+    const rand = Math.random().toString(36).substring(2, 9);
+    tenantA = `test_cat_a_${rand}`;
+    tenantB = `test_cat_b_${rand}`;
+    app = createApp({ database: db, catalogRepo: repo });
   });
 
   it("rejects requests without x-tenant-id header", async () => {

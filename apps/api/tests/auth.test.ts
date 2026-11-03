@@ -1,38 +1,49 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import { InMemoryVectorStore, MockEmbeddingModel } from "@avelor/ai";
+import { MockEmbeddingModel } from "@avelor/ai";
+import { InMemoryCartRepository, parseTenantId } from "@avelor/core";
 import {
-  InMemoryCartRepository,
-  InMemoryCatalogRepository,
-  InMemoryOrderRepository,
-  parseTenantId,
-} from "@avelor/core";
+  createDatabaseClient,
+  DrizzleCatalogRepository,
+  DrizzleOrderRepository,
+  PgVectorStore,
+} from "@avelor/database";
 import { createApp } from "../src/app";
 import { createAuth } from "../src/auth";
 
 describe("Better Auth & Admin / Customer Role Isolation", () => {
   let app: ReturnType<typeof createApp>;
-  let catalogRepo: InMemoryCatalogRepository;
+  let catalogRepo: DrizzleCatalogRepository;
   let cartRepo: InMemoryCartRepository;
-  let orderRepo: InMemoryOrderRepository;
+  let orderRepo: DrizzleOrderRepository;
   let auth: ReturnType<typeof createAuth>;
 
-  const tenantA = "store_alpha";
-  const tenantB = "store_beta";
+  let tenantA: string;
+  let tenantB: string;
 
+  let adminEmailA: string;
   let adminTokenA: string;
   let adminTokenB: string;
   let customerToken: string;
 
   beforeEach(async () => {
-    catalogRepo = new InMemoryCatalogRepository();
+    const db = createDatabaseClient(
+      process.env.DATABASE_URL ?? "postgres://avelor:avelor@localhost:5433/avelor_dev"
+    );
+    catalogRepo = new DrizzleCatalogRepository(db);
     cartRepo = new InMemoryCartRepository();
-    orderRepo = new InMemoryOrderRepository();
-    auth = createAuth({ secret: "test_secret_for_auth_32_characters_long" });
+    orderRepo = new DrizzleOrderRepository(db);
+    auth = createAuth({ database: db, secret: "test_secret_for_auth_32_characters_long" });
 
-    const embeddingModel = new MockEmbeddingModel(64);
-    const vectorStore = new InMemoryVectorStore();
+    const rand = Math.random().toString(36).substring(2, 9);
+    tenantA = `test_alpha_${rand}`;
+    tenantB = `test_beta_${rand}`;
+    adminEmailA = `adminA_${rand}@store.com`;
+
+    const embeddingModel = new MockEmbeddingModel(1536);
+    const vectorStore = new PgVectorStore(db);
 
     app = createApp({
+      database: db,
       catalogRepo,
       cartRepo,
       orderRepo,
@@ -47,7 +58,7 @@ describe("Better Auth & Admin / Customer Role Isolation", () => {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        email: "adminA@store.com",
+        email: adminEmailA,
         password: "Password123!",
         name: "Admin Alpha",
         role: "admin",
@@ -63,7 +74,7 @@ describe("Better Auth & Admin / Customer Role Isolation", () => {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        email: "adminB@store.com",
+        email: `adminB_${rand}@store.com`,
         password: "Password123!",
         name: "Admin Beta",
         role: "admin",
@@ -79,7 +90,7 @@ describe("Better Auth & Admin / Customer Role Isolation", () => {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        email: "customer@shopper.com",
+        email: `customer_${rand}@shopper.com`,
         password: "Password123!",
         name: "Alice Customer",
         role: "customer",
@@ -309,7 +320,7 @@ describe("Better Auth & Admin / Customer Role Isolation", () => {
 
       expect(res.status).toBe(200);
       const body = await res.json();
-      expect(body.user.email).toBe("admina@store.com");
+      expect(body.user.email).toBe(adminEmailA.toLowerCase());
       expect(body.user.role).toBe("admin");
       expect(body.tenantId).toBe(tenantA);
     });

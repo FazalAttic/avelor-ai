@@ -146,14 +146,9 @@ export default function AdminProductsPage() {
         return (
           <div className="flex min-w-0 items-center gap-3">
             {cover ? (
-              <Image
-                src={cover}
-                alt=""
-                width={40}
-                height={40}
-                unoptimized
-                className="size-10 shrink-0 rounded-lg bg-admin-line/60 object-cover ring-1 ring-admin-edge"
-              />
+              <div className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-admin-line/60 ring-1 ring-admin-edge">
+                <Image src={cover} alt="" fill sizes="40px" unoptimized className="object-cover" />
+              </div>
             ) : (
               <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-admin-line/60 ring-1 ring-admin-edge">
                 <HugeiconsIcon
@@ -741,7 +736,7 @@ function ProductSidePanel({
                 >
                   <span
                     className={cn(
-                      "flex size-5 shrink-0 items-center justify-center overflow-hidden rounded",
+                      "relative flex size-5 shrink-0 items-center justify-center overflow-hidden rounded",
                       isSelected ? "bg-white/20" : "bg-admin-line"
                     )}
                   >
@@ -749,10 +744,10 @@ function ProductSidePanel({
                       <Image
                         src={v.image.trim()}
                         alt=""
-                        width={20}
-                        height={20}
+                        fill
+                        sizes="20px"
                         unoptimized
-                        className="size-full object-cover"
+                        className="object-cover"
                       />
                     ) : (
                       <HugeiconsIcon
@@ -871,10 +866,10 @@ function ProductSidePanel({
                       <Image
                         src={activeVariant.image.trim()}
                         alt="Variant preview"
-                        width={96}
-                        height={96}
+                        fill
+                        sizes="96px"
                         unoptimized
-                        className="size-full object-cover transition-transform duration-200 group-hover:scale-105"
+                        className="object-cover transition-transform duration-200 group-hover:scale-105"
                       />
                     ) : (
                       <div className="flex flex-col items-center gap-1.5 p-2 text-muted group-hover:text-brand-blue transition-colors">

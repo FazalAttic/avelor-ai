@@ -264,7 +264,7 @@ export function Sidebar({
         title="New chat"
         onClick={() => {
           sound.pop();
-          onNewChat();
+          onNewChat?.();
         }}
         className={cn(
           "btn-brand flex h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold",

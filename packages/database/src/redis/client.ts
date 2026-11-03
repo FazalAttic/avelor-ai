@@ -1,5 +1,7 @@
 import Redis, { type RedisOptions } from "ioredis";
 
+export type { Redis, RedisOptions };
+
 export interface CreateRedisOptions extends RedisOptions {
   readonly url?: string;
 }

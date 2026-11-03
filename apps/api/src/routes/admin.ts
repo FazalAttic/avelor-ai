@@ -178,6 +178,34 @@ export function createAdminRoutes(deps: AdminRoutesDependencies) {
       }
     }
 
+    if (deps.vectorStore && deps.embeddingModel) {
+      try {
+        const categoriesText =
+          product.categories.length > 0 ? ` Categories: ${product.categories.join(", ")}.` : "";
+        const text = `${product.name}. ${product.description}.${categoriesText}`;
+        const { embeddings } = await deps.embeddingModel.embed({
+          texts: [text],
+          taskType: "document",
+        });
+        const vector = embeddings[0];
+        if (vector) {
+          await deps.vectorStore.upsert([
+            {
+              id: product.id,
+              tenantId,
+              vector,
+              metadata: {
+                name: product.name,
+                categories: product.categories,
+              },
+            },
+          ]);
+        }
+      } catch (err) {
+        console.warn(`[Avelor AI] Failed to auto-index new product ${product.id}:`, err);
+      }
+    }
+
     return c.json({ ...product, variants: createdVariants }, 201);
   });
 
@@ -262,6 +290,35 @@ export function createAdminRoutes(deps: AdminRoutesDependencies) {
       }
 
       const variants = await deps.catalogRepo.listVariants(tenantId, id);
+
+      if (deps.vectorStore && deps.embeddingModel && updated.status !== "archived") {
+        try {
+          const categoriesText =
+            updated.categories.length > 0 ? ` Categories: ${updated.categories.join(", ")}.` : "";
+          const text = `${updated.name}. ${updated.description}.${categoriesText}`;
+          const { embeddings } = await deps.embeddingModel.embed({
+            texts: [text],
+            taskType: "document",
+          });
+          const vector = embeddings[0];
+          if (vector) {
+            await deps.vectorStore.upsert([
+              {
+                id: updated.id,
+                tenantId,
+                vector,
+                metadata: {
+                  name: updated.name,
+                  categories: updated.categories,
+                },
+              },
+            ]);
+          }
+        } catch (err) {
+          console.warn(`[Avelor AI] Failed to auto-index updated product ${updated.id}:`, err);
+        }
+      }
+
       return c.json({ ...updated, variants });
     } catch {
       return c.json({ error: { code: "NOT_FOUND", message: `Product '${id}' not found` } }, 404);
@@ -275,6 +332,17 @@ export function createAdminRoutes(deps: AdminRoutesDependencies) {
     const deleted = await deps.catalogRepo.deleteProduct(tenantId, id);
     if (!deleted) {
       return c.json({ error: { code: "NOT_FOUND", message: `Product '${id}' not found` } }, 404);
+    }
+
+    if (deps.vectorStore) {
+      try {
+        await deps.vectorStore.delete(tenantId, [id]);
+      } catch (err) {
+        console.warn(
+          `[Avelor AI] Failed to remove vector embedding for deleted product ${id}:`,
+          err
+        );
+      }
     }
 
     return c.json({ status: "deleted", id });

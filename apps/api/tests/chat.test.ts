@@ -1,25 +1,34 @@
 import { beforeEach, describe, expect, it } from "bun:test";
-import { InMemoryVectorStore, MockChatModel, MockEmbeddingModel, reindexCatalog } from "@avelor/ai";
-import { InMemoryCatalogRepository, parseTenantId } from "@avelor/core";
+import { MockChatModel, MockEmbeddingModel, reindexCatalog } from "@avelor/ai";
+import { parseTenantId } from "@avelor/core";
+import { createDatabaseClient, DrizzleCatalogRepository, PgVectorStore } from "@avelor/database";
 import { createApp } from "../src/app";
 
 describe("AI Chat HTTP API Endpoints", () => {
   let app: ReturnType<typeof createApp>;
-  let repo: InMemoryCatalogRepository;
+  let repo: DrizzleCatalogRepository;
   let model: MockChatModel;
   let embeddingModel: MockEmbeddingModel;
-  let vectorStore: InMemoryVectorStore;
+  let vectorStore: PgVectorStore;
 
-  const tenantA = "store_alpha";
-  const tenantB = "store_beta";
+  let tenantA: string;
+  let tenantB: string;
 
   beforeEach(async () => {
-    repo = new InMemoryCatalogRepository();
+    const db = createDatabaseClient(
+      process.env.DATABASE_URL ?? "postgres://avelor:avelor@localhost:5433/avelor_dev"
+    );
+    repo = new DrizzleCatalogRepository(db);
     model = new MockChatModel();
-    embeddingModel = new MockEmbeddingModel(64);
-    vectorStore = new InMemoryVectorStore();
+    embeddingModel = new MockEmbeddingModel(1536);
+    vectorStore = new PgVectorStore(db);
+
+    const rand = Math.random().toString(36).substring(2, 9);
+    tenantA = `test_chat_a_${rand}`;
+    tenantB = `test_chat_b_${rand}`;
 
     app = createApp({
+      database: db,
       catalogRepo: repo,
       chatModel: model,
       embeddingModel,

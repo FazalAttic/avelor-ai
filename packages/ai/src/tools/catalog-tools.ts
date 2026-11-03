@@ -119,7 +119,7 @@ export async function executeToolCall(
             const vectorHits = await context.vectorStore.search(queryVec, {
               tenantId,
               topK: limit,
-              minScore: 0.35,
+              minScore: 0.2,
             });
 
             for (const hit of vectorHits) {
@@ -148,14 +148,32 @@ export async function executeToolCall(
         });
       }
 
-      // Format bounded, grounded summary
-      const items = combinedItems.map((p) => ({
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        categories: p.categories,
-        attributes: p.attributes,
-      }));
+      // Format bounded, grounded summary with real-time stock and price availability
+      const items = await Promise.all(
+        combinedItems.map(async (p) => {
+          const variants = await catalogRepo.listVariants(tenantId, p.id);
+          const totalStock = variants.reduce((sum, v) => sum + v.inventoryQuantity, 0);
+          const prices = variants.map((v) => v.price.amount);
+          const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+          const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+          const currency = variants[0]?.price.currency ?? "USD";
+          const formattedPrice =
+            minPrice === maxPrice
+              ? formatMoney({ amount: minPrice, currency })
+              : `${formatMoney({ amount: minPrice, currency })} - ${formatMoney({ amount: maxPrice, currency })}`;
+
+          return {
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            categories: p.categories,
+            attributes: p.attributes,
+            price: formattedPrice,
+            inStock: totalStock > 0,
+            stockQuantity: totalStock,
+          };
+        })
+      );
 
       return JSON.stringify({
         status: "success",

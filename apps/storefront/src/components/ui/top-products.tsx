@@ -47,13 +47,9 @@ export function TopProducts({
       <div className="flex min-w-0 flex-1 flex-col gap-4">
         <div className="module-edge flex items-center gap-3 rounded-xl p-3">
           {cover ? (
-            <Image
-              src={cover}
-              alt=""
-              width={56}
-              height={56}
-              className="size-14 shrink-0 rounded-lg bg-admin-line/60 object-cover"
-            />
+            <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-admin-line/60">
+              <Image src={cover} alt="" fill sizes="56px" unoptimized className="object-cover" />
+            </div>
           ) : (
             <span className="grid size-14 shrink-0 place-items-center rounded-lg bg-admin-line/60">
               <HugeiconsIcon

@@ -1,9 +1,8 @@
-import { Database as SqliteDatabase } from "bun:sqlite";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { type EmailService, ResendEmailService } from "@avelor/core";
-import type { Database } from "@avelor/database";
 import * as schema from "@avelor/database";
+import { createDatabaseClient, type Database, type Redis } from "@avelor/database";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer, twoFactor } from "better-auth/plugins";
@@ -58,6 +57,7 @@ export interface AuthSession {
 
 export interface CreateAuthOptions {
   database?: Database | undefined;
+  redisClient?: Redis | undefined;
   secret?: string | undefined;
   baseURL?: string | undefined;
   googleClientId?: string | undefined;
@@ -88,67 +88,6 @@ export interface AuthInstance {
   [key: string]: unknown;
 }
 
-function initializeInMemorySqlite(): SqliteDatabase {
-  const db = new SqliteDatabase(":memory:");
-  db.run(`
-    CREATE TABLE IF NOT EXISTS user (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      emailVerified BOOLEAN NOT NULL DEFAULT 0,
-      image TEXT,
-      role TEXT NOT NULL DEFAULT 'customer',
-      tenantId TEXT,
-      twoFactorEnabled BOOLEAN NOT NULL DEFAULT 0,
-      createdAt DATETIME NOT NULL,
-      updatedAt DATETIME NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS session (
-      id TEXT PRIMARY KEY,
-      expiresAt DATETIME NOT NULL,
-      token TEXT NOT NULL UNIQUE,
-      createdAt DATETIME NOT NULL,
-      updatedAt DATETIME NOT NULL,
-      ipAddress TEXT,
-      userAgent TEXT,
-      userId TEXT NOT NULL REFERENCES user(id)
-    );
-    CREATE TABLE IF NOT EXISTS account (
-      id TEXT PRIMARY KEY,
-      accountId TEXT NOT NULL,
-      providerId TEXT NOT NULL,
-      userId TEXT NOT NULL REFERENCES user(id),
-      accessToken TEXT,
-      refreshToken TEXT,
-      idToken TEXT,
-      accessTokenExpiresAt DATETIME,
-      refreshTokenExpiresAt DATETIME,
-      scope TEXT,
-      password TEXT,
-      createdAt DATETIME NOT NULL,
-      updatedAt DATETIME NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS verification (
-      id TEXT PRIMARY KEY,
-      identifier TEXT NOT NULL,
-      value TEXT NOT NULL,
-      expiresAt DATETIME NOT NULL,
-      createdAt DATETIME,
-      updatedAt DATETIME
-    );
-    CREATE TABLE IF NOT EXISTS twoFactor (
-      id TEXT PRIMARY KEY,
-      secret TEXT NOT NULL,
-      backupCodes TEXT NOT NULL,
-      userId TEXT NOT NULL REFERENCES user(id),
-      verified BOOLEAN NOT NULL DEFAULT 1,
-      failedVerificationCount INTEGER NOT NULL DEFAULT 0,
-      lockedUntil DATETIME
-    );
-  `);
-  return db;
-}
-
 export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
   ensureEnvLoaded();
 
@@ -174,22 +113,22 @@ export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
     process.env.GOOGLE_CLIENT_SECRET;
   const hasGoogle = Boolean(googleClientId && googleClientSecret);
 
-  let dbConfig: unknown;
-  if (options.database) {
-    dbConfig = drizzleAdapter(options.database, {
-      provider: "pg",
-      schema: {
-        user: schema.users,
-        session: schema.sessions,
-        account: schema.accounts,
-        verification: schema.verifications,
-        twoFactor: schema.twoFactors,
-      },
-    });
-  } else {
-    // In-memory fallback for offline development & tests
-    dbConfig = initializeInMemorySqlite();
-  }
+  const database =
+    options.database ??
+    createDatabaseClient(
+      process.env.DATABASE_URL ?? "postgres://avelor:avelor@localhost:5433/avelor_dev"
+    );
+
+  const dbConfig = drizzleAdapter(database, {
+    provider: "pg",
+    schema: {
+      user: schema.users,
+      session: schema.sessions,
+      account: schema.accounts,
+      verification: schema.verifications,
+      twoFactor: schema.twoFactors,
+    },
+  });
 
   // Better Auth rejects cookie-authenticated POSTs from origins not on this list (CSRF guard).
   // Reuse the CORS allowlist so the storefront origin is trusted in one place.
@@ -202,11 +141,36 @@ export function createAuth(options: CreateAuthOptions = {}): AuthInstance {
   const requireEmailVerification =
     options.requireEmailVerification ?? process.env.REQUIRE_EMAIL_VERIFICATION === "true";
 
+  const redis = options.redisClient;
+  const secondaryStorage = redis
+    ? {
+        get: async (key: string) => {
+          return await redis.get(`auth:${key}`);
+        },
+        set: async (key: string, value: string, ttl?: number) => {
+          if (ttl && ttl > 0) {
+            await redis.set(`auth:${key}`, value, "EX", Math.floor(ttl));
+          } else {
+            await redis.set(`auth:${key}`, value);
+          }
+        },
+        delete: async (key: string) => {
+          await redis.del(`auth:${key}`);
+        },
+      }
+    : undefined;
+
   return betterAuth({
     secret,
     baseURL,
     trustedOrigins,
     database: dbConfig as never,
+    secondaryStorage: secondaryStorage as never,
+    session: {
+      storeSessionInDatabase: true,
+      expiresIn: 60 * 60 * 24 * 7,
+      updateAge: 60 * 60 * 24,
+    },
     emailAndPassword: {
       enabled: true,
       requireEmailVerification,

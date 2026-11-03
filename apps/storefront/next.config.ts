@@ -2,8 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // Demo catalog media is served from Unsplash (seeded by the API).
-    remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com" }],
+    // Allows remote media URLs from Unsplash, Google Images, CDNs, and any user-added external image host
+    remotePatterns: [
+      { protocol: "https", hostname: "**" },
+      { protocol: "http", hostname: "**" },
+    ],
   },
 };
 

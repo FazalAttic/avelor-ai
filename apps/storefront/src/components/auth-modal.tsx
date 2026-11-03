@@ -112,7 +112,7 @@ export function AuthModal({ open, onClose }: AuthModalProps) {
               width={36}
               height={36}
               priority
-              style={{ width: "auto", height: "auto" }}
+              className="size-9 object-contain"
             />
             <h2
               id="auth-title"
