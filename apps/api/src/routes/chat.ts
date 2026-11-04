@@ -293,6 +293,11 @@ export function createChatRoutes(
     const wantsStream =
       body.stream === true || c.req.header("accept")?.includes("text/event-stream");
 
+    const requestStart = performance.now();
+    console.log(
+      `[Avelor API] 📩 Received chat query: "${trimmedPrompt}" (stream: ${wantsStream}, tenantId: "${tenantId}", conversationId: "${conversationId ?? "new"}")`
+    );
+
     if (wantsStream) {
       return streamSSE(c, async (stream) => {
         let heartbeat: ReturnType<typeof setInterval> | undefined;
@@ -375,6 +380,11 @@ export function createChatRoutes(
             }
           }
 
+          const streamDuration = Math.round(performance.now() - requestStart);
+          console.log(
+            `[Avelor API] 📤 Stream completed in ${streamDuration}ms (products: ${products.length}, conversationId: "${conversationId}")`
+          );
+
           await stream.writeSSE({
             data: JSON.stringify({
               type: "done",
@@ -453,6 +463,11 @@ export function createChatRoutes(
           );
         }
       }
+
+      const syncDuration = Math.round(performance.now() - requestStart);
+      console.log(
+        `[Avelor API] 📤 Completed in ${syncDuration}ms (products: ${products.length}, conversationId: "${conversationId}")`
+      );
 
       // Raw model/tool messages are intentionally NOT returned: they contain the
       // system prompt and internal tool payloads (see ADR 0007 on prompt leakage).

@@ -1,8 +1,8 @@
 "use client";
 
-import { Add01Icon, ArrowUp01Icon, Mic01Icon } from "@hugeicons/core-free-icons";
+import { Add01Icon, ArrowUp01Icon, Cancel01Icon, Mic01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { type Ref, useEffect, useRef, useState } from "react";
 import { IconButton } from "@/components/icon-button";
 import { cn } from "@/lib/utils";
@@ -51,6 +51,9 @@ export type ComposerProps = {
   value?: string;
   onValueChange?: (value: string) => void;
   inputRef?: Ref<HTMLTextAreaElement>;
+  hasPromptHistory?: boolean;
+  isPromptHistoryOpen?: boolean;
+  onTogglePromptHistory?: () => void;
 };
 
 export function Composer({
@@ -61,6 +64,9 @@ export function Composer({
   value: controlledValue,
   onValueChange,
   inputRef,
+  hasPromptHistory = false,
+  isPromptHistoryOpen = false,
+  onTogglePromptHistory,
 }: ComposerProps) {
   const [innerValue, setInnerValue] = useState("");
   const [height, setHeight] = useState<number | undefined>(undefined);
@@ -215,6 +221,63 @@ export function Composer({
           </IconButton>
         </div>
         <div className="flex items-center gap-1.5">
+          {hasPromptHistory && (
+            <motion.button
+              type="button"
+              onClick={onTogglePromptHistory}
+              disabled={disabled}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
+              aria-label={isPromptHistoryOpen ? "Close prompt history" : "Show prompt history"}
+              title={isPromptHistoryOpen ? "Close prompt history" : "View prompt history"}
+              className={cn(
+                "relative inline-flex size-9 items-center justify-center rounded-full transition-all duration-200 ease-expo focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue",
+                isPromptHistoryOpen
+                  ? "bg-foreground text-background shadow-sm dark:bg-white dark:text-neutral-900"
+                  : "text-muted hover:bg-surface-hover hover:text-foreground active:scale-95"
+              )}
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                {isPromptHistoryOpen ? (
+                  <motion.span
+                    key="close"
+                    initial={{ rotate: -90, opacity: 0, scale: 0.7 }}
+                    animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                    exit={{ rotate: 90, opacity: 0, scale: 0.7 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex items-center justify-center"
+                  >
+                    <HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={2.2} />
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    key="history"
+                    initial={{ rotate: 90, opacity: 0, scale: 0.7 }}
+                    animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                    exit={{ rotate: -90, opacity: 0, scale: 0.7 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex items-center justify-center"
+                  >
+                    <svg
+                      width="19"
+                      height="19"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                      <path d="M3 3v5h5" />
+                      <path d="M12 7v5l4 2" />
+                    </svg>
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
+          )}
           <button
             type="button"
             onClick={toggleListening}

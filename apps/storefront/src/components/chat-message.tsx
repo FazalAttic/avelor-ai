@@ -481,6 +481,7 @@ export function ChatMessageItem({
           : { duration: 0.28, ease: [0.16, 1, 0.3, 1] }
       }
       style={isUser ? { transformOrigin: "bottom right" } : undefined}
+      id={`msg-${message.id}`}
       className={cn("flex flex-col gap-1.5", isUser ? "items-end" : "items-start")}
     >
       {!isUser ? (
@@ -499,6 +500,7 @@ export function ChatMessageItem({
         </motion.span>
       )}
       <motion.div
+        data-bubble="true"
         whileHover={isUser ? { scale: 1.01 } : undefined}
         transition={{ type: "spring", stiffness: 400, damping: 25 }}
         className={cn(

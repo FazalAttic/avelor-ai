@@ -45,7 +45,50 @@ export default function Home() {
   const rafFollowIdRef = useRef<number | null>(null);
   const [showJump, setShowJump] = useState(false);
   const [chatWidth, setChatWidth] = useState<ChatWidth>("max");
+  const [isPromptHistoryOpen, setIsPromptHistoryOpen] = useState(false);
   const isChatting = sending || messages.length > 0;
+  const userPrompts = messages.filter((m) => m.role === "user");
+
+  useEffect(() => {
+    if (!isPromptHistoryOpen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setIsPromptHistoryOpen(false);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isPromptHistoryOpen]);
+
+  function handleSelectPrompt(messageId: string) {
+    sound.pop();
+    // 1. Immediately close prompt history and remove the blur
+    setIsPromptHistoryOpen(false);
+
+    // 2. Smoothly scroll to the target message
+    const target = document.getElementById(`msg-${messageId}`);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      // 3. Once the blur is completely cleared and the view settles, trigger a silky smooth pulse
+      setTimeout(() => {
+        const bubble = target.querySelector<HTMLElement>("[data-bubble='true']");
+        if (bubble) {
+          bubble.animate(
+            [
+              { transform: "scale(1)", filter: "brightness(1)" },
+              { transform: "scale(1.035)", filter: "brightness(1.1)" },
+              { transform: "scale(1)", filter: "brightness(1)" },
+            ],
+            {
+              duration: 600,
+              easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+            }
+          );
+        }
+      }, 380);
+    }
+  }
 
   useEffect(() => {
     const prefs = readPrefs();
@@ -98,6 +141,7 @@ export default function Home() {
   }
 
   function handleNewChat() {
+    setIsPromptHistoryOpen(false);
     setActiveConversationId(null);
     setMessages([]);
     setPrompt("");
@@ -480,8 +524,10 @@ export default function Home() {
                 <div
                   ref={threadRef}
                   className={cn(
-                    "mx-auto flex w-full flex-col gap-5 px-6 pt-24 pb-56 sm:px-8 transition-[max-width] duration-300 ease-expo",
-                    getChatWidthClass(chatWidth)
+                    "mx-auto flex w-full flex-col gap-5 px-6 pt-24 pb-56 sm:px-8 transition-all duration-300 ease-expo",
+                    getChatWidthClass(chatWidth),
+                    isPromptHistoryOpen &&
+                      "filter blur-[8px] opacity-35 select-none pointer-events-none"
                   )}
                 >
                   {messages.map((message) => (
@@ -498,9 +544,19 @@ export default function Home() {
                 </div>
               </ScrollArea>
             </div>
+            {isPromptHistoryOpen && (
+              <motion.div
+                key="prompt-backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsPromptHistoryOpen(false)}
+                className="pointer-events-auto fixed inset-0 z-10 bg-black/10 transition-all dark:bg-black/30"
+              />
+            )}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center px-6 pb-5 sm:px-8 sm:pb-6">
               <AnimatePresence initial={false}>
-                {showJump ? (
+                {showJump && !isPromptHistoryOpen ? (
                   <motion.button
                     key="jump"
                     type="button"
@@ -530,6 +586,62 @@ export default function Home() {
                   </motion.button>
                 ) : null}
               </AnimatePresence>
+
+              <AnimatePresence>
+                {isPromptHistoryOpen && userPrompts.length > 0 && (
+                  <motion.div
+                    key="prompt-history-stack"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, transition: { duration: 0.18 } }}
+                    className={cn(
+                      "pointer-events-auto mx-auto mb-3 flex max-h-[58vh] w-full flex-col items-end gap-2.5 overflow-y-auto px-2 py-1 transition-[max-width] duration-300 ease-expo scrollbar-none",
+                      getChatWidthClass(chatWidth)
+                    )}
+                  >
+                    {userPrompts.map((item, idx) => (
+                      <motion.button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleSelectPrompt(item.id)}
+                        initial={{ opacity: 0, y: -20, scale: 0.96 }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                          scale: 1,
+                          transition: {
+                            type: "spring",
+                            stiffness: 420,
+                            damping: 28,
+                            mass: 0.7,
+                            delay: idx * 0.04, // Sequential cascade from top to bottom
+                          },
+                        }}
+                        exit={{
+                          opacity: 0,
+                          y: -10,
+                          scale: 0.98,
+                          transition: {
+                            duration: 0.12,
+                            delay: (userPrompts.length - 1 - idx) * 0.02,
+                          },
+                        }}
+                        whileHover={{ scale: 1.015 }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ duration: 0.18, ease: EASE }}
+                        className={cn(
+                          "relative cursor-pointer max-w-[85%] rounded-[24px] border border-black/5 bg-[#f4f4f6] px-4 py-2.5 text-left text-[14.5px] leading-relaxed text-foreground shadow-none",
+                          "transition-colors duration-150 hover:bg-[#e4e4e9] hover:border-black/10",
+                          "dark:border-white/10 dark:bg-neutral-800 dark:hover:bg-neutral-700 sm:max-w-[75%]"
+                        )}
+                      >
+                        <span className="block break-words">{item.content}</span>
+                      </motion.button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <motion.div
                 layoutId="chat-dock"
                 transition={{ layout: { duration: 0.45, ease: EASE } }}
@@ -545,6 +657,9 @@ export default function Home() {
                   inputRef={inputRef}
                   onSubmit={handleSubmit}
                   disabled={sending}
+                  hasPromptHistory={userPrompts.length > 0}
+                  isPromptHistoryOpen={isPromptHistoryOpen}
+                  onTogglePromptHistory={() => setIsPromptHistoryOpen((prev) => !prev)}
                 />
               </motion.div>
             </div>

@@ -107,6 +107,7 @@ export async function executeToolCall(
       const limit = Math.max(1, Math.min(rawLimit, 10));
 
       let maxPriceFilter = typeof args.maxPrice === "number" ? args.maxPrice : undefined;
+      const minPriceFilter = typeof args.minPrice === "number" ? args.minPrice : undefined;
 
       // Extract natural price constraints if present in keyword query (e.g. "running shoes under $100")
       if (query && maxPriceFilter === undefined) {
@@ -117,47 +118,46 @@ export async function executeToolCall(
         }
       }
 
-      // 1. Structured keyword search
-      const result = await catalogRepo.listProducts(tenantId, {
+      // 1. Structured keyword search and semantic vector search in parallel
+      const keywordPromise = catalogRepo.listProducts(tenantId, {
         query,
         category,
         status: "active",
         limit,
       });
 
-      const matchedIds = new Set(result.items.map((p) => p.id));
-      const combinedItems = [...result.items];
-
-      // 2. Hybrid semantic vector search (strictly thresholded at >= 0.35 to prevent category bleed)
-      if (query && context.embeddingModel && context.vectorStore && combinedItems.length < limit) {
+      const vectorPromise = (async () => {
+        if (!query || !context.embeddingModel || !context.vectorStore) return [];
         try {
           const { embeddings } = await context.embeddingModel.embed({
             texts: [query],
             taskType: "query",
           });
           const queryVec = embeddings[0];
-          if (queryVec && queryVec.length > 0) {
-            const vectorHits = await context.vectorStore.search(queryVec, {
-              tenantId,
-              topK: limit,
-              minScore: 0.35,
-            });
-
-            for (const hit of vectorHits) {
-              if (combinedItems.length >= limit) {
-                break;
-              }
-              if (!matchedIds.has(hit.id)) {
-                const prod = await catalogRepo.getProductWithVariants(tenantId, hit.id);
-                if (prod && prod.status === "active") {
-                  matchedIds.add(hit.id);
-                  combinedItems.push(prod);
-                }
-              }
-            }
-          }
+          if (!queryVec || queryVec.length === 0) return [];
+          return await context.vectorStore.search(queryVec, {
+            tenantId,
+            topK: limit,
+            minScore: 0.35,
+          });
         } catch {
-          // Gracefully fallback to keyword search results if vector search encounters an issue
+          return [];
+        }
+      })();
+
+      const [result, vectorHits] = await Promise.all([keywordPromise, vectorPromise]);
+
+      const matchedIds = new Set(result.items.map((p) => p.id));
+      const combinedItems = [...result.items];
+
+      for (const hit of vectorHits) {
+        if (combinedItems.length >= limit) break;
+        if (!matchedIds.has(hit.id)) {
+          const prod = await catalogRepo.getProductWithVariants(tenantId, hit.id);
+          if (prod && prod.status === "active") {
+            matchedIds.add(hit.id);
+            combinedItems.push(prod);
+          }
         }
       }
 
@@ -169,8 +169,8 @@ export async function executeToolCall(
         });
       }
 
-      // Format bounded, grounded summary with real-time stock and price availability
-      const items = await Promise.all(
+      // Format grounded, compact summary with real-time stock and price availability
+      const hydratedItems = await Promise.all(
         combinedItems.map(async (p) => {
           const variants = await catalogRepo.listVariants(tenantId, p.id);
           const totalStock = variants.reduce((sum, v) => sum + v.inventoryQuantity, 0);
@@ -186,22 +186,37 @@ export async function executeToolCall(
           return {
             id: p.id,
             name: p.name,
-            description: p.description,
             categories: p.categories,
-            attributes: p.attributes,
             price: formattedPrice,
             priceAmount: minPrice / 100,
             inStock: totalStock > 0,
             stockQuantity: totalStock,
+            brief: p.description.slice(0, 100),
           };
         })
       );
 
+      // Prioritize products matching budget constraints if specified
+      let finalItems = hydratedItems;
+      if (typeof maxPriceFilter === "number" && maxPriceFilter > 0) {
+        const inBudget = hydratedItems.filter((p) => p.priceAmount <= maxPriceFilter);
+        const overBudget = hydratedItems.filter((p) => p.priceAmount > maxPriceFilter);
+        finalItems = [...inBudget, ...overBudget.slice(0, inBudget.length < 2 ? 1 : 0)];
+      }
+
+      if (typeof minPriceFilter === "number" && minPriceFilter > 0) {
+        finalItems = finalItems.filter((p) => p.priceAmount >= minPriceFilter);
+      }
+
+      if (finalItems.length === 0 && hydratedItems.length > 0) {
+        finalItems = hydratedItems.slice(0, 2);
+      }
+
       return JSON.stringify({
         status: "success",
-        total: Math.max(result.total, items.length),
-        count: items.length,
-        products: items,
+        total: Math.max(result.total, finalItems.length),
+        count: finalItems.length,
+        products: finalItems,
       });
     }
 
@@ -228,10 +243,9 @@ export async function executeToolCall(
         product: {
           id: product.id,
           name: product.name,
-          description: product.description,
+          description: product.description.slice(0, 200),
           status: product.status,
           categories: product.categories,
-          attributes: product.attributes,
           variants: product.variants.map((v) => ({
             id: v.id,
             sku: v.sku,
