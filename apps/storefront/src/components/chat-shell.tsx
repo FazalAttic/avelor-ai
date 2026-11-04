@@ -130,13 +130,6 @@ export function ChatShell({
         </IconButton>
         <ThemeToggle className="hidden sm:inline-flex" />
         <SoundToggle className="hidden sm:inline-flex" />
-        <IconButton
-          label="Settings"
-          onClick={() => setSettingsOpen(true)}
-          className="hidden sm:inline-flex size-10 border border-white/50 bg-white/40 shadow-card backdrop-blur-xl hover:bg-white/60 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
-        >
-          <HugeiconsIcon icon={AccountSettingIcon} size={18} strokeWidth={1.8} />
-        </IconButton>
       </div>
 
       <div className="fixed right-6 top-5 z-40 sm:right-8 sm:top-6">
