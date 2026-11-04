@@ -21,26 +21,58 @@ import { authClient, useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 type Currency = "USD" | "EUR" | "GBP";
+export type ChatWidth = "compact" | "default" | "wide" | "max";
 
 type Note = { text: string; ok: boolean };
 
-type Prefs = {
+export type Prefs = {
   orderUpdates: boolean;
   priceDrops: boolean;
   productPicks: boolean;
   currency: Currency;
+  chatWidth: ChatWidth;
 };
 
 type SectionId = "profile" | "preferences" | "notifications" | "password";
 
-const DEFAULT_PREFS: Prefs = {
+export const DEFAULT_PREFS: Prefs = {
   orderUpdates: true,
   priceDrops: true,
   productPicks: false,
   currency: "USD",
+  chatWidth: "max",
 };
 
-const PREFS_KEY = "avelor:preferences";
+export const PREFS_KEY = "avelor:preferences";
+
+export const CHAT_WIDTH_OPTIONS: { value: ChatWidth; label: string }[] = [
+  { value: "compact", label: "Compact" },
+  { value: "default", label: "Default" },
+  { value: "wide", label: "Wide" },
+  { value: "max", label: "Max" },
+];
+
+export const WIDTH_DESCRIPTIONS: Record<ChatWidth, string> = {
+  compact: "768px — Compact focus view (previous minimum)",
+  default: "896px — Standard balanced layout",
+  wide: "1024px — Wide comfortable layout",
+  max: "1152px — Maximum expanded width",
+};
+
+export function getChatWidthClass(width: ChatWidth): string {
+  switch (width) {
+    case "compact":
+      return "max-w-3xl";
+    case "default":
+      return "max-w-4xl";
+    case "wide":
+      return "max-w-5xl";
+    case "max":
+      return "max-w-6xl";
+    default:
+      return "max-w-6xl";
+  }
+}
 
 const CURRENCIES: { value: Currency; label: string }[] = [
   { value: "USD", label: "$ USD" },
@@ -49,8 +81,8 @@ const CURRENCIES: { value: Currency; label: string }[] = [
 ];
 
 const SECTIONS: { id: SectionId; label: string; icon: IconSvgElement }[] = [
-  { id: "profile", label: "Profile", icon: UserAccountIcon },
   { id: "preferences", label: "Preferences", icon: AccountSettingIcon },
+  { id: "profile", label: "Profile", icon: UserAccountIcon },
   { id: "notifications", label: "Notifications", icon: Notification01Icon },
   { id: "password", label: "Password", icon: KeyIcon },
 ];
@@ -67,9 +99,9 @@ const SAVE_CLASS = cn(
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
 );
 
-function readPrefs(): Prefs {
+export function readPrefs(): Prefs {
   try {
-    const raw = window.localStorage.getItem(PREFS_KEY);
+    const raw = typeof window !== "undefined" ? window.localStorage.getItem(PREFS_KEY) : null;
     return raw ? { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<Prefs>) } : DEFAULT_PREFS;
   } catch {
     return DEFAULT_PREFS;
@@ -86,7 +118,7 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
   const { data: session } = useSession();
   const user = session?.user ?? null;
 
-  const [section, setSection] = useState<SectionId>("profile");
+  const [section, setSection] = useState<SectionId>(user ? "profile" : "preferences");
 
   const [name, setName] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
@@ -108,10 +140,10 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
     if (!open) return;
     setNight(document.documentElement.classList.contains("dark"));
     setSaved(readPrefs());
-    setSection("profile");
+    setSection(user ? "profile" : "preferences");
     setProfileNote(null);
     setPasswordNote(null);
-  }, [open]);
+  }, [open, user]);
 
   useEffect(() => {
     if (user) setName(user.name);
@@ -150,7 +182,16 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
   }
 
   function patch(next: Partial<Prefs>) {
-    setSaved((current) => ({ ...(current ?? DEFAULT_PREFS), ...next }));
+    setSaved((current) => {
+      const updated = { ...(current ?? DEFAULT_PREFS), ...next };
+      try {
+        window.localStorage.setItem(PREFS_KEY, JSON.stringify(updated));
+        window.dispatchEvent(new CustomEvent("avelor:preferences-changed", { detail: updated }));
+      } catch {
+        // storage unavailable
+      }
+      return updated;
+    });
   }
 
   async function saveProfile(event: FormEvent) {
@@ -215,47 +256,61 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
           "dark:border-white/10 dark:bg-[#15182b]/70"
         )}
       >
-        {user ? (
-          <div className="flex min-h-0 w-full">
-            <aside className="flex w-[216px] shrink-0 flex-col gap-1 border-r border-border/70 bg-white/25 p-3 dark:bg-white/5">
-              <div className="flex min-w-0 items-center gap-3 px-1.5 pb-3">
-                <UserAvatar name={user.name} image={user.image} size="md" />
-                <div className="min-w-0 flex-1 max-sm:hidden">
-                  <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
-                  <p className="truncate text-xs text-muted">{user.email}</p>
-                </div>
-              </div>
+        <div className="flex min-h-0 w-full">
+          <aside className="flex w-[216px] shrink-0 flex-col gap-1 border-r border-border/70 bg-white/25 p-3 dark:bg-white/5">
+            <div className="flex min-w-0 items-center gap-3 px-1.5 pb-3">
+              {user ? (
+                <>
+                  <UserAvatar name={user.name} image={user.image} size="md" />
+                  <div className="min-w-0 flex-1 max-sm:hidden">
+                    <p className="truncate text-sm font-semibold text-foreground">{user.name}</p>
+                    <p className="truncate text-xs text-muted">{user.email}</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-foreground text-background">
+                    <HugeiconsIcon icon={AccountSettingIcon} size={18} strokeWidth={2} />
+                  </span>
+                  <div className="min-w-0 flex-1 max-sm:hidden">
+                    <p className="truncate text-sm font-semibold text-foreground">Settings</p>
+                    <p className="truncate text-xs text-muted">Preferences & layout</p>
+                  </div>
+                </>
+              )}
+            </div>
 
-              {SECTIONS.map((item) => {
-                const active = item.id === section;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    aria-current={active ? "true" : undefined}
-                    title={item.label}
-                    onClick={() => setSection(item.id)}
-                    className={cn(
-                      "flex h-10 shrink-0 items-center gap-3 rounded-xl px-2.5 text-sm font-medium",
-                      "transition-colors duration-150 ease-expo max-sm:justify-center max-sm:px-0",
-                      "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue",
-                      active
-                        ? "bg-brand-wash text-brand-blue"
-                        : "text-muted hover:bg-surface-hover hover:text-foreground"
-                    )}
-                  >
-                    <HugeiconsIcon
-                      icon={item.icon}
-                      size={18}
-                      strokeWidth={1.8}
-                      className="shrink-0"
-                    />
-                    <span className="truncate max-sm:hidden">{item.label}</span>
-                  </button>
-                );
-              })}
+            {SECTIONS.map((item) => {
+              const active = item.id === section;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-current={active ? "true" : undefined}
+                  title={item.label}
+                  onClick={() => setSection(item.id)}
+                  className={cn(
+                    "flex h-10 shrink-0 items-center gap-3 rounded-xl px-2.5 text-sm font-medium",
+                    "transition-colors duration-150 ease-expo max-sm:justify-center max-sm:px-0",
+                    "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue",
+                    active
+                      ? "bg-brand-wash text-brand-blue"
+                      : "text-muted hover:bg-surface-hover hover:text-foreground"
+                  )}
+                >
+                  <HugeiconsIcon
+                    icon={item.icon}
+                    size={18}
+                    strokeWidth={1.8}
+                    className="shrink-0"
+                  />
+                  <span className="truncate max-sm:hidden">{item.label}</span>
+                </button>
+              );
+            })}
 
-              <div className="min-h-0 flex-1" />
+            <div className="min-h-0 flex-1" />
+            {user ? (
               <button
                 type="button"
                 onClick={signOut}
@@ -274,22 +329,91 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
                 />
                 <span className="max-sm:hidden">Sign out</span>
               </button>
-            </aside>
+            ) : (
+              <button
+                type="button"
+                onClick={onSignIn}
+                className={cn(
+                  "flex h-10 items-center gap-3 rounded-xl px-2.5 text-sm font-medium text-brand-blue",
+                  "transition-colors duration-150 ease-expo hover:bg-surface-hover",
+                  "max-sm:justify-center max-sm:px-0",
+                  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
+                )}
+              >
+                <HugeiconsIcon
+                  icon={UserAccountIcon}
+                  size={18}
+                  strokeWidth={1.8}
+                  className="shrink-0"
+                />
+                <span className="max-sm:hidden">Sign in</span>
+              </button>
+            )}
+          </aside>
 
-            <div className="relative flex min-w-0 flex-1 flex-col">
-              <div className="flex shrink-0 justify-end px-2 pt-2">
-                <IconButton
-                  label="Close settings"
-                  onClick={onClose}
-                  className="size-9 border border-white/50 bg-white/40 hover:bg-white/60 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
-                >
-                  <HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={2} />
-                </IconButton>
-              </div>
+          <div className="relative flex min-w-0 flex-1 flex-col">
+            <div className="flex shrink-0 justify-end px-2 pt-2">
+              <IconButton
+                label="Close settings"
+                onClick={onClose}
+                className="size-9 border border-white/50 bg-white/40 hover:bg-white/60 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} size={18} strokeWidth={2} />
+              </IconButton>
+            </div>
 
-              <ScrollArea edgeFade className="@container min-h-0 flex-1">
-                <div className="flex flex-col gap-3 px-2 pb-2">
-                  {section === "profile" ? (
+            <ScrollArea edgeFade className="@container min-h-0 flex-1">
+              <div className="flex flex-col gap-3 px-2 pb-2">
+                {section === "preferences" ? (
+                  <SettingGroup
+                    icon={AccountSettingIcon}
+                    title="Preferences"
+                    desc="Applies on this device."
+                  >
+                    <OptionRow
+                      title="Chat Width"
+                      desc={WIDTH_DESCRIPTIONS[prefs.chatWidth ?? "max"]}
+                      control={
+                        <Segmented
+                          name="chatWidth"
+                          value={prefs.chatWidth ?? "max"}
+                          onChange={(chatWidth) => patch({ chatWidth })}
+                          options={CHAT_WIDTH_OPTIONS}
+                        />
+                      }
+                    />
+                    <OptionRow
+                      title="Appearance"
+                      desc="Day sky or night sky."
+                      control={
+                        <Segmented
+                          name="appearance"
+                          value={night ? "night" : "day"}
+                          onChange={(next) => chooseTheme(next === "night")}
+                          options={[
+                            { value: "day", label: "Day", icon: Sun03Icon },
+                            { value: "night", label: "Night", icon: Moon02Icon },
+                          ]}
+                        />
+                      }
+                    />
+                    <OptionRow
+                      title="Currency"
+                      desc="Prices shown across the store."
+                      control={
+                        <Segmented
+                          name="currency"
+                          value={prefs.currency}
+                          onChange={(currency) => patch({ currency })}
+                          options={CURRENCIES}
+                        />
+                      }
+                    />
+                  </SettingGroup>
+                ) : null}
+
+                {section === "profile" ? (
+                  user ? (
                     <SettingGroup
                       icon={UserAccountIcon}
                       title="Profile"
@@ -316,45 +440,27 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
                       </form>
                       <FormNote note={profileNote} />
                     </SettingGroup>
-                  ) : null}
-
-                  {section === "preferences" ? (
+                  ) : (
                     <SettingGroup
-                      icon={AccountSettingIcon}
-                      title="Preferences"
-                      desc="Applies on this device."
+                      icon={UserAccountIcon}
+                      title="Profile"
+                      desc="How stores and couriers see you."
                     >
-                      <OptionRow
-                        title="Appearance"
-                        desc="Day sky or night sky."
-                        control={
-                          <Segmented
-                            name="appearance"
-                            value={night ? "night" : "day"}
-                            onChange={(next) => chooseTheme(next === "night")}
-                            options={[
-                              { value: "day", label: "Day", icon: Sun03Icon },
-                              { value: "night", label: "Night", icon: Moon02Icon },
-                            ]}
-                          />
-                        }
-                      />
-                      <OptionRow
-                        title="Currency"
-                        desc="Prices shown across the store."
-                        control={
-                          <Segmented
-                            name="currency"
-                            value={prefs.currency}
-                            onChange={(currency) => patch({ currency })}
-                            options={CURRENCIES}
-                          />
-                        }
-                      />
+                      <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+                        <p className="text-sm font-semibold text-foreground">Sign in required</p>
+                        <p className="max-w-[34ch] text-xs text-muted">
+                          Sign in to sync your profile details, orders, and addresses.
+                        </p>
+                        <button type="button" onClick={onSignIn} className={SAVE_CLASS}>
+                          Sign in
+                        </button>
+                      </div>
                     </SettingGroup>
-                  ) : null}
+                  )
+                ) : null}
 
-                  {section === "notifications" ? (
+                {section === "notifications" ? (
+                  user ? (
                     <SettingGroup
                       icon={Notification01Icon}
                       title="Notifications"
@@ -394,9 +500,27 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
                         }
                       />
                     </SettingGroup>
-                  ) : null}
+                  ) : (
+                    <SettingGroup
+                      icon={Notification01Icon}
+                      title="Notifications"
+                      desc="We only email what you ask for."
+                    >
+                      <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+                        <p className="text-sm font-semibold text-foreground">Sign in required</p>
+                        <p className="max-w-[34ch] text-xs text-muted">
+                          Sign in to configure email notifications for orders and price drops.
+                        </p>
+                        <button type="button" onClick={onSignIn} className={SAVE_CLASS}>
+                          Sign in
+                        </button>
+                      </div>
+                    </SettingGroup>
+                  )
+                ) : null}
 
-                  {section === "password" ? (
+                {section === "password" ? (
+                  user ? (
                     <SettingGroup
                       icon={KeyIcon}
                       title="Password"
@@ -436,22 +560,28 @@ export function SettingsModal({ open, onClose, onSignIn }: SettingsModalProps) {
                       </form>
                       <FormNote note={passwordNote} />
                     </SettingGroup>
-                  ) : null}
-                </div>
-              </ScrollArea>
-            </div>
+                  ) : (
+                    <SettingGroup
+                      icon={KeyIcon}
+                      title="Password"
+                      desc="Other devices are signed out when it changes."
+                    >
+                      <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+                        <p className="text-sm font-semibold text-foreground">Sign in required</p>
+                        <p className="max-w-[34ch] text-xs text-muted">
+                          Sign in to manage and update your account password.
+                        </p>
+                        <button type="button" onClick={onSignIn} className={SAVE_CLASS}>
+                          Sign in
+                        </button>
+                      </div>
+                    </SettingGroup>
+                  )
+                ) : null}
+              </div>
+            </ScrollArea>
           </div>
-        ) : (
-          <div className="flex w-full flex-col items-center justify-center gap-4 p-8 text-center">
-            <h2 className="text-base font-semibold text-foreground">Account settings</h2>
-            <p className="max-w-[36ch] text-sm text-muted">
-              Sign in to sync your profile, orders and favourites.
-            </p>
-            <button type="button" onClick={onSignIn} className={SAVE_CLASS}>
-              Sign in
-            </button>
-          </div>
-        )}
+        </div>
       </motion.div>
     </div>
   );

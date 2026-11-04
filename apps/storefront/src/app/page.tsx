@@ -9,6 +9,7 @@ import { ChatShell } from "@/components/chat-shell";
 import { Composer } from "@/components/composer";
 import { ProductMarquee } from "@/components/product-marquee";
 import { ScrollArea } from "@/components/scroll-area";
+import { type ChatWidth, getChatWidthClass, readPrefs } from "@/components/settings-modal";
 import type { RecentChat } from "@/components/sidebar";
 import { useCart } from "@/lib/cart-context";
 import {
@@ -43,7 +44,23 @@ export default function Home() {
   const isGlidingRef = useRef(false);
   const rafFollowIdRef = useRef<number | null>(null);
   const [showJump, setShowJump] = useState(false);
+  const [chatWidth, setChatWidth] = useState<ChatWidth>("max");
   const isChatting = sending || messages.length > 0;
+
+  useEffect(() => {
+    const prefs = readPrefs();
+    if (prefs.chatWidth) {
+      setChatWidth(prefs.chatWidth);
+    }
+    function handlePrefsChange(e: Event) {
+      const customEvent = e as CustomEvent<{ chatWidth?: ChatWidth }>;
+      if (customEvent.detail?.chatWidth) {
+        setChatWidth(customEvent.detail.chatWidth);
+      }
+    }
+    window.addEventListener("avelor:preferences-changed", handlePrefsChange);
+    return () => window.removeEventListener("avelor:preferences-changed", handlePrefsChange);
+  }, []);
 
   async function loadRecents() {
     try {
@@ -400,7 +417,10 @@ export default function Home() {
             key="hero"
             exit={{ opacity: 0, y: -40, filter: "blur(6px)" }}
             transition={{ duration: 0.35, ease: EASE }}
-            className="flex w-full max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl translate-y-16 flex-col items-center gap-10 px-6 sm:px-8 md:translate-y-14"
+            className={cn(
+              "flex w-full translate-y-16 flex-col items-center gap-10 px-6 sm:px-8 md:translate-y-14 transition-[max-width] duration-300 ease-expo",
+              getChatWidthClass(chatWidth)
+            )}
           >
             <h1 className="text-center text-3xl font-medium tracking-tight text-foreground sm:text-4xl md:text-5xl">
               Find your{" "}
@@ -459,7 +479,10 @@ export default function Home() {
               <ScrollArea onScroll={trackPinned} className="h-full" viewportRef={scrollRef}>
                 <div
                   ref={threadRef}
-                  className="mx-auto flex w-full max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl flex-col gap-5 px-6 pt-24 pb-56 sm:px-8"
+                  className={cn(
+                    "mx-auto flex w-full flex-col gap-5 px-6 pt-24 pb-56 sm:px-8 transition-[max-width] duration-300 ease-expo",
+                    getChatWidthClass(chatWidth)
+                  )}
                 >
                   {messages.map((message) => (
                     <ChatMessageItem
@@ -510,7 +533,10 @@ export default function Home() {
               <motion.div
                 layoutId="chat-dock"
                 transition={{ layout: { duration: 0.45, ease: EASE } }}
-                className="pointer-events-auto mx-auto w-full max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl rounded-[32px] border border-white/50 bg-white/25 p-3 shadow-card backdrop-blur-2xl dark:border-white/10 dark:bg-white/5"
+                className={cn(
+                  "pointer-events-auto mx-auto w-full rounded-[32px] border border-white/50 bg-white/25 p-3 shadow-card backdrop-blur-2xl dark:border-white/10 dark:bg-white/5 transition-[max-width] duration-300 ease-expo",
+                  getChatWidthClass(chatWidth)
+                )}
               >
                 <Composer
                   placeholder="Ask a follow-up…"

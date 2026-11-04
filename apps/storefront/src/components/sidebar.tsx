@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  AccountSettingIcon,
   Chat01Icon,
   Delete02Icon,
   Edit01Icon,
@@ -287,7 +288,7 @@ export function Sidebar({
         />
         <SideNavItem label="Favourites" icon={FavouriteIcon} href="/favourites" />
         <SideNavItem label="Orders" icon={PackageIcon} href="/orders" />
-        <SideNavItem label="Account settings" icon={UserIcon} onSelect={onSettings} />
+        <SideNavItem label="Settings" icon={AccountSettingIcon} onSelect={onSettings} />
       </nav>
 
       <div className="mt-4 flex min-h-0 flex-1 flex-col">

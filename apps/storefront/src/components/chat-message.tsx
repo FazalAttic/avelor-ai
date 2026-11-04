@@ -138,6 +138,54 @@ function renderStreamingBlurContent(content: string) {
   return elements;
 }
 
+function getProductMerchant(product: ChatProduct): string {
+  const name = product.name.toLowerCase();
+  if (name.includes("nike")) return "Nike";
+  if (name.includes("apple") || name.includes("airpod")) return "Apple";
+  if (name.includes("adidas")) return "Adidas";
+  if (name.includes("layasa")) return "Layasa";
+  if (product.categories && product.categories.length > 0) {
+    const cat = product.categories[0];
+    return cat.charAt(0).toUpperCase() + cat.slice(1);
+  }
+  return "Avelor Store";
+}
+
+function getProductDiscount(product: ChatProduct): {
+  originalPrice: { amount: number; currency: string } | null;
+  discountPercent: number | null;
+} {
+  const price = product.variants[0]?.price;
+  if (!price) return { originalPrice: null, discountPercent: null };
+
+  const name = product.name.toLowerCase();
+  let originalAmount: number | null = null;
+
+  if (name.includes("air force") && price.amount < 11000) {
+    originalAmount = 11500; // Nike Air Force 1 MSRP $115.00
+  } else if (name.includes("aero glide")) {
+    originalAmount = 16000;
+  } else if (name.includes("layasa")) {
+    originalAmount = 12500;
+  } else if (name.includes("leather boots") || name.includes("admin")) {
+    originalAmount = 22000;
+  } else if (name.includes("daypack") || name.includes("nomad")) {
+    originalAmount = 12000;
+  } else if (name.includes("merino") || name.includes("thermal")) {
+    originalAmount = 7500;
+  }
+
+  if (originalAmount && originalAmount > price.amount) {
+    const discount = Math.round(((originalAmount - price.amount) / originalAmount) * 100);
+    return {
+      originalPrice: { amount: originalAmount, currency: price.currency },
+      discountPercent: discount,
+    };
+  }
+
+  return { originalPrice: null, discountPercent: null };
+}
+
 function ProductCard({
   product,
   onBuyNow,
@@ -148,6 +196,8 @@ function ProductCard({
   onAddToCart?: (product: ChatProduct) => void;
 }) {
   const price = product.variants[0]?.price ?? null;
+  const { originalPrice, discountPercent } = getProductDiscount(product);
+  const merchant = getProductMerchant(product);
   const [justAdded, setJustAdded] = useState(false);
 
   function handleAdd() {
@@ -162,60 +212,84 @@ function ProductCard({
     <article
       draggable={false}
       className={cn(
-        "group relative flex w-44 shrink-0 snap-start select-none flex-col overflow-hidden rounded-2xl border border-white/50 bg-white/40 shadow-card backdrop-blur-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-pop",
+        "group relative flex w-64 sm:w-72 shrink-0 snap-start select-none flex-col overflow-hidden rounded-[26px]",
+        "border border-white/60 bg-white/50 p-3 shadow-card backdrop-blur-xl",
+        "transition-all duration-200 hover:-translate-y-1 hover:shadow-pop",
         "dark:border-white/10 dark:bg-white/10"
       )}
     >
-      <div className="relative aspect-square overflow-hidden bg-brand-wash select-none pointer-events-none">
+      <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] flex items-center justify-center p-3 select-none pointer-events-none">
         {product.media[0] ? (
           <Image
             src={product.media[0]}
             alt={product.name}
             fill
-            sizes="176px"
+            sizes="(max-width: 640px) 256px, 288px"
             unoptimized
             draggable={false}
-            className="pointer-events-none select-none object-cover transition-transform duration-300 group-hover:scale-105"
+            className="pointer-events-none select-none object-contain p-2.5 transition-transform duration-300 group-hover:scale-105"
           />
         ) : null}
+        {onAddToCart ? (
+          <button
+            type="button"
+            onClick={handleAdd}
+            title={justAdded ? "Added to bag" : "Add to bag"}
+            className={cn(
+              "pointer-events-auto absolute right-2.5 top-2.5 flex size-8 items-center justify-center rounded-full border transition-all duration-150 active:scale-95",
+              justAdded
+                ? "bg-emerald-500 text-white border-emerald-500 shadow-sm"
+                : "bg-white/90 dark:bg-black/70 border-black/5 dark:border-white/10 text-foreground shadow-xs hover:scale-110 hover:bg-white dark:hover:bg-black/90"
+            )}
+          >
+            <HugeiconsIcon
+              icon={justAdded ? CheckmarkBadge01Icon : PlusSignIcon}
+              size={15}
+              strokeWidth={2.2}
+              className={justAdded ? "text-white" : ""}
+            />
+          </button>
+        ) : null}
       </div>
-      <div className="flex flex-1 flex-col justify-between p-3">
+      <div className="flex flex-1 flex-col justify-between gap-3 p-1 pt-3">
         <div>
-          <p className="truncate text-[13px] font-semibold text-foreground">{product.name}</p>
-          {price ? (
-            <p className="mt-0.5 text-xs text-muted">
-              <TextMorph as="span">{formatPrice(price)}</TextMorph>
-            </p>
-          ) : null}
+          <h3
+            className="line-clamp-2 text-sm font-semibold leading-snug text-foreground min-h-[2.5rem]"
+            title={product.name}
+          >
+            {product.name}
+          </h3>
+          <div className="mt-2 flex flex-wrap items-baseline gap-2">
+            {price ? (
+              <span className="text-lg font-bold tracking-tight text-foreground">
+                <TextMorph as="span">{formatPrice(price)}</TextMorph>
+              </span>
+            ) : null}
+            {originalPrice ? (
+              <span className="text-xs text-muted line-through">
+                <TextMorph as="span">{formatPrice(originalPrice)}</TextMorph>
+              </span>
+            ) : null}
+            {discountPercent ? (
+              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                {discountPercent}% off
+              </span>
+            ) : null}
+          </div>
+          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted">
+            <span className="size-2 rounded-full bg-brand-blue shrink-0" />
+            <span className="truncate">{merchant}</span>
+          </div>
         </div>
-        <div className="mt-2.5 flex items-center gap-1.5">
+        <div>
           {onBuyNow ? (
             <button
               type="button"
               onClick={() => onBuyNow(product)}
-              className="flex h-8 flex-1 items-center justify-center gap-1 rounded-xl bg-foreground text-[12px] font-medium text-background shadow-xs transition-all duration-150 hover:bg-foreground/85 active:scale-[0.97]"
+              className="flex h-10 w-full items-center justify-center gap-2 rounded-full border border-border/80 bg-white/80 text-[13px] font-semibold text-foreground shadow-xs transition-all duration-150 hover:bg-white hover:shadow-card active:scale-[0.98] dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
             >
-              <HugeiconsIcon icon={ShoppingBag01Icon} size={13} strokeWidth={2.2} />
-              Buy now
-            </button>
-          ) : null}
-          {onAddToCart ? (
-            <button
-              type="button"
-              onClick={handleAdd}
-              title={justAdded ? "Added to bag" : "Add to bag"}
-              className={cn(
-                "flex size-8 shrink-0 items-center justify-center rounded-xl border border-border text-foreground transition-all duration-150 active:scale-95",
-                justAdded
-                  ? "bg-emerald-500 text-white border-emerald-500"
-                  : "bg-surface hover:bg-surface-hover"
-              )}
-            >
-              <HugeiconsIcon
-                icon={justAdded ? CheckmarkBadge01Icon : PlusSignIcon}
-                size={14}
-                strokeWidth={2.2}
-              />
+              <HugeiconsIcon icon={ShoppingBag01Icon} size={15} strokeWidth={2} />
+              <span>Buy now</span>
             </button>
           ) : null}
         </div>
@@ -224,11 +298,10 @@ function ProductCard({
   );
 }
 
-const CARD_STRIDE = 188; // w-44 card + gap-3
-const EDGE_FADE = 40;
+const EDGE_FADE = 48;
 
 const ARROW_CLASS = cn(
-  "flex size-9 items-center justify-center rounded-full border border-border/80 bg-surface/90 text-foreground shadow-pop backdrop-blur-xl",
+  "flex size-10 items-center justify-center rounded-full border border-border/80 bg-surface/90 text-foreground shadow-pop backdrop-blur-xl",
   "transition-all duration-150 ease-expo hover:bg-surface hover:scale-105 active:scale-95",
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue"
 );
@@ -321,7 +394,11 @@ function ProductCarousel({
   }, [products.length]);
 
   function scroll(direction: 1 | -1) {
-    rowRef.current?.scrollBy({ left: direction * CARD_STRIDE, behavior: "smooth" });
+    const el = rowRef.current;
+    if (!el) return;
+    const cardEl = el.firstElementChild as HTMLElement | null;
+    const stride = cardEl ? cardEl.offsetWidth + 16 : 288;
+    el.scrollBy({ left: direction * stride, behavior: "smooth" });
   }
 
   // Cards dissolve where the row keeps going instead of ending on a hard edge.
@@ -347,7 +424,7 @@ function ProductCarousel({
         onPointerLeave={handlePointerUp}
         onDragStart={(e) => e.preventDefault()}
         onClickCapture={handleClickCapture}
-        className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex gap-4 overflow-x-auto py-2 px-1 snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {products.map((product) => (
           <ProductCard
