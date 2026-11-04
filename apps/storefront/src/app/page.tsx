@@ -400,7 +400,7 @@ export default function Home() {
             key="hero"
             exit={{ opacity: 0, y: -40, filter: "blur(6px)" }}
             transition={{ duration: 0.35, ease: EASE }}
-            className="flex w-full max-w-3xl translate-y-16 flex-col items-center gap-10 px-6 sm:px-8 md:translate-y-14"
+            className="flex w-full max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl translate-y-16 flex-col items-center gap-10 px-6 sm:px-8 md:translate-y-14"
           >
             <h1 className="text-center text-3xl font-medium tracking-tight text-foreground sm:text-4xl md:text-5xl">
               Find your{" "}
@@ -459,7 +459,7 @@ export default function Home() {
               <ScrollArea onScroll={trackPinned} className="h-full" viewportRef={scrollRef}>
                 <div
                   ref={threadRef}
-                  className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-6 pt-24 pb-56 sm:px-8"
+                  className="mx-auto flex w-full max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl flex-col gap-5 px-6 pt-24 pb-56 sm:px-8"
                 >
                   {messages.map((message) => (
                     <ChatMessageItem
@@ -510,7 +510,7 @@ export default function Home() {
               <motion.div
                 layoutId="chat-dock"
                 transition={{ layout: { duration: 0.45, ease: EASE } }}
-                className="pointer-events-auto mx-auto w-full max-w-3xl rounded-[32px] border border-white/50 bg-white/25 p-3 shadow-card backdrop-blur-2xl dark:border-white/10 dark:bg-white/5"
+                className="pointer-events-auto mx-auto w-full max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl rounded-[32px] border border-white/50 bg-white/25 p-3 shadow-card backdrop-blur-2xl dark:border-white/10 dark:bg-white/5"
               >
                 <Composer
                   placeholder="Ask a follow-up…"
