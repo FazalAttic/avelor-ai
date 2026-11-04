@@ -33,8 +33,10 @@ interface ToolResultPayload {
 
 // Collect IDs of products referenced by catalog tool results so clients can
 // render grounded product cards without receiving raw model/tool messages.
-function extractProductIds(messages: readonly ChatMessage[]): string[] {
-  const ids = new Set<string>();
+function extractProductIds(messages: readonly ChatMessage[], assistantReply?: string): string[] {
+  const candidateProducts: { id: string; name: string }[] = [];
+  const seenIds = new Set<string>();
+
   for (const message of messages) {
     if (
       message.role !== "tool" ||
@@ -45,18 +47,56 @@ function extractProductIds(messages: readonly ChatMessage[]): string[] {
     try {
       const payload = JSON.parse(message.content) as ToolResultPayload;
       if (typeof payload.product?.id === "string") {
-        ids.add(payload.product.id);
+        const id = payload.product.id;
+        if (!seenIds.has(id)) {
+          seenIds.add(id);
+          candidateProducts.push({
+            id,
+            name:
+              typeof (payload.product as { name?: unknown }).name === "string"
+                ? ((payload.product as { name?: string }).name ?? "")
+                : "",
+          });
+        }
       }
       for (const product of payload.products ?? []) {
         if (typeof product.id === "string") {
-          ids.add(product.id);
+          const id = product.id;
+          if (!seenIds.has(id)) {
+            seenIds.add(id);
+            candidateProducts.push({
+              id,
+              name:
+                typeof (product as { name?: unknown }).name === "string"
+                  ? ((product as { name?: string }).name ?? "")
+                  : "",
+            });
+          }
         }
       }
     } catch {
       // Tool output was not catalog JSON — nothing to extract
     }
   }
-  return [...ids];
+
+  // If the assistant explicitly named or recommended products in its reply,
+  // ensure the carousel features those products in conversational order.
+  if (assistantReply && candidateProducts.length > 0) {
+    const lowerReply = assistantReply.toLowerCase();
+    const matched = candidateProducts.filter((p) => {
+      if (!p.name) return false;
+      const lowerName = p.name.toLowerCase();
+      if (lowerReply.includes(lowerName)) return true;
+      const firstTwoWords = lowerName.split(/\s+/).slice(0, 2).join(" ");
+      return firstTwoWords.length > 3 && lowerReply.includes(firstTwoWords);
+    });
+
+    if (matched.length > 0) {
+      return matched.map((p) => p.id);
+    }
+  }
+
+  return candidateProducts.map((p) => p.id);
 }
 
 // Remove raw backend UUIDs, product IDs (e.g. (ID: prod_...)), and developer metadata
@@ -290,14 +330,15 @@ export function createChatRoutes(
 
           if (heartbeat) clearInterval(heartbeat);
 
-          const productIds = extractProductIds(result.messages);
+          const rawReply = result.reply?.trim() || "";
+          const cleanedReply = cleanCustomerFacingReply(rawReply);
+
+          const productIds = extractProductIds(result.messages, cleanedReply);
           const found = await Promise.all(
             productIds.map((id) => repo.getProductWithVariants(tenantId, id))
           );
           const products = found.filter((p): p is ProductWithVariants => p !== null);
 
-          const rawReply = result.reply?.trim() || "";
-          const cleanedReply = cleanCustomerFacingReply(rawReply);
           const safeReply =
             cleanedReply ||
             (products.length > 0
@@ -368,14 +409,15 @@ export function createChatRoutes(
       const agent = new DiscoveryAgent(model, repo, tenantId, options);
       const result = await agent.chat(trimmedPrompt, agentHistory);
 
-      const productIds = extractProductIds(result.messages);
+      const rawReply = result.reply?.trim() || "";
+      const cleanedReply = cleanCustomerFacingReply(rawReply);
+
+      const productIds = extractProductIds(result.messages, cleanedReply);
       const found = await Promise.all(
         productIds.map((id) => repo.getProductWithVariants(tenantId, id))
       );
       const products = found.filter((p): p is ProductWithVariants => p !== null);
 
-      const rawReply = result.reply?.trim() || "";
-      const cleanedReply = cleanCustomerFacingReply(rawReply);
       const safeReply =
         cleanedReply ||
         (products.length > 0

@@ -24,6 +24,16 @@ export const SEARCH_PRODUCTS_TOOL: ToolDefinition = {
         type: "string",
         description: "Filter by category slug or name (e.g. 'electronics', 'apparel')",
       },
+      maxPrice: {
+        type: "number",
+        description:
+          "Filter for products with price less than or equal to this amount in dollars (e.g. 100)",
+      },
+      minPrice: {
+        type: "number",
+        description:
+          "Filter for products with price greater than or equal to this amount in dollars",
+      },
       limit: {
         type: "number",
         description: "Maximum number of products to return (default 5, max 10)",
@@ -89,12 +99,23 @@ export async function executeToolCall(
   switch (name) {
     case "search_products": {
       const rawQuery = args.query ?? args.keyword ?? args.q;
-      const query = typeof rawQuery === "string" ? rawQuery.trim() : undefined;
+      let query = typeof rawQuery === "string" ? rawQuery.trim() : undefined;
       const rawCategory = args.category ?? args.categorySlug;
       const category = typeof rawCategory === "string" ? rawCategory.trim() : undefined;
       // Bounded output ceiling: max 10 products
       const rawLimit = typeof args.limit === "number" ? Math.floor(args.limit) : 5;
       const limit = Math.max(1, Math.min(rawLimit, 10));
+
+      let maxPriceFilter = typeof args.maxPrice === "number" ? args.maxPrice : undefined;
+
+      // Extract natural price constraints if present in keyword query (e.g. "running shoes under $100")
+      if (query && maxPriceFilter === undefined) {
+        const priceMatch = query.match(/(?:under|below|less than|up to)\s*\$?(\d+(?:\.\d+)?)/i);
+        if (priceMatch?.[1]) {
+          maxPriceFilter = Number.parseFloat(priceMatch[1]);
+          query = query.replace(/(?:under|below|less than|up to)\s*\$?(\d+(?:\.\d+)?)/i, "").trim();
+        }
+      }
 
       // 1. Structured keyword search
       const result = await catalogRepo.listProducts(tenantId, {
@@ -107,7 +128,7 @@ export async function executeToolCall(
       const matchedIds = new Set(result.items.map((p) => p.id));
       const combinedItems = [...result.items];
 
-      // 2. Hybrid semantic vector search
+      // 2. Hybrid semantic vector search (strictly thresholded at >= 0.35 to prevent category bleed)
       if (query && context.embeddingModel && context.vectorStore && combinedItems.length < limit) {
         try {
           const { embeddings } = await context.embeddingModel.embed({
@@ -119,7 +140,7 @@ export async function executeToolCall(
             const vectorHits = await context.vectorStore.search(queryVec, {
               tenantId,
               topK: limit,
-              minScore: 0.2,
+              minScore: 0.35,
             });
 
             for (const hit of vectorHits) {
@@ -169,6 +190,7 @@ export async function executeToolCall(
             categories: p.categories,
             attributes: p.attributes,
             price: formattedPrice,
+            priceAmount: minPrice / 100,
             inStock: totalStock > 0,
             stockQuantity: totalStock,
           };
