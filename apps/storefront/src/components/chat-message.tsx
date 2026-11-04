@@ -198,13 +198,12 @@ function ProductCard({
     <article
       draggable={false}
       className={cn(
-        "group relative flex w-64 sm:w-72 shrink-0 snap-start select-none flex-col overflow-hidden rounded-[26px]",
-        "border border-white/60 bg-white/50 p-3 shadow-card backdrop-blur-xl",
-        "transition-all duration-200 hover:-translate-y-1 hover:shadow-pop",
+        "relative flex w-64 sm:w-72 shrink-0 snap-start select-none flex-col overflow-hidden rounded-[26px]",
+        "border border-white/60 bg-white/50 p-3 backdrop-blur-xl",
         "dark:border-white/10 dark:bg-white/10"
       )}
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-white border border-black/[0.04] shadow-xs select-none pointer-events-none dark:bg-neutral-900/50 dark:border-white/10">
+      <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-white border border-black/[0.04] select-none pointer-events-none dark:bg-neutral-900/50 dark:border-white/10">
         {product.media[0] ? (
           <Image
             src={product.media[0]}
@@ -213,7 +212,7 @@ function ProductCard({
             sizes="(max-width: 640px) 256px, 288px"
             unoptimized
             draggable={false}
-            className="pointer-events-none select-none object-cover transition-transform duration-300 group-hover:scale-105"
+            className="pointer-events-none select-none object-cover"
           />
         ) : null}
       </div>
@@ -278,8 +277,6 @@ function ProductCard({
     </article>
   );
 }
-
-const EDGE_FADE = 48;
 
 const ARROW_CLASS = cn(
   "flex size-10 items-center justify-center rounded-full border border-border/80 bg-surface/90 text-foreground shadow-pop backdrop-blur-xl",
@@ -382,23 +379,11 @@ function ProductCarousel({
     el.scrollBy({ left: direction * stride, behavior: "smooth" });
   }
 
-  // Cards dissolve where the row keeps going instead of ending on a hard edge.
-  const stops = [
-    overflow.left ? "transparent 0" : "black 0",
-    overflow.left ? `black ${EDGE_FADE}px` : null,
-    overflow.right ? `black calc(100% - ${EDGE_FADE}px)` : null,
-    overflow.right ? "transparent 100%" : null,
-  ]
-    .filter(Boolean)
-    .join(", ");
-  const edgeMask = overflow.left || overflow.right ? `linear-gradient(to right, ${stops})` : "none";
-
   return (
     <div className="relative w-full">
       <section
         ref={rowRef}
         aria-label="Recommended products"
-        style={{ WebkitMaskImage: edgeMask, maskImage: edgeMask }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
