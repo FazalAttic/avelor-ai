@@ -138,19 +138,6 @@ function renderStreamingBlurContent(content: string) {
   return elements;
 }
 
-function getProductMerchant(product: ChatProduct): string {
-  const name = product.name.toLowerCase();
-  if (name.includes("nike")) return "Nike";
-  if (name.includes("apple") || name.includes("airpod")) return "Apple";
-  if (name.includes("adidas")) return "Adidas";
-  if (name.includes("layasa")) return "Layasa";
-  if (product.categories && product.categories.length > 0) {
-    const cat = product.categories[0];
-    return cat.charAt(0).toUpperCase() + cat.slice(1);
-  }
-  return "Avelor Store";
-}
-
 function getProductDiscount(product: ChatProduct): {
   originalPrice: { amount: number; currency: string } | null;
   discountPercent: number | null;
@@ -197,7 +184,6 @@ function ProductCard({
 }) {
   const price = product.variants[0]?.price ?? null;
   const { originalPrice, discountPercent } = getProductDiscount(product);
-  const merchant = getProductMerchant(product);
   const [justAdded, setJustAdded] = useState(false);
 
   function handleAdd() {
@@ -213,12 +199,12 @@ function ProductCard({
       draggable={false}
       className={cn(
         "group relative flex w-64 sm:w-72 shrink-0 snap-start select-none flex-col overflow-hidden rounded-[26px]",
-        "border border-white/60 bg-white/50 p-3 shadow-card backdrop-blur-xl",
+        "border border-white/60 bg-white/50 shadow-card backdrop-blur-xl",
         "transition-all duration-200 hover:-translate-y-1 hover:shadow-pop",
         "dark:border-white/10 dark:bg-white/10"
       )}
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-black/[0.03] dark:bg-white/[0.05] flex items-center justify-center p-3 select-none pointer-events-none">
+      <div className="relative aspect-square w-full overflow-hidden bg-white select-none pointer-events-none dark:bg-white/5">
         {product.media[0] ? (
           <Image
             src={product.media[0]}
@@ -227,31 +213,11 @@ function ProductCard({
             sizes="(max-width: 640px) 256px, 288px"
             unoptimized
             draggable={false}
-            className="pointer-events-none select-none object-contain p-2.5 transition-transform duration-300 group-hover:scale-105"
+            className="pointer-events-none select-none object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : null}
-        {onAddToCart ? (
-          <button
-            type="button"
-            onClick={handleAdd}
-            title={justAdded ? "Added to bag" : "Add to bag"}
-            className={cn(
-              "pointer-events-auto absolute right-2.5 top-2.5 flex size-8 items-center justify-center rounded-full border transition-all duration-150 active:scale-95",
-              justAdded
-                ? "bg-emerald-500 text-white border-emerald-500 shadow-sm"
-                : "bg-white/90 dark:bg-black/70 border-black/5 dark:border-white/10 text-foreground shadow-xs hover:scale-110 hover:bg-white dark:hover:bg-black/90"
-            )}
-          >
-            <HugeiconsIcon
-              icon={justAdded ? CheckmarkBadge01Icon : PlusSignIcon}
-              size={15}
-              strokeWidth={2.2}
-              className={justAdded ? "text-white" : ""}
-            />
-          </button>
-        ) : null}
       </div>
-      <div className="flex flex-1 flex-col justify-between gap-3 p-1 pt-3">
+      <div className="flex flex-1 flex-col justify-between p-3.5 pt-3">
         <div>
           <h3
             className="line-clamp-2 text-sm font-semibold leading-snug text-foreground min-h-[2.5rem]"
@@ -276,20 +242,35 @@ function ProductCard({
               </span>
             ) : null}
           </div>
-          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted">
-            <span className="size-2 rounded-full bg-brand-blue shrink-0" />
-            <span className="truncate">{merchant}</span>
-          </div>
         </div>
-        <div>
+        <div className="mt-3 flex items-center gap-2">
           {onBuyNow ? (
             <button
               type="button"
               onClick={() => onBuyNow(product)}
-              className="flex h-10 w-full items-center justify-center gap-2 rounded-full border border-border/80 bg-white/80 text-[13px] font-semibold text-foreground shadow-xs transition-all duration-150 hover:bg-white hover:shadow-card active:scale-[0.98] dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+              className="flex h-10 flex-1 items-center justify-center gap-2 rounded-full border border-border/80 bg-white/80 text-[13px] font-semibold text-foreground shadow-xs transition-all duration-150 hover:bg-white hover:shadow-card active:scale-[0.98] dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
             >
               <HugeiconsIcon icon={ShoppingBag01Icon} size={15} strokeWidth={2} />
               <span>Buy now</span>
+            </button>
+          ) : null}
+          {onAddToCart ? (
+            <button
+              type="button"
+              onClick={handleAdd}
+              title={justAdded ? "Added to bag" : "Add to bag"}
+              className={cn(
+                "flex size-10 shrink-0 items-center justify-center rounded-full border transition-all duration-150 active:scale-95",
+                justAdded
+                  ? "border-emerald-500 bg-emerald-500 text-white shadow-xs"
+                  : "border-border/80 bg-white/80 text-foreground shadow-xs hover:bg-white hover:shadow-card dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+              )}
+            >
+              <HugeiconsIcon
+                icon={justAdded ? CheckmarkBadge01Icon : PlusSignIcon}
+                size={16}
+                strokeWidth={2.2}
+              />
             </button>
           ) : null}
         </div>
