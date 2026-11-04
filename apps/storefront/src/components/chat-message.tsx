@@ -199,12 +199,12 @@ function ProductCard({
       draggable={false}
       className={cn(
         "group relative flex w-64 sm:w-72 shrink-0 snap-start select-none flex-col overflow-hidden rounded-[26px]",
-        "border border-white/60 bg-white/50 shadow-card backdrop-blur-xl",
+        "border border-white/60 bg-white/50 p-3 shadow-card backdrop-blur-xl",
         "transition-all duration-200 hover:-translate-y-1 hover:shadow-pop",
         "dark:border-white/10 dark:bg-white/10"
       )}
     >
-      <div className="relative aspect-square w-full overflow-hidden bg-white select-none pointer-events-none dark:bg-white/5">
+      <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-white border border-black/[0.04] shadow-xs select-none pointer-events-none dark:bg-neutral-900/50 dark:border-white/10">
         {product.media[0] ? (
           <Image
             src={product.media[0]}
@@ -217,7 +217,7 @@ function ProductCard({
           />
         ) : null}
       </div>
-      <div className="flex flex-1 flex-col justify-between p-3.5 pt-3">
+      <div className="flex flex-1 flex-col justify-between p-1 pt-3">
         <div>
           <h3
             className="line-clamp-2 text-sm font-semibold leading-snug text-foreground min-h-[2.5rem]"
