@@ -441,7 +441,7 @@ function ProductCarousel({
         onPointerLeave={handlePointerUp}
         onDragStart={(e) => e.preventDefault()}
         onClickCapture={handleClickCapture}
-        className="flex gap-4 overflow-x-auto py-2 px-1 snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex gap-4 overflow-x-auto pt-0 pb-1 px-1 snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {products.map((product, index) => (
           <ProductCard
@@ -589,6 +589,15 @@ export function ChatMessageItem({
           renderContent(message.content)
         )}
       </motion.div>
+      <AnimatePresence>
+        {!isUser && message.products.length > 0 ? (
+          <ProductCarousel
+            products={message.products}
+            onBuyNow={onBuyNow}
+            onAddToCart={onAddToCart}
+          />
+        ) : null}
+      </AnimatePresence>
       {timeLabel ? (
         <span
           className={cn(
@@ -600,15 +609,6 @@ export function ChatMessageItem({
           {timeLabel}
         </span>
       ) : null}
-      <AnimatePresence>
-        {!isUser && message.products.length > 0 ? (
-          <ProductCarousel
-            products={message.products}
-            onBuyNow={onBuyNow}
-            onAddToCart={onAddToCart}
-          />
-        ) : null}
-      </AnimatePresence>
     </motion.div>
   );
 }
