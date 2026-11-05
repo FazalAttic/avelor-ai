@@ -22,7 +22,9 @@ export const SEARCH_PRODUCTS_TOOL: ToolDefinition = {
       },
       category: {
         type: "string",
-        description: "Filter by category slug or name (e.g. 'electronics', 'apparel')",
+        enum: ["Footwear", "Apparel", "Gaming", "Accessories", "Home", "Fitness", "Coffee"],
+        description:
+          "Filter by exact store category (Footwear, Apparel, Gaming, Accessories, Home, Fitness, Coffee)",
       },
       maxPrice: {
         type: "number",
