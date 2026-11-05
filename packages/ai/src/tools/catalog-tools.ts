@@ -161,6 +161,21 @@ export async function executeToolCall(
         }
       }
 
+      // If category filter was too restrictive and returned nothing, fall back to keyword query
+      if (combinedItems.length === 0 && category && query) {
+        const fallback = await catalogRepo.listProducts(tenantId, {
+          query,
+          status: "active",
+          limit,
+        });
+        for (const item of fallback.items) {
+          if (!matchedIds.has(item.id)) {
+            matchedIds.add(item.id);
+            combinedItems.push(item);
+          }
+        }
+      }
+
       if (combinedItems.length === 0) {
         return JSON.stringify({
           status: "empty",

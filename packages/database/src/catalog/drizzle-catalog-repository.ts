@@ -185,7 +185,17 @@ export class DrizzleCatalogRepository implements CatalogRepository {
     }
 
     if (filter.category) {
-      conditions.push(sql`${products.categories} @> ${JSON.stringify([filter.category])}::jsonb`);
+      const cleanCat = filter.category.trim().toLowerCase();
+      conditions.push(
+        sql`EXISTS (
+          SELECT 1 FROM jsonb_array_elements_text(${products.categories}) AS cat
+          WHERE lower(cat) = ${cleanCat}
+             OR lower(${cleanCat}) ILIKE '%' || lower(cat) || '%'
+             OR lower(cat) ILIKE '%' || lower(${cleanCat}) || '%'
+             OR (lower(cat) = 'footwear' AND ${cleanCat} ILIKE '%shoe%')
+             OR (lower(cat) = 'shoes' AND ${cleanCat} ILIKE '%footwear%')
+        )`
+      );
     }
 
     if (filter.query) {
