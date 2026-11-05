@@ -19,6 +19,10 @@ export interface DiscoveryAgentOptions {
   readonly guardrail?: GuardrailEngine | undefined;
 }
 
+function formatDuration(ms: number): string {
+  return `${ms}ms (${(ms / 1000).toFixed(2)}s)`;
+}
+
 export class DiscoveryAgent {
   constructor(
     private readonly model: ChatModel,
@@ -53,8 +57,9 @@ export class DiscoveryAgent {
         text: userQuery,
         role: "user",
       });
+      const guardDuration = Math.round(performance.now() - guardStart);
       console.log(
-        `🛡️  Input Guardrail evaluated in ${Math.round(performance.now() - guardStart)}ms (verdict: ${inputCheck.verdict})`
+        `🛡️  Input Guardrail evaluated in ${formatDuration(guardDuration)} (verdict: ${inputCheck.verdict})`
       );
 
       if (inputCheck.verdict === "rejected" && inputCheck.category !== "out_of_domain") {
@@ -101,7 +106,7 @@ export class DiscoveryAgent {
 
     const step1Duration = Math.round(performance.now() - step1Start);
     totalLlmTime += step1Duration;
-    console.log(`⏱️  Step 1: LLM responded in ${step1Duration}ms`);
+    console.log(`⏱️  Step 1: LLM responded in ${formatDuration(step1Duration)}`);
 
     const assistantMessage = response.message;
     messages.push(assistantMessage);
@@ -123,7 +128,7 @@ export class DiscoveryAgent {
 
       const totalDuration = Math.round(performance.now() - startTotal);
       console.log(
-        `📊 Total Agent Time: ${totalDuration}ms (LLM: ${totalLlmTime}ms | Tools: ${totalToolTime}ms | LLM Calls: ${llmCallCount})`
+        `📊 Total Agent Time: ${formatDuration(totalDuration)} (LLM: ${formatDuration(totalLlmTime)} | Tools: ${formatDuration(totalToolTime)} | LLM Calls: ${llmCallCount})`
       );
       console.log(`========================================================================\n`);
 
@@ -154,7 +159,7 @@ export class DiscoveryAgent {
         });
         const singleDuration = Math.round(performance.now() - singleToolStart);
         console.log(
-          `  ✔ Tool ${call.name} completed in ${singleDuration}ms (${resultString.length} chars output)`
+          `  ✔ Tool ${call.name} completed in ${formatDuration(singleDuration)} (${resultString.length} chars output)`
         );
         return {
           role: "tool" as const,
@@ -168,7 +173,7 @@ export class DiscoveryAgent {
     const parallelToolDuration = Math.round(performance.now() - toolPhaseStart);
     totalToolTime += parallelToolDuration;
     console.log(
-      `⚡ All ${toolResults.length} tool(s) completed concurrently in ${parallelToolDuration}ms`
+      `⚡ All ${toolResults.length} tool(s) completed concurrently in ${formatDuration(parallelToolDuration)}`
     );
 
     for (const res of toolResults) {
@@ -187,14 +192,24 @@ export class DiscoveryAgent {
 
     const synthDuration = Math.round(performance.now() - synthStart);
     totalLlmTime += synthDuration;
-    console.log(`⏱️  Final Synthesis completed in ${synthDuration}ms`);
+    console.log(`⏱️  Final Synthesis completed in ${formatDuration(synthDuration)}`);
+
+    const hasFoundProducts = toolResults.some((res) => {
+      try {
+        const parsed = JSON.parse(res.content);
+        return (
+          (parsed.count && parsed.count > 0) || (parsed.products && parsed.products.length > 0)
+        );
+      } catch {
+        return false;
+      }
+    });
 
     let finalReply = finalResponse.message.content?.trim();
     if (!finalReply) {
-      finalReply =
-        toolCallsExecuted.length > 0
-          ? "Here are the top products I found in our store for you. Feel free to ask if you would like more details on any of them!"
-          : "I searched our store but couldn't find items matching your request. Would you like to check out another category or try a different search?";
+      finalReply = hasFoundProducts
+        ? "Here are the top products I found in our store for you. Feel free to ask if you would like more details on any of them!"
+        : "I searched our store but couldn't find items matching your request. Would you like to check out another category or try a different search?";
     }
     if (this.options?.guardrail) {
       const outCheck = await this.options.guardrail.checkOutput({
@@ -214,7 +229,7 @@ export class DiscoveryAgent {
 
     const totalDuration = Math.round(performance.now() - startTotal);
     console.log(
-      `📊 Total Agent Time: ${totalDuration}ms (LLM: ${totalLlmTime}ms | Tools: ${totalToolTime}ms | LLM Calls: ${llmCallCount} | Tools Executed: ${toolCallsExecuted.length})`
+      `📊 Total Agent Time: ${formatDuration(totalDuration)} (LLM: ${formatDuration(totalLlmTime)} | Tools: ${formatDuration(totalToolTime)} | LLM Calls: ${llmCallCount} | Tools Executed: ${toolCallsExecuted.length})`
     );
     console.log(`========================================================================\n`);
 
@@ -252,8 +267,9 @@ export class DiscoveryAgent {
         text: userQuery,
         role: "user",
       });
+      const guardDuration = Math.round(performance.now() - guardStart);
       console.log(
-        `🛡️  Input Guardrail evaluated in ${Math.round(performance.now() - guardStart)}ms (verdict: ${inputCheck.verdict})`
+        `🛡️  Input Guardrail evaluated in ${formatDuration(guardDuration)} (verdict: ${inputCheck.verdict})`
       );
 
       if (inputCheck.verdict === "rejected" && inputCheck.category !== "out_of_domain") {
@@ -301,7 +317,7 @@ export class DiscoveryAgent {
 
     const step1Duration = Math.round(performance.now() - step1Start);
     totalLlmTime += step1Duration;
-    console.log(`⏱️  Step 1: LLM responded in ${step1Duration}ms`);
+    console.log(`⏱️  Step 1: LLM responded in ${formatDuration(step1Duration)}`);
 
     const assistantMessage = response.message;
     messages.push(assistantMessage);
@@ -331,7 +347,7 @@ export class DiscoveryAgent {
 
       const totalDuration = Math.round(performance.now() - startTotal);
       console.log(
-        `📊 Total Agent Time: ${totalDuration}ms (LLM: ${totalLlmTime}ms | Tools: ${totalToolTime}ms | LLM Calls: ${llmCallCount})`
+        `📊 Total Agent Time: ${formatDuration(totalDuration)} (LLM: ${formatDuration(totalLlmTime)} | Tools: ${formatDuration(totalToolTime)} | LLM Calls: ${llmCallCount})`
       );
       console.log(`==========================================================================\n`);
 
@@ -362,7 +378,7 @@ export class DiscoveryAgent {
         });
         const singleDuration = Math.round(performance.now() - singleToolStart);
         console.log(
-          `  ✔ Tool ${call.name} completed in ${singleDuration}ms (${resultString.length} chars output)`
+          `  ✔ Tool ${call.name} completed in ${formatDuration(singleDuration)} (${resultString.length} chars output)`
         );
         return {
           role: "tool" as const,
@@ -376,7 +392,7 @@ export class DiscoveryAgent {
     const parallelToolDuration = Math.round(performance.now() - toolPhaseStart);
     totalToolTime += parallelToolDuration;
     console.log(
-      `⚡ All ${toolResults.length} tool(s) completed concurrently in ${parallelToolDuration}ms`
+      `⚡ All ${toolResults.length} tool(s) completed concurrently in ${formatDuration(parallelToolDuration)}`
     );
 
     for (const res of toolResults) {
@@ -399,7 +415,9 @@ export class DiscoveryAgent {
         async (chunk) => {
           if (synthFirstToken === null) {
             synthFirstToken = Math.round(performance.now() - synthStart);
-            console.log(`⚡ Final Synthesis: First token streamed in ${synthFirstToken}ms (TTFT)`);
+            console.log(
+              `⚡ Final Synthesis: First token streamed in ${formatDuration(synthFirstToken)} (TTFT)`
+            );
           }
           finalReply += chunk;
           await onChunk(chunk);
@@ -419,13 +437,23 @@ export class DiscoveryAgent {
 
     const synthDuration = Math.round(performance.now() - synthStart);
     totalLlmTime += synthDuration;
-    console.log(`⏱️  Final Synthesis completed in ${synthDuration}ms`);
+    console.log(`⏱️  Final Synthesis completed in ${formatDuration(synthDuration)}`);
+
+    const hasFoundProducts = toolResults.some((res) => {
+      try {
+        const parsed = JSON.parse(res.content);
+        return (
+          (parsed.count && parsed.count > 0) || (parsed.products && parsed.products.length > 0)
+        );
+      } catch {
+        return false;
+      }
+    });
 
     if (!finalReply) {
-      finalReply =
-        toolCallsExecuted.length > 0
-          ? "Here are the top products I found in our store for you. Feel free to ask if you would like more details on any of them!"
-          : "I searched our store but couldn't find items matching your request. Would you like to check out another category or try a different search?";
+      finalReply = hasFoundProducts
+        ? "Here are the top products I found in our store for you. Feel free to ask if you would like more details on any of them!"
+        : "I searched our store but couldn't find items matching your request. Would you like to check out another category or try a different search?";
       await onChunk(finalReply);
     }
 
@@ -447,7 +475,7 @@ export class DiscoveryAgent {
 
     const totalDuration = Math.round(performance.now() - startTotal);
     console.log(
-      `📊 Total Agent Time: ${totalDuration}ms (LLM: ${totalLlmTime}ms | Tools: ${totalToolTime}ms | LLM Calls: ${llmCallCount} | Tools Executed: ${toolCallsExecuted.length})`
+      `📊 Total Agent Time: ${formatDuration(totalDuration)} (LLM: ${formatDuration(totalLlmTime)} | Tools: ${formatDuration(totalToolTime)} | LLM Calls: ${llmCallCount} | Tools Executed: ${toolCallsExecuted.length})`
     );
     console.log(`==========================================================================\n`);
 

@@ -132,6 +132,7 @@ export default function Home() {
             role: m.role,
             content: m.content,
             products: m.products ?? [],
+            createdAt: m.createdAt,
           }))
         );
       }
@@ -366,11 +367,20 @@ export default function Home() {
     pinnedRef.current = true;
     setShowJump(false);
 
+    const nowIso = new Date().toISOString();
+
     // Immediately add both user message and assistant placeholder (with pulsing dots)
     setMessages((prev) => [
       ...prev,
-      { id: userMsgId, role: "user", content: text, products: [] },
-      { id: replyId, role: "assistant", content: "", products: [], isStreaming: true },
+      { id: userMsgId, role: "user", content: text, products: [], createdAt: nowIso },
+      {
+        id: replyId,
+        role: "assistant",
+        content: "",
+        products: [],
+        isStreaming: true,
+        createdAt: nowIso,
+      },
     ]);
     setSending(true);
     sound.send();

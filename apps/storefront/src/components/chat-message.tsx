@@ -23,7 +23,40 @@ export type UiChatMessage = {
   readonly products: readonly ChatProduct[];
   readonly isError?: boolean;
   readonly isStreaming?: boolean;
+  readonly createdAt?: string;
 };
+
+function formatMessageTime(dateString?: string): string {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const now = new Date();
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+
+  const timeStr = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+  if (isToday) {
+    return `Today, ${timeStr}`;
+  }
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear();
+
+  if (isYesterday) {
+    return `Yesterday, ${timeStr}`;
+  }
+
+  const dateStr = date.toLocaleDateString([], { month: "short", day: "numeric" });
+  return `${dateStr}, ${timeStr}`;
+}
 
 function stripTechnicalIds(text: string): string {
   if (!text) return "";
@@ -461,6 +494,7 @@ export function ChatMessageItem({
     : message.isStreaming
       ? "generating"
       : "idle";
+  const timeLabel = formatMessageTime(message.createdAt);
 
   return (
     <motion.div
@@ -482,7 +516,7 @@ export function ChatMessageItem({
       }
       style={isUser ? { transformOrigin: "bottom right" } : undefined}
       id={`msg-${message.id}`}
-      className={cn("flex flex-col gap-1.5", isUser ? "items-end" : "items-start")}
+      className={cn("group relative flex flex-col gap-1.5", isUser ? "items-end" : "items-start")}
     >
       {!isUser ? (
         <span className="flex items-center gap-2 pl-1 text-[11px] font-medium text-muted">
@@ -536,6 +570,17 @@ export function ChatMessageItem({
           renderContent(message.content)
         )}
       </motion.div>
+      {timeLabel ? (
+        <span
+          className={cn(
+            "pointer-events-none select-none text-[11px] font-medium text-muted transition-all duration-200 ease-out",
+            "opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0",
+            isUser ? "pr-1" : "pl-1"
+          )}
+        >
+          {timeLabel}
+        </span>
+      ) : null}
       {!isUser && message.products.length > 0 ? (
         <ProductCarousel
           products={message.products}

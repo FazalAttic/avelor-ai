@@ -345,10 +345,16 @@ export function createChatRoutes(
           const products = found.filter((p): p is ProductWithVariants => p !== null);
 
           const safeReply =
-            cleanedReply ||
-            (products.length > 0
-              ? "Here are the top products I found in our store for you. Let me know if you would like more details or need help finding anything else!"
-              : "I couldn't find items matching your request in our catalog. Would you like to explore other categories or try a different search?");
+            products.length === 0 &&
+            (!cleanedReply ||
+              cleanedReply.toLowerCase().includes("here are the top products") ||
+              cleanedReply.toLowerCase().includes("here are a few") ||
+              cleanedReply.toLowerCase().includes("here are some"))
+              ? "I searched our store but couldn't find items matching your request. Would you like to explore other categories or try a different search?"
+              : cleanedReply ||
+                (products.length > 0
+                  ? "Here are the top products I found in our store for you. Let me know if you would like more details or need help finding anything else!"
+                  : "I couldn't find items matching your request in our catalog. Would you like to explore other categories or try a different search?");
 
           if (options?.conversationRepo && conversationId) {
             try {
@@ -382,7 +388,7 @@ export function createChatRoutes(
 
           const streamDuration = Math.round(performance.now() - requestStart);
           console.log(
-            `[Avelor API] 📤 Stream completed in ${streamDuration}ms (products: ${products.length}, conversationId: "${conversationId}")`
+            `[Avelor API] 📤 Stream completed in ${streamDuration}ms (${(streamDuration / 1000).toFixed(2)}s) (products: ${products.length}, conversationId: "${conversationId}")`
           );
 
           await stream.writeSSE({
@@ -429,10 +435,16 @@ export function createChatRoutes(
       const products = found.filter((p): p is ProductWithVariants => p !== null);
 
       const safeReply =
-        cleanedReply ||
-        (products.length > 0
-          ? "Here are the top products I found in our store for you. Let me know if you would like more details or need help finding anything else!"
-          : "I couldn't find items matching your request in our catalog. Would you like to explore other categories or try a different search?");
+        products.length === 0 &&
+        (!cleanedReply ||
+          cleanedReply.toLowerCase().includes("here are the top products") ||
+          cleanedReply.toLowerCase().includes("here are a few") ||
+          cleanedReply.toLowerCase().includes("here are some"))
+          ? "I searched our store but couldn't find items matching your request. Would you like to explore other categories or try a different search?"
+          : cleanedReply ||
+            (products.length > 0
+              ? "Here are the top products I found in our store for you. Let me know if you would like more details or need help finding anything else!"
+              : "I couldn't find items matching your request in our catalog. Would you like to explore other categories or try a different search?");
 
       if (options?.conversationRepo && conversationId) {
         try {
@@ -466,7 +478,7 @@ export function createChatRoutes(
 
       const syncDuration = Math.round(performance.now() - requestStart);
       console.log(
-        `[Avelor API] 📤 Completed in ${syncDuration}ms (products: ${products.length}, conversationId: "${conversationId}")`
+        `[Avelor API] 📤 Completed in ${syncDuration}ms (${(syncDuration / 1000).toFixed(2)}s) (products: ${products.length}, conversationId: "${conversationId}")`
       );
 
       // Raw model/tool messages are intentionally NOT returned: they contain the
