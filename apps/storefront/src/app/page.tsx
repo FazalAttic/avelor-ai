@@ -477,11 +477,10 @@ export default function Home() {
             )}
           >
             <h1 className="text-center text-3xl font-medium tracking-tight text-foreground sm:text-4xl md:text-5xl">
-              Find your{" "}
+              Find anything,{" "}
               <span className="bg-[image:var(--gradient-brand)] bg-clip-text text-transparent">
-                perfect pair
-              </span>{" "}
-              of shoes
+                unrivaled
+              </span>
             </h1>
             <motion.div
               layoutId="chat-dock"

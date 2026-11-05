@@ -592,7 +592,7 @@ export function CheckoutDrawer() {
                 ) : null}
 
                 {status === "submitting" ? (
-                  <div className="flex h-11 items-center justify-center gap-2 rounded-full border-0 bg-gradient-to-b from-[#2a2c30] to-[#141517] text-xs font-medium text-white/80 shadow-xs">
+                  <div className="flex h-11 items-center justify-center gap-2 rounded-full border-0 bg-gradient-to-b from-[#3a3b40] to-[#1e1f23] text-xs font-medium text-white/80 shadow-[0_2px_8px_rgba(0,0,0,0.18)]">
                     <div className="size-4 animate-spin rounded-full border-2 border-white/60 border-t-transparent" />
                     <span>{statusMessage}</span>
                   </div>
@@ -600,21 +600,16 @@ export function CheckoutDrawer() {
                   <button
                     type="submit"
                     className={cn(
-                      "relative flex h-11 w-full items-center justify-center gap-1.5 overflow-hidden rounded-full border-0 outline-none",
-                      "bg-gradient-to-b from-[#34373d] via-[#1f2125] to-[#121316]",
+                      "relative flex h-11 w-full items-center justify-center gap-1.5 rounded-full border-0 outline-none",
+                      "bg-gradient-to-b from-[#3a3b40] to-[#1e1f23]",
                       "text-[13px] font-semibold text-white",
-                      "shadow-[inset_0_1px_1px_rgba(255,255,255,0.3),inset_0_-1px_1px_rgba(0,0,0,0.5),0_3px_10px_rgba(0,0,0,0.25)]",
+                      "shadow-[0_2px_8px_rgba(0,0,0,0.18)]",
                       "transition-all duration-200 ease-out",
-                      "hover:from-[#3c4048] hover:via-[#25282d] hover:to-[#16171b] hover:shadow-[inset_0_1px_1px_rgba(255,255,255,0.4),0_4px_14px_rgba(0,0,0,0.3)]",
-                      "active:scale-[0.985] active:from-[#24262a] active:to-[#0f1012] active:shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]",
+                      "hover:from-[#44464c] hover:to-[#26272c] hover:shadow-[0_3px_12px_rgba(0,0,0,0.24)]",
+                      "active:scale-[0.985] active:from-[#2a2b2f] active:to-[#18191c]",
                       "cursor-pointer select-none"
                     )}
                   >
-                    {/* Top specular light gleam overlay */}
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute inset-x-0 top-0 h-[45%] bg-gradient-to-b from-white/20 to-transparent opacity-80"
-                    />
                     <span className="relative z-10 flex items-center gap-1">
                       <span>Checkout · </span>
                       <TextMorph as="span">{formattedTotal}</TextMorph>
