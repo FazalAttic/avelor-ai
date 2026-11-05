@@ -196,7 +196,7 @@ export default function Home() {
       if (diff > 1) {
         isGlidingRef.current = true;
         // Smooth exponential glide: moves a fraction of the distance each frame
-        const stepAmount = Math.max(diff * 0.18, 2);
+        const stepAmount = Math.max(diff * 0.12, 1.5);
         el.scrollTop = Math.min(el.scrollTop + stepAmount, maxScroll);
         rafFollowIdRef.current = requestAnimationFrame(step);
       } else {

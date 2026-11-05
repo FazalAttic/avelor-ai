@@ -208,10 +208,12 @@ function getProductDiscount(product: ChatProduct): {
 
 function ProductCard({
   product,
+  index = 0,
   onBuyNow,
   onAddToCart,
 }: {
   product: ChatProduct;
+  index?: number;
   onBuyNow?: (product: ChatProduct) => void;
   onAddToCart?: (product: ChatProduct) => void;
 }) {
@@ -228,11 +230,19 @@ function ProductCard({
   }
 
   return (
-    <article
+    <motion.article
       draggable={false}
+      initial={{ opacity: 0, y: 22, scale: 0.95, filter: "blur(6px)" }}
+      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+      transition={{
+        duration: 0.45,
+        delay: index * 0.08,
+        ease: [0.16, 1, 0.3, 1],
+      }}
+      whileHover={{ y: -3, transition: { duration: 0.2 } }}
       className={cn(
         "relative flex w-64 sm:w-72 shrink-0 snap-start select-none flex-col overflow-hidden rounded-[26px]",
-        "border border-white/60 bg-white/50 p-3 backdrop-blur-xl",
+        "border border-white/60 bg-white/50 p-3 backdrop-blur-xl transition-shadow duration-200 hover:shadow-card",
         "dark:border-white/10 dark:bg-white/10"
       )}
     >
@@ -277,22 +287,24 @@ function ProductCard({
         </div>
         <div className="mt-3 flex items-center gap-2">
           {onBuyNow ? (
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.96 }}
               onClick={() => onBuyNow(product)}
-              className="flex h-10 flex-1 items-center justify-center gap-2 rounded-full border border-border/80 bg-white/80 text-[13px] font-semibold text-foreground shadow-xs transition-all duration-150 hover:bg-white hover:shadow-card active:scale-[0.98] dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
+              className="flex h-10 flex-1 items-center justify-center gap-2 rounded-full border border-border/80 bg-white/80 text-[13px] font-semibold text-foreground shadow-xs transition-all duration-150 hover:bg-white hover:shadow-card active:scale-[0.98] dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15 cursor-pointer"
             >
               <HugeiconsIcon icon={ShoppingBag01Icon} size={15} strokeWidth={2} />
               <span>Buy now</span>
-            </button>
+            </motion.button>
           ) : null}
           {onAddToCart ? (
-            <button
+            <motion.button
               type="button"
+              whileTap={{ scale: 0.92 }}
               onClick={handleAdd}
               title={justAdded ? "Added to bag" : "Add to bag"}
               className={cn(
-                "flex size-10 shrink-0 items-center justify-center rounded-full border transition-all duration-150 active:scale-95",
+                "flex size-10 shrink-0 items-center justify-center rounded-full border transition-all duration-150 active:scale-95 cursor-pointer",
                 justAdded
                   ? "border-emerald-500 bg-emerald-500 text-white shadow-xs"
                   : "border-border/80 bg-white/80 text-foreground shadow-xs hover:bg-white hover:shadow-card dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15"
@@ -303,11 +315,11 @@ function ProductCard({
                 size={16}
                 strokeWidth={2.2}
               />
-            </button>
+            </motion.button>
           ) : null}
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }
 
@@ -413,7 +425,13 @@ function ProductCarousel({
   }
 
   return (
-    <div className="relative w-full">
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 8 }}
+      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      className="relative w-full"
+    >
       <section
         ref={rowRef}
         aria-label="Recommended products"
@@ -425,9 +443,10 @@ function ProductCarousel({
         onClickCapture={handleClickCapture}
         className="flex gap-4 overflow-x-auto py-2 px-1 snap-x snap-mandatory scroll-smooth cursor-grab active:cursor-grabbing select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {products.map((product) => (
+        {products.map((product, index) => (
           <ProductCard
             key={product.id}
+            index={index}
             product={product}
             onBuyNow={onBuyNow}
             onAddToCart={onAddToCart}
@@ -474,7 +493,7 @@ function ProductCarousel({
           </motion.div>
         ) : null}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }
 
@@ -581,13 +600,15 @@ export function ChatMessageItem({
           {timeLabel}
         </span>
       ) : null}
-      {!isUser && message.products.length > 0 ? (
-        <ProductCarousel
-          products={message.products}
-          onBuyNow={onBuyNow}
-          onAddToCart={onAddToCart}
-        />
-      ) : null}
+      <AnimatePresence>
+        {!isUser && message.products.length > 0 ? (
+          <ProductCarousel
+            products={message.products}
+            onBuyNow={onBuyNow}
+            onAddToCart={onAddToCart}
+          />
+        ) : null}
+      </AnimatePresence>
     </motion.div>
   );
 }
