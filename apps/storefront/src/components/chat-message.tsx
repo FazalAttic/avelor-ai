@@ -239,10 +239,9 @@ function ProductCard({
         delay: index * 0.08,
         ease: [0.16, 1, 0.3, 1],
       }}
-      whileHover={{ y: -3, transition: { duration: 0.2 } }}
       className={cn(
         "relative flex w-64 sm:w-72 shrink-0 snap-start select-none flex-col overflow-hidden rounded-[26px]",
-        "border border-white/60 bg-white/50 p-3 backdrop-blur-xl transition-shadow duration-200 hover:shadow-card",
+        "border border-white/60 bg-white/50 p-3 backdrop-blur-xl",
         "dark:border-white/10 dark:bg-white/10"
       )}
     >
