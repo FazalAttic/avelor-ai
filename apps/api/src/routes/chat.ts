@@ -353,7 +353,7 @@ export function createChatRoutes(
               ? "I searched our store but couldn't find items matching your request. Would you like to explore other categories or try a different search?"
               : cleanedReply ||
                 (products.length > 0
-                  ? "Here are the top products I found in our store for you. Let me know if you would like more details or need help finding anything else!"
+                  ? "Here are the top products worth a look from our catalog:"
                   : "I couldn't find items matching your request in our catalog. Would you like to explore other categories or try a different search?");
 
           if (options?.conversationRepo && conversationId) {
@@ -443,7 +443,7 @@ export function createChatRoutes(
           ? "I searched our store but couldn't find items matching your request. Would you like to explore other categories or try a different search?"
           : cleanedReply ||
             (products.length > 0
-              ? "Here are the top products I found in our store for you. Let me know if you would like more details or need help finding anything else!"
+              ? "Here are the top products worth a look from our catalog:"
               : "I couldn't find items matching your request in our catalog. Would you like to explore other categories or try a different search?");
 
       if (options?.conversationRepo && conversationId) {

@@ -208,7 +208,7 @@ export class DiscoveryAgent {
     let finalReply = finalResponse.message.content?.trim();
     if (!finalReply) {
       finalReply = hasFoundProducts
-        ? "Here are the top products I found in our store for you. Feel free to ask if you would like more details on any of them!"
+        ? "Here are the top products worth a look from our store:"
         : "I searched our store but couldn't find items matching your request. Would you like to check out another category or try a different search?";
     }
     if (this.options?.guardrail) {
@@ -452,7 +452,7 @@ export class DiscoveryAgent {
 
     if (!finalReply) {
       finalReply = hasFoundProducts
-        ? "Here are the top products I found in our store for you. Feel free to ask if you would like more details on any of them!"
+        ? "Here are the top products worth a look from our store:"
         : "I searched our store but couldn't find items matching your request. Would you like to check out another category or try a different search?";
       await onChunk(finalReply);
     }
