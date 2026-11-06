@@ -16,12 +16,32 @@ export interface AdminOrderItem {
   readonly totalPrice: AdminMoney;
 }
 
+export interface AdminShippingAddress {
+  readonly fullName: string;
+  readonly phone: string;
+  readonly country: string;
+  readonly line1: string;
+  readonly line2: string;
+  readonly landmark?: string;
+  readonly pincode: string;
+  readonly city: string;
+  readonly state: string;
+  readonly coordinates?: {
+    readonly lat: number;
+    readonly lng: number;
+    readonly accuracy?: number;
+  };
+  readonly isDefault?: boolean;
+}
+
 export interface AdminOrder {
   readonly id: string;
   readonly customerEmail: string;
   readonly items: readonly AdminOrderItem[];
   readonly total: AdminMoney;
   readonly status: OrderStatus;
+  readonly shippingAddress?: AdminShippingAddress;
+  readonly paymentMethod?: string;
   readonly createdAt: string;
   readonly updatedAt: string;
 }

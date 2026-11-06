@@ -6,6 +6,7 @@ import {
   type OrderItem,
   type OrderRepository,
   type PaymentProvider,
+  type ShippingAddress,
 } from "@avelor/core";
 import { Hono } from "hono";
 import type { AppEnv } from "../app";
@@ -14,6 +15,8 @@ import { requireTenant } from "../middleware/tenant";
 interface CheckoutPayload {
   cartId: string;
   customerEmail: string;
+  shippingAddress?: ShippingAddress | undefined;
+  paymentMethod?: string | undefined;
   idempotencyKey?: string | undefined;
 }
 
@@ -21,6 +24,8 @@ interface BuyNowPayload {
   variantId: string;
   quantity?: number | undefined;
   customerEmail: string;
+  shippingAddress?: ShippingAddress | undefined;
+  paymentMethod?: string | undefined;
   idempotencyKey?: string | undefined;
 }
 
@@ -124,6 +129,8 @@ export function createOrderRoutes(
       customerEmail: body.customerEmail,
       items: [orderItem],
       total,
+      shippingAddress: body.shippingAddress,
+      paymentMethod: body.paymentMethod,
       idempotencyKey: body.idempotencyKey,
     });
 
@@ -260,6 +267,8 @@ export function createOrderRoutes(
       customerEmail: body.customerEmail,
       items: orderItems,
       total: cart.subtotal,
+      shippingAddress: body.shippingAddress,
+      paymentMethod: body.paymentMethod,
       idempotencyKey: body.idempotencyKey,
     });
 

@@ -1,4 +1,13 @@
-import { index, integer, pgTable, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
+import type { ShippingAddress } from "@avelor/core";
+import {
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 export const orders = pgTable(
   "orders",
@@ -10,6 +19,8 @@ export const orders = pgTable(
     totalAmount: integer("total_amount").notNull(), // Minor units (e.g. cents)
     totalCurrency: varchar("total_currency", { length: 3 }).notNull(),
     status: varchar("status", { length: 32 }).notNull().default("pending"),
+    shippingAddress: jsonb("shipping_address").$type<ShippingAddress>(),
+    paymentMethod: varchar("payment_method", { length: 32 }),
     idempotencyKey: varchar("idempotency_key", { length: 128 }),
     paymentSessionId: varchar("payment_session_id", { length: 128 }),
     checkoutUrl: varchar("checkout_url", { length: 512 }),

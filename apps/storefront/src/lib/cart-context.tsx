@@ -18,6 +18,7 @@ import {
   createCart,
   fetchCart,
   removeItemFromCart,
+  type ShippingAddressPayload,
   type StoreOrder,
 } from "./chat-api";
 import { sound } from "./sound";
@@ -52,7 +53,11 @@ interface CartContextValue {
   readonly updateQuantity: (variantId: string, quantity: number) => Promise<void>;
   readonly removeItem: (variantId: string) => Promise<void>;
   readonly clearCart: () => void;
-  readonly checkout: (customerEmail: string) => Promise<StoreOrder>;
+  readonly checkout: (
+    customerEmail: string,
+    shippingAddress?: ShippingAddressPayload,
+    paymentMethod?: string
+  ) => Promise<StoreOrder>;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -283,7 +288,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const checkout = useCallback(
-    async (customerEmail: string): Promise<StoreOrder> => {
+    async (
+      customerEmail: string,
+      shippingAddress?: ShippingAddressPayload,
+      paymentMethod?: string
+    ): Promise<StoreOrder> => {
       if (items.length === 0) {
         throw new Error("Your cart is empty. Please add items before checking out.");
       }
@@ -324,7 +333,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const idempotencyKey = `idemp_chk_${crypto.randomUUID()}`;
 
       try {
-        const order = await checkoutCart(activeCartId, customerEmail, idempotencyKey);
+        const order = await checkoutCart(
+          activeCartId,
+          customerEmail,
+          idempotencyKey,
+          shippingAddress,
+          paymentMethod
+        );
         clearCart();
         return order;
       } catch (err: unknown) {
@@ -333,7 +348,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         if (errMsg.includes("not found") || errMsg.includes("CART_NOT_FOUND")) {
           const freshCartId = await createAndPopulateRemoteCart();
           const retryKey = `idemp_chk_${crypto.randomUUID()}`;
-          const order = await checkoutCart(freshCartId, customerEmail, retryKey);
+          const order = await checkoutCart(
+            freshCartId,
+            customerEmail,
+            retryKey,
+            shippingAddress,
+            paymentMethod
+          );
           clearCart();
           return order;
         }

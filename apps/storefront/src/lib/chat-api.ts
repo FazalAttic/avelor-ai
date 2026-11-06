@@ -281,6 +281,26 @@ export interface OrderItemPayload {
   readonly totalPrice: ChatMoney;
 }
 
+export interface ShippingAddressPayload {
+  readonly fullName: string;
+  readonly phone: string;
+  readonly country: string;
+  readonly line1: string; // flat, house, building, apartment
+  readonly line2: string; // area, street, sector, village
+  readonly landmark?: string | undefined;
+  readonly pincode: string;
+  readonly city: string;
+  readonly state: string;
+  readonly coordinates?:
+    | {
+        readonly lat: number;
+        readonly lng: number;
+        readonly accuracy?: number | undefined;
+      }
+    | undefined;
+  readonly isDefault?: boolean | undefined;
+}
+
 export interface StoreOrder {
   readonly id: string;
   readonly tenantId: string;
@@ -296,6 +316,8 @@ export interface StoreOrder {
     | "delivered"
     | "canceled"
     | "failed";
+  readonly shippingAddress?: ShippingAddressPayload | undefined;
+  readonly paymentMethod?: string | undefined;
   readonly paymentSessionId?: string | undefined;
   readonly checkoutUrl?: string | undefined;
   readonly createdAt: string;
@@ -467,7 +489,9 @@ export async function removeItemFromCart(cartId: string, variantId: string): Pro
 export async function checkoutCart(
   cartId: string,
   customerEmail: string,
-  idempotencyKey?: string
+  idempotencyKey?: string,
+  shippingAddress?: ShippingAddressPayload,
+  paymentMethod?: string
 ): Promise<StoreOrder> {
   const response = await fetch(`${API_URL}/orders/checkout`, {
     method: "POST",
@@ -476,7 +500,13 @@ export async function checkoutCart(
       "x-tenant-id": TENANT_ID,
     },
     credentials: "include",
-    body: JSON.stringify({ cartId, customerEmail, idempotencyKey }),
+    body: JSON.stringify({
+      cartId,
+      customerEmail,
+      idempotencyKey,
+      shippingAddress,
+      paymentMethod,
+    }),
   });
 
   if (!response.ok) {

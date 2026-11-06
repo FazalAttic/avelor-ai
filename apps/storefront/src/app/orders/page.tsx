@@ -21,6 +21,15 @@ type Order = {
   status: string;
   items: OrderItem[];
   total: string;
+  shippingAddress?: {
+    fullName: string;
+    phone: string;
+    line1: string;
+    city: string;
+    pincode: string;
+    coordinates?: { lat: number; lng: number };
+  };
+  paymentMethod?: string;
 };
 
 const DEFAULT_ORDERS: Order[] = [
@@ -87,6 +96,17 @@ function formatApiOrder(o: StoreOrder): Order {
     status: statusLabel,
     items,
     total: formatPrice(o.total),
+    shippingAddress: o.shippingAddress
+      ? {
+          fullName: o.shippingAddress.fullName,
+          phone: o.shippingAddress.phone,
+          line1: o.shippingAddress.line1,
+          city: o.shippingAddress.city,
+          pincode: o.shippingAddress.pincode,
+          coordinates: o.shippingAddress.coordinates,
+        }
+      : undefined,
+    paymentMethod: o.paymentMethod,
   };
 }
 
@@ -165,6 +185,27 @@ export default function OrdersPage() {
                     </div>
                   ))}
                 </div>
+                {order.shippingAddress && (
+                  <div className="mt-3 flex items-center justify-between rounded-xl bg-surface-hover/80 px-3 py-2 text-xs text-muted">
+                    <span className="truncate">
+                      📍 Ship to:{" "}
+                      <strong className="text-foreground font-medium">
+                        {order.shippingAddress.fullName}
+                      </strong>{" "}
+                      ({order.shippingAddress.line1}, {order.shippingAddress.city})
+                    </span>
+                    {order.shippingAddress.coordinates && (
+                      <a
+                        href={`https://maps.google.com/?q=${order.shippingAddress.coordinates.lat},${order.shippingAddress.coordinates.lng}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="shrink-0 text-brand-blue font-semibold hover:underline ml-2"
+                      >
+                        Map Pin
+                      </a>
+                    )}
+                  </div>
+                )}
                 <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
                   <p className="text-sm text-subtle">
                     Total <span className="ml-1 font-semibold text-foreground">{order.total}</span>

@@ -121,9 +121,43 @@ export default function AdminOrdersPage() {
     },
     {
       key: "customer",
-      header: "Customer",
+      header: "Customer & Delivery",
       hide: "md",
-      cell: (order) => <span className="truncate text-admin-ink">{order.customerEmail}</span>,
+      width: "w-[26%]",
+      cell: (order) => {
+        const addr = order.shippingAddress;
+        return (
+          <div className="min-w-0 flex flex-col gap-0.5">
+            <span className="truncate font-medium text-admin-ink text-xs">
+              {addr?.fullName || order.customerEmail}
+            </span>
+            {addr ? (
+              <>
+                <p className="truncate text-[11px] text-muted">
+                  {addr.line1}, {addr.city} {addr.pincode}
+                </p>
+                <p className="text-[10px] text-subtle truncate">
+                  📞 {addr.phone}{" "}
+                  {order.paymentMethod ? `· Pay: ${order.paymentMethod.toUpperCase()}` : ""}
+                </p>
+                {addr.coordinates && (
+                  <a
+                    href={`https://maps.google.com/?q=${addr.coordinates.lat},${addr.coordinates.lng}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex w-fit items-center gap-1 text-[10px] font-semibold text-brand-blue hover:underline"
+                    title="Open pinned location on Google Maps"
+                  >
+                    📍 Google Maps Location
+                  </a>
+                )}
+              </>
+            ) : (
+              <span className="truncate text-[11px] text-muted">{order.customerEmail}</span>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: "items",
