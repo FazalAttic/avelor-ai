@@ -99,6 +99,7 @@ export function CheckoutDrawer() {
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [isDefault, setIsDefault] = useState(true);
+  const [showDetailedFields, setShowDetailedFields] = useState(false);
 
   // Map / GPS Location State
   const [isLocating, setIsLocating] = useState(false);
@@ -107,7 +108,6 @@ export function CheckoutDrawer() {
     lng: number;
     accuracy?: number;
   } | null>(null);
-  const [locationSuccessMsg, setLocationSuccessMsg] = useState<string | null>(null);
 
   // Payment Method
   const [paymentMethod, setPaymentMethod] = useState<"online" | "cod" | "sandbox">("online");
@@ -219,7 +219,6 @@ export function CheckoutDrawer() {
 
     setIsLocating(true);
     setError(null);
-    setLocationSuccessMsg(null);
 
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
@@ -228,7 +227,6 @@ export function CheckoutDrawer() {
         const accuracy = pos.coords.accuracy;
 
         setCoordinates({ lat, lng, accuracy });
-        setLocationSuccessMsg(`📍 Pin captured: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
 
         // Reverse-geocode to auto-populate manual fields
         try {
@@ -322,21 +320,25 @@ export function CheckoutDrawer() {
       setError("Please enter your flat, house, or building number.");
       return;
     }
-    if (!line2.trim()) {
-      setError("Please enter your area, street, or sector.");
-      return;
-    }
-    if (!pincode.trim()) {
-      setError("Please enter your delivery pincode / postal code.");
-      return;
-    }
-    if (!city.trim()) {
-      setError("Please enter your town or city.");
-      return;
-    }
-    if (!state.trim()) {
-      setError("Please enter your state or province.");
-      return;
+
+    // Only validate manual location fields if GPS pin wasn't used or user wants detailed manual fields
+    if (!coordinates || showDetailedFields) {
+      if (!line2.trim()) {
+        setError("Please enter your area, street, or sector.");
+        return;
+      }
+      if (!pincode.trim()) {
+        setError("Please enter your delivery pincode / postal code.");
+        return;
+      }
+      if (!city.trim()) {
+        setError("Please enter your town or city.");
+        return;
+      }
+      if (!state.trim()) {
+        setError("Please enter your state or province.");
+        return;
+      }
     }
 
     // Save as default if selected
@@ -963,78 +965,115 @@ export function CheckoutDrawer() {
                   className="flex flex-col gap-3 py-1"
                 >
                   {/* GPS Location / Pin on Map Box */}
-                  <div className="rounded-2xl border border-brand-blue/30 bg-brand-blue/5 p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-blue/15 text-brand-blue">
-                          <HugeiconsIcon icon={Location01Icon} size={15} strokeWidth={2.2} />
+                  <div
+                    className={cn(
+                      "rounded-2xl border p-3 transition-colors",
+                      coordinates
+                        ? "border-emerald-500/30 bg-emerald-500/5"
+                        : "border-brand-blue/30 bg-brand-blue/5"
+                    )}
+                  >
+                    {coordinates ? (
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                            <HugeiconsIcon
+                              icon={CheckmarkCircle02Icon}
+                              size={15}
+                              strokeWidth={2.4}
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-foreground truncate">
+                              📍 Pinned:{" "}
+                              {[line2, city].filter(Boolean).join(", ") ||
+                                `${coordinates.lat.toFixed(4)}, ${coordinates.lng.toFixed(4)}`}
+                            </p>
+                            <p className="text-[11px] text-muted truncate">
+                              {[city, state, pincode].filter(Boolean).join(", ")}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-semibold text-foreground">
-                            Pin Delivery Location
-                          </p>
-                          <p className="text-[11px] text-muted">
-                            Auto-fill & transmit GPS to courier
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={handleDetectLocation}
-                        disabled={isLocating}
-                        className="flex h-7 items-center gap-1.5 rounded-lg bg-foreground px-2.5 text-[11px] font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
-                      >
-                        {isLocating ? (
-                          <>
-                            <div className="size-3 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                            <span>Locating...</span>
-                          </>
-                        ) : (
-                          <span>📍 Use GPS</span>
-                        )}
-                      </button>
-                    </div>
-
-                    {locationSuccessMsg && (
-                      <div className="mt-2.5 flex items-center justify-between rounded-lg bg-emerald-500/10 px-2.5 py-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
-                        <span className="truncate">{locationSuccessMsg}</span>
-                        {coordinates && (
+                        <div className="flex items-center gap-2 shrink-0">
                           <a
                             href={`https://maps.google.com/?q=${coordinates.lat},${coordinates.lng}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="shrink-0 font-bold underline ml-2"
+                            className="text-[11px] font-semibold text-brand-blue hover:underline"
                           >
-                            Open Maps
+                            Open Maps ↗
                           </a>
-                        )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCoordinates(null);
+                              setShowDetailedFields(true);
+                            }}
+                            className="text-[11px] font-medium text-muted hover:text-foreground transition-colors"
+                          >
+                            Change
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand-blue/15 text-brand-blue">
+                            <HugeiconsIcon icon={Location01Icon} size={15} strokeWidth={2.2} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-foreground">
+                              Pin Delivery Location
+                            </p>
+                            <p className="text-[11px] text-muted">
+                              Auto-detect & remove manual location fields
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleDetectLocation}
+                          disabled={isLocating}
+                          className="flex h-7 items-center gap-1.5 rounded-lg bg-foreground px-2.5 text-[11px] font-semibold text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+                        >
+                          {isLocating ? (
+                            <>
+                              <div className="size-3 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                              <span>Locating...</span>
+                            </>
+                          ) : (
+                            <span>📍 Use GPS</span>
+                          )}
+                        </button>
                       </div>
                     )}
                   </div>
 
-                  {/* Manual Address Fields */}
+                  {/* Address Fields */}
                   <div className="flex flex-col gap-2.5">
-                    {/* Country / Region */}
-                    <div>
-                      <label
-                        htmlFor="addr-country"
-                        className="block text-[11px] font-medium text-muted mb-1"
-                      >
-                        Country / Region
-                      </label>
-                      <select
-                        id="addr-country"
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value)}
-                        className="h-9 w-full rounded-xl border border-border bg-surface-hover px-3 text-xs text-foreground focus:border-brand-blue focus:outline-none"
-                      >
-                        {COUNTRIES.map((c) => (
-                          <option key={c} value={c}>
-                            {c}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {/* Country / Region (hidden if GPS pinned unless expanded) */}
+                    {(!coordinates || showDetailedFields) && (
+                      <div>
+                        <label
+                          htmlFor="addr-country"
+                          className="block text-[11px] font-medium text-muted mb-1"
+                        >
+                          Country / Region
+                        </label>
+                        <select
+                          id="addr-country"
+                          value={country}
+                          onChange={(e) => setCountry(e.target.value)}
+                          className="h-9 w-full rounded-xl border border-border bg-surface-hover px-3 text-xs text-foreground focus:border-brand-blue focus:outline-none"
+                        >
+                          {COUNTRIES.map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
                     {/* Full Name & Phone */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1093,24 +1132,26 @@ export function CheckoutDrawer() {
                       />
                     </div>
 
-                    {/* Line 2: Area, Street, Sector, Village */}
-                    <div>
-                      <label
-                        htmlFor="addr-line2"
-                        className="block text-[11px] font-medium text-muted mb-1"
-                      >
-                        Area, Street, Sector, Village *
-                      </label>
-                      <input
-                        id="addr-line2"
-                        type="text"
-                        required
-                        value={line2}
-                        onChange={(e) => setLine2(e.target.value)}
-                        placeholder="e.g. Road No. 12, Jubilee Hills"
-                        className="h-9 w-full rounded-xl border border-border bg-surface-hover px-3 text-xs text-foreground focus:border-brand-blue focus:outline-none"
-                      />
-                    </div>
+                    {/* Line 2: Area, Street, Sector, Village (hidden if GPS pinned unless expanded) */}
+                    {(!coordinates || showDetailedFields) && (
+                      <div>
+                        <label
+                          htmlFor="addr-line2"
+                          className="block text-[11px] font-medium text-muted mb-1"
+                        >
+                          Area, Street, Sector, Village *
+                        </label>
+                        <input
+                          id="addr-line2"
+                          type="text"
+                          required
+                          value={line2}
+                          onChange={(e) => setLine2(e.target.value)}
+                          placeholder="e.g. Road No. 12, Jubilee Hills"
+                          className="h-9 w-full rounded-xl border border-border bg-surface-hover px-3 text-xs text-foreground focus:border-brand-blue focus:outline-none"
+                        />
+                      </div>
+                    )}
 
                     {/* Landmark */}
                     <div>
@@ -1130,62 +1171,79 @@ export function CheckoutDrawer() {
                       />
                     </div>
 
-                    {/* Pincode & City */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label
-                          htmlFor="addr-pincode"
-                          className="block text-[11px] font-medium text-muted mb-1"
-                        >
-                          Pincode / ZIP *
-                        </label>
-                        <input
-                          id="addr-pincode"
-                          type="text"
-                          required
-                          value={pincode}
-                          onChange={(e) => setPincode(e.target.value)}
-                          placeholder="e.g. 500034"
-                          className="h-9 w-full rounded-xl border border-border bg-surface-hover px-3 text-xs text-foreground focus:border-brand-blue focus:outline-none"
-                        />
+                    {/* Pincode & City (hidden if GPS pinned unless expanded) */}
+                    {(!coordinates || showDetailedFields) && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label
+                            htmlFor="addr-pincode"
+                            className="block text-[11px] font-medium text-muted mb-1"
+                          >
+                            Pincode / ZIP *
+                          </label>
+                          <input
+                            id="addr-pincode"
+                            type="text"
+                            required
+                            value={pincode}
+                            onChange={(e) => setPincode(e.target.value)}
+                            placeholder="e.g. 500034"
+                            className="h-9 w-full rounded-xl border border-border bg-surface-hover px-3 text-xs text-foreground focus:border-brand-blue focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label
+                            htmlFor="addr-city"
+                            className="block text-[11px] font-medium text-muted mb-1"
+                          >
+                            Town / City *
+                          </label>
+                          <input
+                            id="addr-city"
+                            type="text"
+                            required
+                            value={city}
+                            onChange={(e) => setCity(e.target.value)}
+                            placeholder="e.g. Hyderabad"
+                            className="h-9 w-full rounded-xl border border-border bg-surface-hover px-3 text-xs text-foreground focus:border-brand-blue focus:outline-none"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label
-                          htmlFor="addr-city"
-                          className="block text-[11px] font-medium text-muted mb-1"
-                        >
-                          Town / City *
-                        </label>
-                        <input
-                          id="addr-city"
-                          type="text"
-                          required
-                          value={city}
-                          onChange={(e) => setCity(e.target.value)}
-                          placeholder="e.g. Hyderabad"
-                          className="h-9 w-full rounded-xl border border-border bg-surface-hover px-3 text-xs text-foreground focus:border-brand-blue focus:outline-none"
-                        />
-                      </div>
-                    </div>
+                    )}
 
-                    {/* State */}
-                    <div>
-                      <label
-                        htmlFor="addr-state"
-                        className="block text-[11px] font-medium text-muted mb-1"
+                    {/* State (hidden if GPS pinned unless expanded) */}
+                    {(!coordinates || showDetailedFields) && (
+                      <div>
+                        <label
+                          htmlFor="addr-state"
+                          className="block text-[11px] font-medium text-muted mb-1"
+                        >
+                          State / Province *
+                        </label>
+                        <input
+                          id="addr-state"
+                          type="text"
+                          required
+                          value={state}
+                          onChange={(e) => setState(e.target.value)}
+                          placeholder="e.g. Telangana"
+                          className="h-9 w-full rounded-xl border border-border bg-surface-hover px-3 text-xs text-foreground focus:border-brand-blue focus:outline-none"
+                        />
+                      </div>
+                    )}
+
+                    {/* Option to toggle manual fields when GPS is pinned */}
+                    {coordinates && (
+                      <button
+                        type="button"
+                        onClick={() => setShowDetailedFields((prev) => !prev)}
+                        className="w-fit text-[11px] font-medium text-brand-blue hover:underline py-0.5 text-left"
                       >
-                        State / Province *
-                      </label>
-                      <input
-                        id="addr-state"
-                        type="text"
-                        required
-                        value={state}
-                        onChange={(e) => setState(e.target.value)}
-                        placeholder="e.g. Telangana"
-                        className="h-9 w-full rounded-xl border border-border bg-surface-hover px-3 text-xs text-foreground focus:border-brand-blue focus:outline-none"
-                      />
-                    </div>
+                        {showDetailedFields
+                          ? "− Hide detailed city, state & pincode fields"
+                          : "+ Edit city, state or pincode manually"}
+                      </button>
+                    )}
 
                     {/* Default Address Checkbox */}
                     <label className="flex items-center gap-2.5 pt-1 text-xs text-muted cursor-pointer select-none">
